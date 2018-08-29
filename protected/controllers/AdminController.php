@@ -343,17 +343,29 @@ class AdminController extends CController
 	
 	public function actionManageLanguage()
 	{
-		
-		$set_lang_id=getOptionA("set_lang_id");
+		if (isset($_GET['Do'])){
+			if ($_GET['Do']=="Add"){
+			   $this->crumbsTitle=Yii::t("default","Manage Language Add");
+		       $this->render('manage-language-add');
+			} else {
+				$this->crumbsTitle=Yii::t("default","Manage Language Settings");
+		        $this->render('manage-language-settings');
+			}
+			
+			$set_lang_id=getOptionA("set_lang_id");
 		if ( !empty($set_lang_id)){
 			$set_lang_id=json_decode($set_lang_id);
 		}
-		
 		$this->crumbsTitle=t("Manage Language Settings");
 		$this->render('manage-language-new',array(
 		  'langauge_list'=>FunctionsV3::getLanguageList(false),
 		  'set_lang_id'=>$set_lang_id
 		));
+	
+		} else {
+		   $this->crumbsTitle=Yii::t("default","Manage Language");
+		   $this->render('manage-language-list');
+		}
 	}
 	
 	public function actionSeo()
