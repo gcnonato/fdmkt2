@@ -12,8 +12,6 @@ class Functions extends CApplicationComponent
 	
 	public $search_result_total=0;
 	
-	public $additional_details;
-	
 	public function __construct()
 	{
 		$this->db_ext=new DbExt; 		
@@ -131,13 +129,8 @@ class Functions extends CApplicationComponent
 		";
 		if ( $res=$DbExt->rst($stmt)){
 			if ($list){
-				foreach ($res as $val) {	
-					
-					$cuisine_json['cuisine_name_trans']=!empty($val['cuisine_name_trans'])?
-	    		    json_decode($val['cuisine_name_trans'],true):'';
-									
-					//$lists[$val['cuisine_id']]=ucwords($val['cuisine_name']);
-					$lists[$val['cuisine_id']]=qTranslate($val['cuisine_name'],'cuisine_name',$cuisine_json);
+				foreach ($res as $val) {					
+					$lists[$val['cuisine_id']]=ucwords($val['cuisine_name']);
 				}
 				return $lists;
 			}
@@ -181,11 +174,7 @@ class Functions extends CApplicationComponent
 		return array(
 		  1=>Yii::t("default","Delivery & Pickup"),
 		  2=>Yii::t("default","Delivery Only"),
-		  3=>yii::t("default","Pickup Only"),
-		  4=>t("Delivery / Pickup / Dinein"),
-		  5=>t("Delivery & Dinein"),
-		  6=>t("Pickup & Dinein"),
-		  7=>t("Dinein Only")
+		  3=>yii::t("default","Pickup Only")
 		);
 	}
 	
@@ -203,35 +192,6 @@ class Functions extends CApplicationComponent
 			            'pickup'=>Yii::t("default","Pickup")          
 			        );
 					break;
-					
-				case 4:	
-				   return array(
-			           'delivery'=>Yii::t("default","Delivery"),
-			           'pickup'=>Yii::t("default","Pickup"),
-			           'dinein'=>t("Dinein")
-			        );
-				   break;
-				   
-				case 5:	
-				   return array(
-			           'delivery'=>Yii::t("default","Delivery"),			           
-			           'dinein'=>t("Dinein")
-			        );
-				   break;
-				   
-				case 6:	
-				   return array(
-			           'pickup'=>Yii::t("default","Pickup"),
-			           'dinein'=>t("Dinein")
-			        );
-				   break;   
-				  
-				case 7:	
-				   return array(			           
-			           'dinein'=>t("Dinein")
-			        );
-				   break;       
-				      
 				default:
 					return array(
 			           'delivery'=>Yii::t("default","Delivery"),
@@ -495,9 +455,7 @@ class Functions extends CApplicationComponent
     	  'not_authorize'=>t("You are not authorize with this app"),
     	  'not_login_fb'=>t("Sorry but you are not login with facebook"),
     	  'login_succesful'=>t("Login Successful"),
-    	  'you_cannot_edit_order'=>t("You cannot edit this order since you have redeem points"),
-    	  'dinein_time_is_required'=>t("Dinein time is required"),
-    	  'dinein_time'=>t("Dine in time")
+    	  'you_cannot_edit_order'=>t("You cannot edit this order since you have redeem points")
     	);
     }   	
     
@@ -880,13 +838,6 @@ class Functions extends CApplicationComponent
 		$payment_list=array('visible'=>$this->hasMerchantAccess("payment-gateway"),'tag'=>'payment-gateway','label'=>'<i class="fa fa-usd"></i>'.Yii::t("default",'Payment Gateway'),
                 
                    'itemOptions'=>array('class'=>''), 'items'=>array(
-                   
-                   array('visible'=>$this->hasMerchantAccess("cod"),'tag'=>'cod', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Cash On delivery"),                    
-                   'url'=>array('merchant/codsettings')),                
-                   
-                   array('visible'=>$this->hasMerchantAccess("ocr"),'tag'=>'ocr', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Offline Credit Card Payment"),                    
-                   'url'=>array('merchant/offlineccsettings')),                                   
-                   
                    array('visible'=>$this->hasMerchantAccess("pyp"),'tag'=>'paypal', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Paypal"),                    
                    'url'=>array('merchant/paypalSettings')),                
                    
@@ -926,21 +877,6 @@ class Functions extends CApplicationComponent
                    
                    array('visible'=>$this->hasMerchantAccess("btr"),'tag'=>'btr', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Braintree"), 
                    'url'=>array('merchant/braintreesettings')),                                                            
-                   
-                   array('visible'=>$this->hasMerchantAccess("rzr"),'tag'=>'rzr', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Razorpay"), 
-                   'url'=>array('merchant/razor')),                                                            
-                   
-                   array('visible'=>$this->hasMerchantAccess("vog"),'tag'=>'vog', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","voguepay"), 
-                   'url'=>array('merchant/voguepay')),                                                            
-                   
-                   array('visible'=>$this->hasMerchantAccess("mol"),'tag'=>'mol', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Mollie"), 
-                   'url'=>array('merchant/mollie')), 
-                   
-                   /*array('visible'=>$this->hasMerchantAccess("ip8"),'tag'=>'ip8', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Ipay88"), 
-                   'url'=>array('merchant/ipay88')),                                                            
-                   
-                   array('visible'=>$this->hasMerchantAccess("mri"),'tag'=>'mri', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","moneris"), 
-                   'url'=>array('merchant/moneris')),                                                            */
                                                          
                 ));              
                               
@@ -967,37 +903,16 @@ class Functions extends CApplicationComponent
               }
                             
 						
-        /*$mtype=$this->getMerchantMembershipType();        
-        if ( $mtype==2){        	
-        	$payment_list='';        	
-        	$payment_list=array('visible'=>true,'tag'=>'payment-gateway','label'=>'<i class="fa fa-usd"></i>'.Yii::t("default",'Payment Gateway'),                
-                 'itemOptions'=>array('class'=>''), 'items'=>array(
-                   array('visible'=>$this->hasMerchantAccess("pyr"),'tag'=>'pyr', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Pay On Delivery"),                    
-                   'url'=>array('merchant/payondelivery')),        
-              ));        
-        }*/	
-        $merchant_type=FunctionsV3::getMerchantTypeBySession();        
-        if ($merchant_type==2){
-        	$payment_list='';        	
-        	$payment_list=array('visible'=>true,
-        	'tag'=>'payment-gateway','label'=>'<i class="fa fa-usd"></i>'.Yii::t("default",'Payment Gateway'),                
-             'itemOptions'=>array('class'=>''), 'items'=>array(
-                   array('visible'=>$this->hasMerchantAccess("pyr"),
-                       'tag'=>'pyr', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Pay On Delivery"),
-                       'url'=>array('merchant/payondelivery')),        
-              ));        
+        $mtype=$this->getMerchantMembershipType();
+        if ( $mtype==2){
+        	$payment_list='';
         }	
         
-        $minfo=$this->getMerchantInfo();         
+        $minfo=$this->getMerchantInfo();        
         $togle_com=false;
         if ($minfo[0]->is_commission==2){
         	$togle_com=true;
         }	
-        
-        $togle_com_widrawals=false;        
-        if ($merchant_type==2){
-        	$togle_com_widrawals=true;
-        } 
          
 		return array(  
 		    'activeCssClass'=>'active', 
@@ -1012,8 +927,8 @@ class Functions extends CApplicationComponent
                 array('visible'=>$this->hasMerchantAccess("Settings"),'tag'=>"Settings",'label'=>'<i class="fa fa-cog"></i>'.Yii::t("default","Settings"),
                 'url'=>array('/merchant/Settings')),
                 
-                array('visible'=>$this->hasMerchantAccess("tablebook"),'tag'=>"tablebook",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Table Booking"),
-                'url'=>array('/merchant/tablebooking')),
+                /* array('visible'=>$this->hasMerchantAccess("tablebook"),'tag'=>"tablebook",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Table Booking"),
+                'url'=>array('/merchant/tablebooking')), */
                                                 
                 array('visible'=>$this->hasMerchantAccess("orderStatus"),'tag'=>"orderStatus",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Order Status"),
                 'url'=>array('/merchant/orderStatus')),
@@ -1041,14 +956,8 @@ class Functions extends CApplicationComponent
                 array('visible'=>$this->hasMerchantAccess("FoodItem"),'tag'=>"FoodItem",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Food Item"),
                 'url'=>array('/merchant/FoodItem')),             
                 
-                array('visible'=>$this->hasMerchantAccess("invoice"),'tag'=>"invoice",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Invoice"),
-                'url'=>array('/merchant/invoice')),
-                
                 array('visible'=>$this->hasMerchantAccess("shippingrate"),'tag'=>"shippingrate",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Delivery Charges Rates"),
                 'url'=>array('/merchant/shippingrate')),
-                
-                array('visible'=>$this->hasMerchantAccess("mintable"),'tag'=>"mintable",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Minimum Order Table"),
-                'url'=>array('/merchant/mintable')),
                 
                 array('visible'=>$this->hasMerchantAccess("offers"),'tag'=>"offers",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Offers"),
                 'url'=>array('/merchant/offers')),
@@ -1056,8 +965,8 @@ class Functions extends CApplicationComponent
                 array('visible'=>$this->hasMerchantAccess("gallerysettings"),'tag'=>"gallerysettings",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Gallery Settings"),
                 'url'=>array('/merchant/gallerysettings')),
                 
-                /*array('visible'=>$this->hasMerchantAccess("receiptSettings"),'tag'=>"receiptSettings",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Receipt Settings"),
-                'url'=>array('/merchant/receiptSettings')),*/
+                array('visible'=>$this->hasMerchantAccess("receiptSettings"),'tag'=>"receiptSettings",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Receipt Settings"),
+                'url'=>array('/merchant/receiptSettings')),
                 
                 array('visible'=>$this->hasMerchantAccess("voucher"),'tag'=>"voucher",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Voucher"),
                 'url'=>array('/merchant/voucher')),
@@ -1071,11 +980,13 @@ class Functions extends CApplicationComponent
                    array('visible'=>$togle_com,'tag'=>'statement', 'label'=>'<i class="fa fa-paypal"></i>'.t("Statement"), 
                    'url'=>array('merchant/statement')),                
                    
+                   /*array('visible'=>$togle_com,'tag'=>'cashstatement', 'label'=>'<i class="fa fa-paypal"></i>'.t("Cash Statement"), 
+                   'url'=>array('merchant/cashstatement')),                */
                    
                    array('visible'=>$togle_com,'tag'=>'earnings', 'label'=>'<i class="fa fa-paypal"></i>'.t("Earnings"),
                    'url'=>array('merchant/earnings')),     
                    
-                   array('visible'=>$togle_com_widrawals,'tag'=>'withdrawals', 'label'=>'<i class="fa fa-paypal"></i>'.t("Withdrawals"),
+                   array('visible'=>$togle_com,'tag'=>'withdrawals', 'label'=>'<i class="fa fa-paypal"></i>'.t("Withdrawals"),
                    'url'=>array('merchant/withdrawals')),     
                                       
                 )),   
@@ -1089,7 +1000,7 @@ class Functions extends CApplicationComponent
                    array('visible'=>$this->hasMerchantAccess("smsBroadcast"),'tag'=>'smsBroadcast', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","SMS BroadCast"), 
                    'url'=>array('merchant/smsBroadcast')),     
                    array('visible'=>$this->hasMerchantAccess("purchaseSMS"),'tag'=>'purchaseSMS', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Purchase SMS Credit"), 
-                   'url'=>array('merchant/purchasesms')),                           
+                   'url'=>array('merchant/purchaseSMS')),                           
                    array('visible'=>$this->hasMerchantAccess("purchasesmstransaction"),'tag'=>'purchasesmstransaction', 'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Purchase Credit Transactions"), 
                    'url'=>array('merchant/purchasesmstransaction')),                           
                 )),
@@ -1102,9 +1013,11 @@ class Functions extends CApplicationComponent
                    'url'=>array('merchant/salesReport')),
                    array('visible'=>$this->hasMerchantAccess("salesSummaryReport"),'tag'=>'salesSummaryReport','label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Sales Summary Report"), 
                    'url'=>array('merchant/salesSummaryReport')),                
+
                    
-                   array('visible'=>$this->hasMerchantAccess("bookingreport"),'tag'=>'bookingreport','label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Booking Summary Report"), 
-                   'url'=>array('merchant/bookingreport')),                
+                //    array('visible'=>$this->hasMerchantAccess("bookingreport"),'tag'=>'bookingreport','label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Booking Summary Report"), 
+
+                //    'url'=>array('merchant/bookingreport')),                              
                 )),
 
                 /*array('tag'=>"home",'label'=>'<i class="fa fa-cog"></i>'.Yii::t("default","Receipt Settings"),
@@ -1147,47 +1060,15 @@ class Functions extends CApplicationComponent
 			'pay',
 			'paymentconfirm',
 			'faxreceipt',
-			'profile',
-			'print'
+			'profile'
 		);
 		if (in_array($tag,$accepted_tag)){
 			return true;
 		}	
 		
-		/*HIDE TABLE BOOKING IF DISABLED */
-		if ( $tag=="tablebook"){
-			$tbl_booking=getOption( self::getMerchantID() ,'merchant_master_table_boooking');
-			if($tbl_booking==1){
-				return false;
-			}		
-		}
-		
-		/*HIDE MINIMUM TABLE RATES IF SEARCH TYPE IS BY LOCATION*/
-		if ( $tag=="mintable"){
-			if (FunctionsV3::isSearchByLocation()){
-				return false;
-			}
-		}	
-				
-		if ($tag=="invoice"){
-			if ( $merchant_type=FunctionsV3::getMerchantMembershipType( self::getMerchantID() )){
-				if($merchant_type==1){
-					return false;
-				}			
-			}
-		}		
-		
-		/*special category*/
-		if($tag=="CategoryList"){
-		   $merchant_category_disabled=getOptionA('merchant_category_disabled');
-		   if($merchant_category_disabled==1){
-		   	  return false;
-		   }		
-		}			
-		
-		/*$tag_paymentgateway=array(
+		$tag_paymentgateway=array(
 		  'paypal','stripe','mercadopago','ide','payu','pys','ccr','bcy','epy','pyr',
-		  'atz','obd','pyp','stp','mcd','ocr','btr','rzr','mri'
+		  'atz','obd','pyp','stp','mcd','ocr','btr'
 		);				
 				
 		if ( $tag=="obdreceive"){
@@ -1195,28 +1076,11 @@ class Functions extends CApplicationComponent
 		}	
 		
 		if (in_array($tag,$tag_paymentgateway)){			
-			$list_payment=$this->getMerchantListOfPaymentGateway();
+			$list_payment=$this->getMerchantListOfPaymentGateway();		
+		/*	dump($list_payment);
+			die();*/				
 			if (!in_array($tag,(array)$list_payment)){
 				return false;
-			}
-		}*/
-		
-		/*CHECK IF ENABLED IN PAYMENT GATEWAY SETTINGS*/
-		if ( $tag=="obdreceive"){
-			$tag='obd';
-		}	
-		
-		$payment_list=FunctionsV3::PaymentOptionList();
-		if (array_key_exists($tag,(array)$payment_list)){
-			$list_payment_enabled=$this->getMerchantListOfPaymentGateway();		
-			if ( !in_array($tag,(array)$list_payment_enabled)){
-				 return false;
-			} else {
-				$master_key="merchant_switch_master_$tag";
-				$master_key_val=getOption(self::getMerchantID(),$master_key);
-				if($master_key_val==1){
-					return false;
-				}			
 			}
 		}
 		
@@ -1275,9 +1139,7 @@ class Functions extends CApplicationComponent
 		if ( is_array($info) && count($info)>=1){
 			$info=(array)$info[0];			
 			if (isset($info['merchant_user_id'])){
-				$access=json_decode($info['user_access']);		
-				$tag=strtolower($tag);
-				$access = array_map('strtolower', $access);				
+				$access=json_decode($info['user_access']);																
 				if (in_array($tag,(array)$access)){
 					return true;
 				}			
@@ -1318,19 +1180,10 @@ class Functions extends CApplicationComponent
                 array('visible'=>$this->AA('dishes'),
                 'tag'=>"dishes",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Dishes"),
                 'url'=>array('/admin/dishes')),
-                
-                /*array('visible'=>$this->AA('category'),
-                'tag'=>"category",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Category"),
-                'url'=>array('/admin/category')),*/
                                                
                 array('visible'=>$this->AA('OrderStatus'),
                 'tag'=>"OrderStatus",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Order Status"),
                 'url'=>array('/admin/OrderStatus')),
-                
-                array('visible'=>$this->AA('incomingorders'),'tag'=>"incomingorders",
-                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Incoming Orders"),
-                'url'=>array('/admin/incomingorders')),           
-                
                 
                 array('visible'=>$this->AA('settings'),
                 'tag'=>"settings",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Settings"),
@@ -1340,13 +1193,9 @@ class Functions extends CApplicationComponent
                 'tag'=>"themesettings",'label'=>'<i class="fa fa-list-alt"></i>'.t("Theme settings"),
                 'url'=>array('/admin/themesettings')),                     
                 
-                /*array('visible'=>$this->AA('zipcode'),
+                array('visible'=>$this->AA('zipcode'),
                 'tag'=>"zipcode",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Post codes"),
-                'url'=>array('/admin/zipcode')),*/
-                
-                array('visible'=>$this->AA('managelocation'),
-                'tag'=>"managelocation",'label'=>'<i class="fa fa-list-alt"></i>'.t("Manage location"),
-                'url'=>array('/admin/managelocation')),
+                'url'=>array('/admin/zipcode')),
                                 
                 array('visible'=>$this->AA('commisionsettings'),
                 'tag'=>"commisionsettings",
@@ -1357,11 +1206,6 @@ class Functions extends CApplicationComponent
                 'tag'=>"voucher",
                 'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Voucher"),
                 'url'=>array('/admin/voucher')),                                   
-                
-                array('visible'=>$this->AA('invoice'),
-                'tag'=>"invoice",
-                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Invoice"),
-                'url'=>array('/admin/invoice')),                                                   
                 
                 array('visible'=>$this->AA('merchantcommission'),
                 'tag'=>"merchantcommission",
@@ -1382,25 +1226,13 @@ class Functions extends CApplicationComponent
                  )),          
                                 
                 array('visible'=>$this->AA('emailsettings'),'tag'=>"emailsettings",
-                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Email Settings"),
+                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Mail & SMTP Settings"),
                 'url'=>array('/admin/emailsettings')),           
-               
+                
                 array('visible'=>$this->AA('emailtpl'),
-                'tag'=>"emailtpl",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Notification Template"),
+                'tag'=>"emailtpl",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Email Template"),
                 'url'=>array('/admin/emailtpl')),           
                 
-                array('visible'=>$this->AA('notisettings'),
-                'tag'=>"notisettings",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Notification Settings"),
-                'url'=>array('/admin/notisettings')),            
-                                
-                array('visible'=>$this->AA('emailogs'),'tag'=>"emailogs",
-                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Email Logs"),
-                'url'=>array('/admin/emailogs')),           
-                
-                array('visible'=>$this->AA('cronjobs'),'tag'=>"cronjobs",
-                'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Cron Jobs"),
-                'url'=>array('/admin/cronjobs')),           
-                               
                 /*array('visible'=>$this->AA('ordertemplate'),
                 'tag'=>"ordertemplate",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Order Email Template"),
                 'url'=>array('/admin/ordertemplate')),*/
@@ -1442,29 +1274,25 @@ class Functions extends CApplicationComponent
                    
                    array('visible'=>$this->AA('addonexport'),
                    'tag'=>'addonexport','label'=>'<i class="fa"></i>'.Yii::t("default","Export/Import"), 
-                   'url'=>Yii::app()->getBaseUrl(true)."/exportmanager?lang=".Yii::app()->language),                
-                   
-                   /*array('visible'=>$this->AA('mobileapp'),
-                   'tag'=>'mobileapp','label'=>'<i class="fa"></i>'.Yii::t("default","MobileApp"), 
-                   'url'=>Yii::app()->getBaseUrl(true)."/mobileapp"),*/
+                   'url'=>Yii::app()->getBaseUrl(true)."/ExportManager"),                
                    
                    array('visible'=>$this->AA('mobileapp'),
                    'tag'=>'mobileapp','label'=>'<i class="fa"></i>'.Yii::t("default","MobileApp"), 
-                   'url'=> Yii::app()->createUrl('/mobileapp?lang='.Yii::app()->language) ),                
+                   'url'=>Yii::app()->getBaseUrl(true)."/mobileapp"),                
                    
                    array('visible'=>$this->AA('pointsprogram'),
                    'tag'=>'pointsprogram','label'=>'<i class="fa"></i>'.Yii::t("default","Loyalty Points Program"), 
-                   'url'=>Yii::app()->getBaseUrl(true)."/pointsprogram?lang=".Yii::app()->language),                
+                   'url'=>Yii::app()->getBaseUrl(true)."/pointsprogram"),                
                                       
                    array('visible'=>$this->AA('merchantapp'),
                    'tag'=>'merchantapp','label'=>'<i class="fa"></i>'.Yii::t("default","MerchantApp"), 
-                   'url'=>Yii::app()->getBaseUrl(true)."/merchantapp?lang=".Yii::app()->language),                
+                   'url'=>Yii::app()->getBaseUrl(true)."//merchantapp"),                
               
                  )),  
-                /**add ons */     
-                                            
+                /**add ons */
+
                 array('visible'=>$this->AA('analytics'),
-                'tag'=>"analytics",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Custom Code & Analytics"),
+                'tag'=>"analytics",'label'=>'<i class="fa fa-list-alt"></i>'.Yii::t("default","Analytics"),
                 'url'=>array('/admin/analytics')),                               
                 
                 array('visible'=>$this->AA('customerlist'),'tag'=>"customerlist",
@@ -1543,26 +1371,6 @@ class Functions extends CApplicationComponent
                    'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Braintree"), 
                    'url'=>array('admin/braintree')),                             
                    
-                   array('visible'=>$this->AA('razor'),'tag'=>'razor',
-                   'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Razorpay"), 
-                   'url'=>array('admin/razor')),                             
-                   
-                   array('visible'=>$this->AA('voguepay'),'tag'=>'voguepay',
-                   'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","voguepay"), 
-                   'url'=>array('admin/voguepay')),                             
-                   
-                   /*array('visible'=>$this->AA('mollie'),'tag'=>'mollie',
-                   'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Mollie"), 
-                   'url'=>array('admin/mollie')),                             */
-                   
-                   /*array('visible'=>$this->AA('ipay88'),'tag'=>'ipay88',
-                   'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","Ipay88"), 
-                   'url'=>array('admin/ipay88')),                             
-                   
-                   array('visible'=>$this->AA('moneris'),'tag'=>'moneris',
-                   'label'=>'<i class="fa fa-paypal"></i>'.Yii::t("default","moneris"), 
-                   'url'=>array('admin/moneris')),                             */
-                   
                  )),                               
                  
                  array('visible'=>$this->AA('sms'),
@@ -1634,7 +1442,7 @@ class Functions extends CApplicationComponent
                  
                  array('visible'=>$this->AA('userList'),
                  'tag'=>"userList",'label'=>'<i class="fa fa-users"></i>'.Yii::t("default","User List"),
-                'url'=>array('/admin/userlist')),                
+                'url'=>array('/admin/userList')),                
                                 
                 array('tag'=>"logout",'label'=>'<i class="fa fa-sign-out"></i>'.Yii::t("default","Logout"),
                 'url'=>array('/admin/login/logout/true')),
@@ -2069,8 +1877,6 @@ class Functions extends CApplicationComponent
 		{{option}}
 		WHERE
 		option_name='".addslashes($option_name)."'
-		AND
-		merchant_id='0'
 		";
 		$connection=Yii::app()->db;
 		$rows=$connection->createCommand($stmt)->queryAll(); 		
@@ -2082,13 +1888,8 @@ class Functions extends CApplicationComponent
 		$command = Yii::app()->db->createCommand();
 		
 		if (is_array($rows) && count($rows)>=1){
-			$option_id=$rows[0]['id'];			
-			/*$res = $command->update('{{option}}' , $params , 
-				                     'option_name=:option_name' , array(':option_name'=> addslashes($option_name) ));*/
-			
 			$res = $command->update('{{option}}' , $params , 
-				                     'id=:id' , array(':id'=> addslashes($option_id) ));
-				                     
+				                     'option_name=:option_name' , array(':option_name'=> addslashes($option_name) ));
 		    if ($res){
 		    	return TRUE;
 		    } 
@@ -2106,12 +1907,10 @@ class Functions extends CApplicationComponent
 		{{option}}
 		WHERE
 		option_name='".addslashes($option_name)."'
-		AND
-		merchant_id='0'
 		LIMIT 0,1
 		";
 		$connection=Yii::app()->db;
-		$rows=$connection->createCommand($stmt)->queryAll(); 		
+		$rows=$connection->createCommand($stmt)->queryAll();
 		if (is_array($rows) && count($rows)>=1){
 			return stripslashes($rows[0]['option_value']);
 		}
@@ -2670,9 +2469,9 @@ class Functions extends CApplicationComponent
 			$json=$this->Curl($api,'');					
 		}
 		
-		if (isset($_GET['debugx'])){
-			dump($api);
-		    dump($json);
+		if (isset($_GET['debug'])){
+			/*dump($api);
+		    dump($json);*/
 		}
 			
 		if (!empty($json)){
@@ -2723,7 +2522,7 @@ class Functions extends CApplicationComponent
 		membership_expired <'$today'
 		AND
 		is_commission='1'
-		";				
+		";		
 		$DbExt->qry($stmt);		
 	}
 	
@@ -3117,18 +2916,17 @@ class Functions extends CApplicationComponent
 		return false;
 	}	
 		
-	public function getMerchantMenu($merchant_id='',$food_name='')
+	public function getMerchantMenu($merchant_id='')
 	{
 		$data='';
 		$this->data='list';
-		if ( $res=$this->getCategoryList2($merchant_id , $food_name )){						
+		if ( $res=$this->getCategoryList2($merchant_id)){						
 			foreach ($res as $cat_i=>$cat_name) {				
 				$data[]=array(
 				  'category_id'=>$cat_i,
 				  'category_name'=>$cat_name['category_name'],
 				  'category_description'=>$cat_name['category_description'],
 				  'category_name_trans'=>!empty($cat_name['category_name_trans'])?json_decode($cat_name['category_name_trans'],true):'',
-				  'photo'=>$cat_name['photo'],
 				  'category_description_trans'=>!empty($cat_name['category_description_trans'])?json_decode($cat_name['category_description_trans'],true):'',
 				  'dish'=>$cat_name['dish'],
 				  'item'=>$this->getItemByCategory($cat_i,false,$merchant_id)
@@ -3205,8 +3003,7 @@ class Functions extends CApplicationComponent
 		$this->code=2;
 		$htm='';	
     	$subtotal=0;
-    	$mid=isset($data['merchant_id'])?$data['merchant_id']:'';    	
-    	    	
+    	$mid=isset($data['merchant_id'])?$data['merchant_id']:'';
     	if (empty($mid)){
     		$this->msg=Yii::t("default","Merchant ID is empty");
     		return ;
@@ -3215,7 +3012,10 @@ class Functions extends CApplicationComponent
     	Yii::app()->functions->data="list";
     	$food_item=Yii::app()->functions->getFoodItemLists($mid);
     	$subcat_list=Yii::app()->functions->getAddOnLists($mid);	    	
-    	    	    		       	
+    	    	    	
+    	//dump($cart_item);    	
+    	//dump($food_item);
+            	    		   
     	if (isset($cart_item)){
     		if (is_array($cart_item) && count($cart_item)>=1){
     			$x=0;
@@ -3280,52 +3080,25 @@ class Functions extends CApplicationComponent
 	    				}	
     				}
     				
-    				/*dump($food_item);
-    				dump($val['item_id']);*/    				
-    				
     				$htm.='<div class="item-order-list item-row">';
-    				    				  
-    				  $val['category_id']=isset($val['category_id'])?$val['category_id']:'';
-    				  
-    				  if ($res_category=$this->getCategory($val['category_id'])){     				  	  
-    				  	  $category_name_trans['category_name_trans']=!empty($res_category['category_name_trans'])?
-    				  	  json_decode($res_category['category_name_trans'],true):false; 
-    				  	      			    				  	  
-    				  	  $htm.="<p style=\"margin:0;\"><b>".qTranslate($res_category['category_name'],
-    				  	  'category_name',$category_name_trans)."</b></p>";
-    				  } 
-    				  
-    				  //dump($htm);
-    				      				     				 
 			          $htm.='<div class="a">'.$val['qty'].'</div>';
-			          $htm.='<div class="b">'.qTranslate(
-			          isset($food_item[$val['item_id']])?$food_item[$val['item_id']]:''
-			          ,'item_name',$food_infos);
+			          $htm.='<div class="b">'.qTranslate($food_item[$val['item_id']],'item_name',$food_infos);
 			          if (!empty($size_words)){
-			          	 $htm.="(".qTranslate($size_words,'size_name',$size_info_trans).")";
+			          	 $htm.="(".ucwords(qTranslate($size_words,'size_name',$size_info_trans)).")";
 			          }
-			          
-			          //dump($val);
 			          
 			          // array value
 			          $item_array[$key]=array(
 			            'item_id'=>$val['item_id'],
-			            'item_name'=>isset($food_item[$val['item_id']])?$food_item[$val['item_id']]:'',
+			            'item_name'=>$food_item[$val['item_id']],
 			            'size_words'=>$size_words,
 			            'qty'=>$val['qty'],
 			            'normal_price'=>prettyFormat($val['price']),
 			            'discounted_price'=>$price,
-			            'discount'=>$val['discount'],
 			            'order_notes'=>isset($val['notes'])?$val['notes']:'',
 			            'cooking_ref'=>isset($val['cooking_ref'])?$val['cooking_ref']:'',
 			            'ingredients'=>isset($val['ingredients'])?$val['ingredients']:'',
-			            'non_taxable'=>isset($val['non_taxable'])?$val['non_taxable']:1,
-			            'category_id'=>isset($val['category_id'])?$val['category_id']:'',
-			            'category_name'=>isset($res_category['category_name_trans'])?$res_category['category_name']:'',
-			            'category_name_trans'=>isset($category_name_trans)?$category_name_trans:'',			            
-			            'item_name_trans'=>isset($food_infos)?$food_infos:'',
-			            'size_name_trans'=>isset($size_info_trans)?$size_info_trans:'',
-			            'cooking_name_trans'=>isset($cooking_ref_trans)?$cooking_ref_trans:''
+			            'non_taxable'=>isset($val['non_taxable'])?$val['non_taxable']:1
 			          );			          			         
 			          
 			          $htm.=Widgets::displaySpicyIconByID($val['item_id']);
@@ -3334,15 +3107,12 @@ class Functions extends CApplicationComponent
 			          	  $htm.="<p class=\"uk-text-small\">".
 			          	  "<span class=\"normal-price\">".displayPrice(baseCurrency(),prettyFormat($val['price']))." </span>".
 			          	  "<span class=\"sale-price\">".displayPrice(baseCurrency(),prettyFormat($price))."</span>"
-			          	  ."</p>";		
-			          	  	          	  
+			          	  ."</p>";			          	  
 			          } else {
-			          	
 			          	$htm.="<p class=\"uk-text-small\">".			          	  
 			          	  "<span class=\"base-price\">".displayPrice(baseCurrency(),prettyFormat($val['price']))."</span>"
 			          	  ."</p>";			          	  
 			          }
-			          
 			          if (!empty($val['cooking_ref'])){
 			              $htm.="<p class=\"small\">".
 			              qTranslate($val['cooking_ref'],'cooking_name',$cooking_ref_trans)."</p>";
@@ -3350,20 +3120,14 @@ class Functions extends CApplicationComponent
 			          if (!empty($val['notes'])){
 			              $htm.="<p class=\"small text-info\">".$val['notes']."</p>";
 			          }				          
-			          			          
-			          /*ingredients*/  			          
+			          
+			          /*ingredients*/			         
 			          if (isset($val['ingredients'])){
 			          	if (!empty($val['ingredients'])){
 			          		if (is_array($val['ingredients']) && count($val['ingredients'])>=1){
 			          			$htm.="<p class=\"small ingredients-label\">".t("Ingredients").":</p>";
-			          		    foreach ($val['ingredients'] as $val_ingred) {		
-			          		    				          		       
-			          		       if($details_ingredients=FunctionsV3::getIngredientsByName($val_ingred,$mid)){
-			          		       	  $_ingredients['ingredients_name_trans']=json_decode($details_ingredients['ingredients_name_trans'],true);			          		       	  
-			          		       	  $htm.="<p class=\"small\">".
-			          		       	  qTranslate($val_ingred,'ingredients_name',$_ingredients)
-			          		       	  ."</p>";
-			          		       } else $htm.="<p class=\"small\">".$val_ingred."</p>";
+			          		    foreach ($val['ingredients'] as $val_ingred) {
+			          		       $htm.="<p class=\"small\">".$val_ingred."</p>";
 			          		    }	
 			          		}
 			          	}	
@@ -3373,7 +3137,6 @@ class Functions extends CApplicationComponent
 			          
 			          $htm.='<div class="manage">';
 			            $htm.='<div class="c">';
-			            
 			             if ( $receipt==false):
 			             $htm.='<a href="javascript:;" class="edit_item" data-row="'.$key.'" rel="'.$val['item_id'].'" >
 			                        <i class="ion-compose"></i>
@@ -3381,9 +3144,7 @@ class Functions extends CApplicationComponent
 			              $htm.='<a href="javascript:;" class="delete_item" data-row="'.$key.'" rel="'.$val['item_id'].'" >
 			                       <i class="ion-trash-a"></i>
 			                    </a>';
-			             endif;
-			             
-			             
+			              endif;
 			            $htm.='</div>';
 			             $htm.='<div class="d">'.displayPrice(baseCurrency(),prettyFormat($total_price,$mid)).'</div>';
 			          $htm.='</div>';
@@ -3393,8 +3154,6 @@ class Functions extends CApplicationComponent
 			          //dump($val);			          
 			          //$item_array[$key]['sub_item']=$val['sub_item'];
 			          $val['sub_item']=isset($val['sub_item'])?$val['sub_item']:'';
-			          //dump($val['sub_item']);
-			          //$val['sub_item']='';
 			          
 			          if (is_array($val['sub_item']) && count($val['sub_item'])>=1){
 			          	 foreach ($val['sub_item'] as $cat_id=>$val_sub) {				          	 	
@@ -3408,12 +3167,12 @@ class Functions extends CApplicationComponent
 			          	 				$subcategory_trans['subcategory_name_trans']=!empty($subcategory_tran['subcategory_name_trans'])?json_decode($subcategory_tran['subcategory_name_trans'],true):'';
 			          	 			}			          	 					          	 			
 			          	 		}
-			          	 	
+			          	 				          	 		
 			          	 		$htm.='<div class="a"></div>';
 						        $htm.='<div class="b uk-text-success">'.
-						        qTranslate($subcat_list[$cat_id],'subcategory_name',
-						        $subcategory_trans).'</div>';  
-						        $htm.='<div class="clear"></div>';
+						        ucwords(qTranslate($subcat_list[$cat_id],'subcategory_name',
+						        $subcategory_trans)).'</div>';  
+						        $htm.='<div class="clear"></div>';				          	 		
 			          	 	}
 			          	 				          	 				          	 				          	 	
 			          	 	$addon_qty=1;				          	 	
@@ -3461,32 +3220,30 @@ class Functions extends CApplicationComponent
 			          	 		  //'addon_price'=>$addon_item_price
 			          	 		  'addon_price'=>unPrettyPrice($val_subs[1])
 			          	 		);
-			          	 					          	 		
+			          	 		
+			          	 		/*changes for driver app*/
+			          	 		$item_array[$key]['new_sub_item'][$subcat_list[$cat_id]][]=array(
+			          	 		  'addon_name'=>$val_subs[2],
+			          	 		  'addon_category'=>$subcat_list[$cat_id],
+			          	 		  'addon_qty'=>$addon_qty,			          	 		  
+			          	 		  'addon_price'=>unPrettyPrice($val_subs[1])
+			          	 		);
+			          	 		
 			          	 		/**translation */
 			          	 		$addon_name_trans='';
 			          	 		if ($this->getOptionAdmin("enabled_multiple_translation")==2){
 			          	 			$addon_name_trans=$this->getAddonTranslation($val_subs[2],$mid);
 			          	 		}
-			          	 					          	 			          	 					          	 		
+			          	 					          	 					          	 		
 			          	 		$htm.='<div class="a">'.$addon_qty.'x</div>';
-$htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2],
-'sub_item_name',$addon_name_trans).'</div>';
+$htm.='<div class="b uk-text-muted">'."$addon_raw_price ".ucwords(qTranslate($val_subs[2],
+'sub_item_name',$addon_name_trans)).'</div>';
 						          $htm.='<div class="manage">';							             
 						             if ( $addon_item_price!=0){
 						             $htm.='<div class="d">'.displayPrice(baseCurrency(),prettyFormat($addon_item_price)).'</div>';
 						             } else $htm.='<div class="d">-</div>';
 						          $htm.='</div>';
 						        $htm.='<div class="clear"></div>';
-						        
-						        /*changes for driver app*/
-			          	 		$item_array[$key]['new_sub_item'][$subcat_list[$cat_id]][]=array(
-			          	 		  'addon_name'=>$val_subs[2],
-			          	 		  'addon_category'=>$subcat_list[$cat_id],
-			          	 		  'addon_qty'=>$addon_qty,			          	 		  
-			          	 		  'addon_price'=>unPrettyPrice($val_subs[1]),
-			          	 		  'subcategory_name_trans'=>isset($subcategory_trans)?$subcategory_trans:'',
-			          	 		  'sub_item_name_trans'=>isset($addon_name_trans)?$addon_name_trans:'',
-			          	 		);
 			          	 	}
 			          	 }
 			          }	    			
@@ -3511,8 +3268,6 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     			$tax_amt=$tax;
     			$delivery_charges=Yii::app()->functions->getOption('merchant_delivery_charges',$mid);
     			
-    			/*dump($delivery_charges);
-    			dump($_SESSION['shipping_fee']);*/
     			
     			//shipping rates
     			if (isset($_SESSION['shipping_fee'])){
@@ -3529,7 +3284,9 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     			$merchant_packaging_charge=Yii::app()->functions->getOption('merchant_packaging_charge',$mid);    		
     			//fixed packaging charge
     			if (isset($data['packaging'])){
-    				$merchant_packaging_charge=$data['packaging'];
+    				if ($data['packaging']>0){
+    					$merchant_packaging_charge=$data['packaging'];
+    				}
     			}    		
     			
                 if (!empty($delivery_charges)){
@@ -3538,14 +3295,10 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
                 
                 /*if transaction is pickup*/
                 //dump($data);
-    			if ($data['delivery_type']=="pickup" || $data['delivery_type']=="dinein"){
+    			if ($data['delivery_type']=="pickup"){
     				$delivery_charges=0;
     			}           
-    			
-    			if ( $data['delivery_type']=="dinein"){    				
-    				$merchant_packaging_charge=0;
-    			}
-    			    			
+                    			
                 /*VOUCHER*/
     			$has_voucher=false;
     			$less_voucher=0; 
@@ -3579,7 +3332,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		        			$voucher_type=normalPrettyPrice((integer)$order_infos['voucher_amount'])."%";
 		        			$less_voucher=$subtotal*($order_infos['voucher_amount']/100);
 		        		}		        	
-		        	} else $has_voucher=false;	        
+		        	}		        
 		        }    		
 
 		        if ($less_voucher==TRUE){
@@ -3595,10 +3348,6 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		        $show_discount=false;
 		        $discounted_amount=0;
 		        $merchant_discount_amount=0;
-		        
-		        if(isset($_SESSION['promo_discount'])){
-		           unset($_SESSION['promo_discount']);
-		        }
 		        
 		        if ($receipt==TRUE){
 		        	$_GET['id']=isset($_GET['id'])?$_GET['id']:$new_order_id;
@@ -3625,18 +3374,13 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 			        	   $discounted_amount=$subtotal*$merchant_discount_amount1;		        	
 			        	   $subtotal=$subtotal-$discounted_amount;
 			        	   
-			        	   $_SESSION['promo_discount']=1;
-			        	   
 			        	   /** check if item is taxable*/
 			        	   if ($food_taxable==false){
 			        		   $subtotal_non=$subtotal_non-$discounted_amount;
 			        	   }
-			        	} 
+			        	}		        	
 			        }    	
 		        }	
-		        
-		        /*dump($discounted_amount);
-		        dump($merchant_discount_amount);*/
 		        
 		        /**above sub total free delivery*/		
 		        $free_delivery=false;        
@@ -3718,10 +3462,22 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		        
 		         if ( $has_voucher==TRUE){		 
 
-		         	 if ( $show_discount==true):		         	 			        
+		         	 if ( $show_discount==true):
+			         /*$htm.='<div class="a">'.t("Discount")." $merchant_discount_amount%".  ':</div>';
+			         $htm.='<div class="manage manage-ux">';
+			           $htm.='<div class="b">('.displayPrice(baseCurrency(),prettyFormat($discounted_amount,$mid)).')</div>';
+			         $htm.='</div>';*/
 			           $htm.=FunctionsV3::receiptRowTotal( t("Discount")." $merchant_discount_amount%" ,
 			           displayPrice(baseCurrency(),prettyFormat($discounted_amount,$mid)));
 			         endif;
+
+			         /*$cart_subtotal_raw=$subtotal+$less_voucher;
+			         $htm.="<span class=\"cart_subtotal_raw\" data-value=\"$cart_subtotal_raw\" ></span>";*/
+			         
+			         /*$htm.='<div class="a">'.Yii::t("default","Sub Total").':</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b cart_subtotal">'.displayPrice(baseCurrency(),prettyFormat($subtotal+$less_voucher,$mid)).'</div>';
+			         $htm.='</div>';*/
 			         
 			         $htm.=FunctionsV3::receiptRowTotal("Sub Total",
 			         displayPrice(baseCurrency(),prettyFormat($subtotal+$less_voucher,$mid)),'','cart_subtotal'
@@ -3730,23 +3486,39 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 			         if ($receipt==TRUE){
 			         	$voucher_code=" - ".$order_infos['voucher_code']."";
 			         } else $voucher_code='';
-			         			         
+			         
+			         /*$htm.='<div class="a">'.Yii::t("default","Less Voucher")." ".$voucher_type.':</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b">-'.displayPrice(baseCurrency(),prettyFormat($less_voucher,$mid)).'</div>';
+			         $htm.='</div>';*/
+
 			         $htm.=FunctionsV3::receiptRowTotal( Yii::t("default","Less Voucher")." ".$voucher_type ,
 			         "(".displayPrice(baseCurrency(),prettyFormat($less_voucher,$mid).")" )
 			         );	         
-			         			         
-			         $htm.=FunctionsV3::receiptRowTotal("Sub Total (Less Voucher)",
+			         
+			         /*$htm.='<div class="a">'.Yii::t("default","Sub Total").':</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b">'.displayPrice(baseCurrency(),prettyFormat($subtotal,$mid)).'</div>';
+			         $htm.='</div>';*/	
+			         $htm.=FunctionsV3::receiptRowTotal("Sub Total",
 			         displayPrice(baseCurrency(),prettyFormat($subtotal,$mid))
 			         );
 			         		        
 		         } else {			         
 		         	
-			         if ( $show_discount==true):			         
+			         if ( $show_discount==true):
+			         /*$htm.='<div class="a">'.t("Discount")." $merchant_discount_amount%".  ':</div>';
+			         $htm.='<div class="manage manage-ux">';
+			           $htm.='<div class="b">('.displayPrice(baseCurrency(),prettyFormat($discounted_amount,$mid)).')</div>';
+			         $htm.='</div>';*/
 			         $htm.=FunctionsV3::receiptRowTotal( t("Discount")." $merchant_discount_amount%",
-			           "(".displayPrice(baseCurrency(),prettyFormat($discounted_amount,$mid)).")"
+			           displayPrice(baseCurrency(),prettyFormat($discounted_amount,$mid))
 			          );
 			         endif;
-		         			         
+		         
+			         /*$cart_subtotal_raw=$subtotal;
+			         $htm.="<span class=\"cart_subtotal_raw\" data-value=\"$cart_subtotal_raw\" ></span>";*/
+			         
 			         /*POINTS PROGRAM*/			
 			         if (FunctionsV3::hasModuleAddon("pointsprogram")){      
 				         $pts_redeem_amt=0;
@@ -3764,7 +3536,12 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 					         "(".PointsProgram::price($pts_redeem_amt).")" );	
 				         } 	
 			         }
-			         			         
+			         
+			         /*$htm.='<div class="a">'.Yii::t("default","Sub Total").':</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b cart_subtotal">'.displayPrice(baseCurrency(),prettyFormat($subtotal,$mid)).'</div>';
+			         $htm.='</div>';*/
+			         
 			        $htm.=FunctionsV3::receiptRowTotal('Sub Total',
 			        displayPrice(baseCurrency(),prettyFormat($subtotal,$mid)),'','cart_subtotal'
 			        );
@@ -3777,61 +3554,84 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		            displayPrice(baseCurrency(),prettyFormat($delivery_charges,$mid)));
 		         }		         
 		         
-		         if ( $free_delivery==true){			         
+		         if ( $free_delivery==true){
+			         /*$htm.='<div class="a">'.Yii::t("default","Delivery Fee").':</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b">'.t("Free").'</div>';
+			         $htm.='</div>';*/	
 		             $htm.=FunctionsV3::receiptRowTotal("Delivery Fee", t("Free") );
 		         }
 		         
-		         if (!empty($merchant_packaging_charge)){		
-		           if($merchant_packaging_charge>=0.001){         
-			           $htm.=FunctionsV3::receiptRowTotal("Packaging",
-			             displayPrice(baseCurrency(),prettyFormat($merchant_packaging_charge,$mid))
-			           );
-		           }
+		         if (!empty($merchant_packaging_charge)){
+		         /*$htm.='<div class="a">'.Yii::t("default","Packaging").':</div>';
+		         $htm.='<div class="manage">';
+		           $htm.='<div class="b">'.displayPrice(baseCurrency(),prettyFormat($merchant_packaging_charge,$mid)).'</div>';
+		         $htm.='</div>';*/
+		           $htm.=FunctionsV3::receiptRowTotal("Packaging",
+		             displayPrice(baseCurrency(),prettyFormat($merchant_packaging_charge,$mid))
+		           );
 		         }
 		         			         			         
-		         if ( !empty($tax)){				     
+		         if ( !empty($tax)){
+				     /*$htm.='<div class="a">'.Yii::t("default","Tax").' '.$tax_amt.'% :</div>';
+			         $htm.='<div class="manage">';
+			           $htm.='<div class="b">'.displayPrice(baseCurrency(),prettyFormat($taxable_subtotal,$mid)).'</div>';
+			         $htm.='</div>';*/
 			         $htm.=FunctionsV3::receiptRowTotal( t("Tax")." $tax_amt%" ,
 			         displayPrice(baseCurrency(),prettyFormat($taxable_subtotal,$mid))
 			         );
 		         }
-
-		         /*TIPS*/
-		         if (isset($data['cart_tip_percentage'])){
-		         	if(strlen($data['cart_tip_percentage'])>=0.0001){
-			         	$data['tip_enabled']=2;
-			         	$data['tip_percent']=$data['cart_tip_percentage'];
-		         	}
-		         }
 		         		         
-		         if (isset($data['tip_enabled'])){		         	
-		         	if ($data['tip_enabled']==2 && $data['tip_percent']>=0.0001){
-		         		$data['cart_tip_value'] =  $subtotal * $data['tip_percent'];
-		         		$data['cart_tip_percentage']=$data['tip_percent']*100;
+		         if (isset($data['cart_tip_value'])){
+		         	if ( $data['cart_tip_value'] >=0.1) {
 		         		
-		         		$htm.=FunctionsV3::receiptRowTotal( t("Tips")." ".number_format($data['cart_tip_percentage'],0)."%" ,
+		         		/*$htm.='<div class="a">'.Yii::t("default","Tips").' '.
+		         		number_format($data['cart_tip_percentage'],0).'% :</div>';
+			            $htm.='<div class="manage">';
+			            $htm.='<div class="b">'.displayPrice(baseCurrency(),prettyFormat($data['cart_tip_value'],$mid)).
+			            '</div>';
+			            $htm.='</div>';*/
+			            
+			            $htm.=FunctionsV3::receiptRowTotal( t("Tips")." ".number_format($data['cart_tip_percentage'],0)."%" ,
 			            displayPrice(baseCurrency(),prettyFormat($data['cart_tip_value'],$mid))
-			            );			            
-			            $total+=$data['cart_tip_value'];		         		
+			            );
+			            
+			            $total+=$data['cart_tip_value'];
 		         	}
-		         }
-		        		         
+		         }    		
+		         		        		         
 		         if (isset($data['card_fee'])){
-		         	if ( $data['card_fee'] >=0.1) {		         					         	
+		         	if ( $data['card_fee'] >=0.1) {
+		         		
+			         	/*$htm.='<div class="a">'.Yii::t("default","Card Fee").':</div>';
+			            $htm.='<div class="manage">';
+			            $htm.='<div class="b">'.displayPrice(baseCurrency(),prettyFormat($data['card_fee'],$mid)).'</div>';
+			            $htm.='</div>';*/
+			            
 			            $htm.=FunctionsV3::receiptRowTotal("Card Fee",
 			            displayPrice(baseCurrency(),prettyFormat($data['card_fee'],$mid))
-			            );			            
+			            );
+			            
 			            $total+=$data['card_fee'];
 		         	}
 		         }    		
-		         		       		       
+		         		       
+		       /*$htm.='<div class="a bold cart_total_wrap">'.Yii::t("default","Total").':</div>';
+		         $htm.='<div class="manage">';
+		           $htm.='<div class="b bold cart_total">'.displayPrice(baseCurrency(),prettyFormat($total,$mid)).'</div>';
+		         $htm.='</div>';
+		         $htm.='<div class="clear"></div>';
+		       $htm.='</div>';*/
 		       $htm.="<div class=\"row cart_total_wrap bold\">";
 	    	   $htm.="<div class=\"col-md-6 col-xs-6  text-right\">".t("Total")."</div>";
 	    	   $htm.="<div class=\"col-md-6 col-xs-6  text-right cart_total\">".
 	    	   displayPrice(baseCurrency(),prettyFormat($total,$mid))."</div>";
 	    	   $htm.="</div>";
 
+		       
+		       
 		       /*POINTS PROGRAM*/
-		       if (FunctionsV3::hasModuleAddon("pointsprogram")){			       	 
+		       if (FunctionsV3::hasModuleAddon("pointsprogram")){
 		         $htm.=PointsProgram::cartTotalEarnPoints($cart_item,$receipt);
 		       }
 		       
@@ -3866,28 +3666,11 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		         'voucher_type'=>$voucher_type,
 		         'tips'=>isset($data['cart_tip_value'])?$data['cart_tip_value']:'',
 		         'tips_percent'=>$data['cart_tip_percentage']>0.1?number_format($data['cart_tip_percentage'],0)."%":'',
-		         'cart_tip_percentage'=>$data['cart_tip_percentage']>0.1?number_format($data['cart_tip_percentage']):'',
-		         'pts_redeem_amt'=>isset($pts_redeem_amt)?$pts_redeem_amt:'',
-		         'voucher_value'=>isset($_SESSION['voucher_code']['amount'])?$_SESSION['voucher_code']['amount']:'',
-		         'voucher_types'=>isset($_SESSION['voucher_code']['voucher_type'])?$_SESSION['voucher_code']['voucher_type']:''
+		         'pts_redeem_amt'=>isset($pts_redeem_amt)?$pts_redeem_amt:''
 		       );		    
 		       
-		       //dump($item_array_total);
-		       
-		       if ($receipt){		       	  
-		       	  $item_array_total['voucher_value']=isset($data['voucher_amount'])?$data['voucher_amount']:0;
-		       	  $item_array_total['voucher_types']=isset($data['voucher_type'])?$data['voucher_type']:'';
-		       }
-		       
-		       if (isset($data['card_fee'])){
-		       	   if ( $data['card_fee'] >0) {
-		       	   	   $item_array_total['card_fee']=$data['card_fee'];
-		       	   }
-		       }
-		       
-		       //dump($data);
-		       /*header('Content-Type: text/html; charset=utf-8');
-		       echo $htm;*/
+		       /*dump($data);
+		       dump($htm);*/
     			  			
     			$this->code=1;
     			$this->msg="OK";
@@ -3946,7 +3729,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     		//dump($res);
     		unset($res[0]['password']);
     		$client_id=$res[0]['client_id'];
-    		$update=array('last_login'=>FunctionsV3::dateNow(),'ip_address'=>$_SERVER['REMOTE_ADDR']);
+    		$update=array('last_login'=>date('Y-m-d H:i:s'),'ip_address'=>$_SERVER['REMOTE_ADDR']);
     		$DbExt->updateData("{{client}}",$update,'client_id',$client_id);
     		$_SESSION['kr_client']=$res[0];
     		return true;
@@ -4231,7 +4014,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		) as abn,
 				
 		(
-		select concat(street,' ',area_name,' ',city,' ',state,' ',zipcode )
+		select concat(street,' ',city,' ',state,' ',zipcode )
 		from
 		{{order_delivery_address}}
 		where
@@ -4273,9 +4056,6 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 		$and
 		LIMIT 0,1
 		";				
-		
-		//dump($stmt);
-		
 		$connection=Yii::app()->db;
 		$rows=$connection->createCommand($stmt)->queryAll(); 				
 		if (is_array($rows) && count($rows)>=1){
@@ -4534,7 +4314,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 	      'merchant_id'=>$merchant_id,
 	      'ratings'=>$ratings,
 	      'client_id'=>$client_id,
-	      'date_created'=>FunctionsV3::dateNow(),
+	      'date_created'=>date('Y-m-d H:i:s'),
 	      'ip_address'=>$_SERVER['REMOTE_ADDR']
 	    );	    	    
 	    	    	    
@@ -4545,7 +4325,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
 	    	$rating_id=$res['id'];	    	    	
 	    	$update=array(
 	    	  'ratings'=>$ratings,
-	    	   'date_created'=>FunctionsV3::dateNow(),
+	    	   'date_created'=>date('Y-m-d H:i:s'),
 	           'ip_address'=>$_SERVER['REMOTE_ADDR']
 	        );
 	    	if ( $DbExt->updateData("{{rating}}",$update,'id',$rating_id) ){	    		
@@ -4730,8 +4510,8 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     	if ($res=$db_ext->rst($stmt)){
     		foreach ($res as $val) {    			
     			//$list[$val['stats_id']]=ucwords($val['description']);
-    			$list[$val['description']]=t($val['description']);
-    		}    		
+    			$list[$val['description']]=$val['description'];
+    		}
     		return $list;
     	}
     	return false;    
@@ -4800,7 +4580,6 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     	      AND status NOT IN ('".initialStatus()."')
     	      ORDER BY date_created DESC
     	";    	
-    	//dump($stmt);
     	if ($res=$db_ext->rst($stmt)){    		
     		return $res;
     	}
@@ -4908,10 +4687,13 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     
     public function adminCurrencyCode()
     {
-    	$curr_code=$this->getOptionAdmin("admin_currency_set");
+    	$curr_code=$this->getOptionAdmin("admin_currency_set");	    
     	if (empty($curr_code)){
     		return "USD";
-    	}        	
+    	}
+	    
+	    
+	    
     	return $curr_code;
     }
     
@@ -5047,7 +4829,7 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     	if ($res=$DbExt->rst($stmt)){    		
     		if ( $as_list==TRUE){
     			foreach ($res as $val) {    				
-    			    $data[$val['merchant_id']]=ucwords(stripslashes($val['restaurant_name']));
+    			    $data[$val['merchant_id']]=ucwords($val['restaurant_name']);
     			}
     			return $data;
     		} else return $res;    	
@@ -5058,8 +4840,8 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     public function ExpirationType()
     {
     	return array(
-    	 'days'=>t("Days"),
-    	 'year'=>t("Year")
+    	 'days'=>"Days",
+    	 'year'=>"Year"
     	);
     }
     
@@ -5111,229 +4893,96 @@ $htm.='<div class="b uk-text-muted">'."$addon_raw_price ".qTranslate($val_subs[2
     	return true;    
     }
     
-    public function sendEmail($to='',$from='',$subject='',$body='' , $record_id='')
+    public function sendEmail($to='',$from='',$subject='',$body='')
     {    			 
     	$from1=Yii::app()->functions->getOptionAdmin('global_admin_sender_email');
     	if (!empty($from1)){
     		$from=$from1;
     	}    	
-    	
-    	$email_dsiabled_auto_break=getOptionA('email_dsiabled_auto_break');
-		if($email_dsiabled_auto_break!=1){
-		   $body=nl2br($body);
-		}
-    				
-    	$send_status=false; $send_msg='';
     	   	    	
     	$email_provider=Yii::app()->functions->getOptionAdmin('email_provider');
-    	//dump($email_provider);
-    	switch ($email_provider) {
-    		case "smtp":
-    			$smtp_host=Yii::app()->functions->getOptionAdmin('smtp_host');
-	    		$smtp_port=Yii::app()->functions->getOptionAdmin('smtp_port');
-	    		$smtp_username=Yii::app()->functions->getOptionAdmin('smtp_username');
-	    		$smtp_password=Yii::app()->functions->getOptionAdmin('smtp_password');
-	    		$smtp_secure=Yii::app()->functions->getOptionAdmin('smtp_secure');	   
-	    			    		    		    	
-	    		$mail=Yii::app()->Smtpmail;
-	    		
-	    		Yii::app()->Smtpmail->Host=$smtp_host;
-	    		Yii::app()->Smtpmail->Username=$smtp_username;
-	    		Yii::app()->Smtpmail->Password=$smtp_password;
-	    		Yii::app()->Smtpmail->Port=$smtp_port;
-	    		Yii::app()->Smtpmail->SMTPSecure=$smtp_secure;
-	    		//Yii::app()->Smtpmail->CharSet="utf-8";
-	    		
-			    $mail->SetFrom($from, '');
-			    $mail->Subject = $subject;
-			    $mail->MsgHTML($body);
-			    $mail->AddAddress($to, "");
-			    if(!$mail->Send()) {			        
-			        $mail->ClearAddresses();	
-			        $send_msg=t("error occurred")." ".$mail->ErrorInfo;
-			    } else {			        
-			        $mail->ClearAddresses();
-			        $send_status=true;
-			        $send_msg="sent";
-			    }    		    		
-    			break;
     	
-    		case "mandrill":
-    			
-    			$api_key=Yii::app()->functions->getOptionAdmin('mandrill_api_key');    		
-	    		try {
-	    			 require_once 'mandrillapp/Mandrill.php';
-	    			 $mandrill = new Mandrill($api_key);
-	    			 $message = array(
-				        'html' => $body,
-				        'text' => '',
-				        'subject' => $subject,
-				        'from_email' => $from,
-				        //'from_name' => 'Example Name',
-				        'to' => array(
-				            array(
-				                'email' => $to,
-				                //'name' => 'Recipient Name',
-				                'type' => 'to'
-				            )
-				        )
-	                );                
-	                $async = false;
-				    $ip_pool = '';
-				    $send_at = '';
-				    $result = $mandrill->messages->send($message, $async, $ip_pool, $send_at);				    
-				    if (is_array($result) && count($result)>=1){
-				    	if ($result[0]['status']=="sent"){
-				    		$send_status=true; $send_msg="sent";
-				    	}				    	
-				    } 
-	    		} catch(Mandrill_Error $e) {	    			
-	    			$send_msg=t("error occurred")." ".$e->getMessage();
-	    		}		    		
-    			 break;
-    			 
-    		case "sendgrid":
-    			    		    
-    		     require_once('sendgrid/sendgrid-php.php');
-    		     
-		         $request_body=(object)array(
-		           'personalizations'=>array(
-		             (object) array(
-		                'to'=>array(
-		                  (object)array(
-		                    'email'=>$to
-		                  )
-		                ),
-		                'subject'=>$subject
-		              )
-		           ),
-		          'from'=>(object)array(
-		             'email'=>$from
-		           ),
-		           'content'=>array(
-		              (object)array(
-		                'type'=>"text/html",
-		                'value'=>$body
-		              )
-		           )
-		         );
-		         		         			         	       
-		         $apiKey = trim(getOptionA('sendgrid_api_key'));
-		         $sg = new \SendGrid($apiKey);
-		         $response = $sg->client->mail()->send()->post($request_body);
-		         $respcode = $response->statusCode();
-		         
-		         if ($respcode==202){
-		         	$send_status=true; $send_msg="sent";
-		         }  else {
-		         	$sendgrid_body=json_decode($response->body(),true);
-		            if(is_array($sendgrid_body) && count($sendgrid_body)>=1){
-		                $send_msg = $sendgrid_body['errors'][0]['message'];
-		            } else $send_msg = t("error occurred");
-		         }	    		   		     
-    		     break;
-    		     
-    		case "mailjet":     
-
-    		    require_once 'mailjet/Mailjet.php';
-			    $apikey = trim(getOptionA('mailjet_api_key'));
-			    $secret_key = trim(getOptionA('mailjet_secret_key'));
-			    $mj = new Mailjet($apikey, $secret_key);
-			    
-			    $params = array(
-			        "method"  => "POST",
-			        "from"    => $from,
-			        "to"      => $to,
-			        "subject" => $subject,
-			        "html"    => $body
-			    );
-
-			    $mj_resp = $mj->sendEmail($params);
-			    
-			    if ($mj->_response_code == 200){
-			   	   $send_status=true; $send_msg="sent";
-			    } else $send_msg = t("error occurred")." ".$mj->_response_code;
-			    		    
-    		   break;
-    		   
-    		case "elasticemail":
-    		   $api_elastic = 'https://api.elasticemail.com/v2/email/send';
-    		   $elastic_params = array(
-    		      'from' => $from,
-			      //'fromName' => '',
-			      'apikey' => trim(getOptionA('elastic_email_apikey')),
-			      'subject' => $subject,
-			      'to' => $to,
-			      'bodyHtml' => $body ,
-			      //'bodyText' => 'Text Body',
-			      'isTransactional' => false
-			   );
-			    
-			   $options = array(
-                  'http' => array(
-                          'header'  => "Content-type: application/x-www-form-urlencoded\r\n",
-                          'method'  => 'POST',
-                          'content' => http_build_query($elastic_params)
-                   )
-               );
-
-               $context  = stream_context_create($options);
-               $elastic_resp = file_get_contents($api_elastic, false, $context);
-               if ($elastic_resp === FALSE) {
-               	   $send_msg = t("error occurred");
-               } else {
-               	   $elastic_results=json_decode($elastic_resp,true);               	   
-               	   if(is_array($elastic_results) && count($elastic_results)>=1){
-	               	   if ($elastic_results['success']==1){
-	               	   	   $send_status=true; $send_msg="sent";
-	               	   } else $send_msg = $elastic_results['error'];
-               	   } else $send_msg = t("error occurred");
-               }               
-    		   break;
+    	if ( $email_provider=="smtp"){
+    		$smtp_host=Yii::app()->functions->getOptionAdmin('smtp_host');
+    		$smtp_port=Yii::app()->functions->getOptionAdmin('smtp_port');
+    		$smtp_username=Yii::app()->functions->getOptionAdmin('smtp_username');
+    		$smtp_password=Yii::app()->functions->getOptionAdmin('smtp_password');
+    		    		    		
+    		$mail=Yii::app()->Smtpmail;
     		
-    		default:    			
-    			$headers  = "From: $from\r\n";		
-		        $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-		        
+    		Yii::app()->Smtpmail->Host=$smtp_host;
+    		Yii::app()->Smtpmail->Username=$smtp_username;
+    		Yii::app()->Smtpmail->Password=$smtp_password;
+    		Yii::app()->Smtpmail->Port=$smtp_port;
+
+    		$subject='=?UTF-8?B?'.base64_encode($subject).'?=';	    		
+		    $mail->SetFrom($from, '');
+		    $mail->Subject = $subject;
+		    $mail->MsgHTML($body);
+		    $mail->AddAddress($to, "");
+		    if(!$mail->Send()) {
+		        //echo "Mailer Error: " . $mail->ErrorInfo;
+		        $mail->ClearAddresses();
+		        return false;
+		    }else {
+		        //echo "Message sent!";
+		        $mail->ClearAddresses();
+		        return true;
+		    }    		    		
+    	} elseif ( $email_provider=="mandrill"){
+    		$api_key=Yii::app()->functions->getOptionAdmin('mandrill_api_key');    		
+    		try {
+    			 require_once 'mandrillapp/Mandrill.php';
+    			 $mandrill = new Mandrill($api_key);
+				 $subject='=?UTF-8?B?'.base64_encode($subject).'?=';	
+    			 $message = array(
+			        'html' => $body,
+			        'text' => '',
+			        'subject' => $subject,
+			        'from_email' => $from,
+			        //'from_name' => 'Example Name',
+			        'to' => array(
+			            array(
+			                'email' => $to,
+			                //'name' => 'Recipient Name',
+			                'type' => 'to'
+			            )
+			        )
+                );                
+                $async = false;
+			    $ip_pool = '';
+			    $send_at = '';
+			    $result = $mandrill->messages->send($message, $async, $ip_pool, $send_at);
+			    //dump($result);
+			    if (is_array($result) && count($result)>=1){
+			    	if ($result[0]['status']=="sent"){
+			    		return true;
+			    	}				    	
+			    } 
+    		} catch(Mandrill_Error $e) {
+    			//echo 'A mandrill error occurred: ' . get_class($e) . ' - ' . $e->getMessage();
+
+    		}	
+    		return false;
+    	}
+    	
+		$headers  = "From: $from\r\n";		
+		$headers .= "Content-type: text/html; charset=UTF-8\r\n";
+		
 $message =<<<EOF
 $body
 EOF;
-                $headers  = "From: $from\r\n";                                
-                $headers .= "Content-type: text/html; charset=UTF-8\r\n";
-
-                if (!empty($to)) {
-                	//if (@mail($to, '=?utf-8?B?'.base64_encode($subject).'?=', $message, $headers)){		
-					if (@mail($to, $subject, $message, $headers)){
-						$send_status=true; $send_msg="sent";
-					} else $send_msg = t("error occurred");
-				} else $send_msg = t("to is missing"); 
-    			break;
-    	}
-    	     	        	
-    	$params_logs=array(
-    	   'email_address'=>$to,
-    	   'sender'=>$from,
-    	   'subject'=>$subject,
-    	   'content'=>$body,
-    	   'status'=>$send_msg,
-    	   'date_created'=>FunctionsV3::dateNow(),
-    	   'ip_address'=>$_SERVER['REMOTE_ADDR'],
-    	   'module_type'=>"core",
-    	   'email_provider'=>$email_provider
-    	);    	
-    	$DbExt=new DbExt;
-    	
-    	if ($record_id>0){
-    		$params_logs=array(
-    		   'status'=>$send_msg,
-    		   'email_provider'=>$email_provider,
-    		   'ip_address'=>$_SERVER['REMOTE_ADDR'],
-    		);
-    		$DbExt->updateData("{{email_logs}}",$params_logs,'id',$record_id);
-    	} else $DbExt->insertData("{{email_logs}}",$params_logs);    
-    	unset($DbExt);
-    	
-    	return $send_status;   	
+		$headers  = "From: $from\r\n";
+		//$headers .= "Content-type: text/html\r\n";
+		$headers .= "Content-type: text/html; charset=UTF-8\r\n";
+				
+		if (!empty($to)) {
+			$subject='=?UTF-8?B?'.base64_encode($subject).'?=';	
+			if (@mail($to, $subject, $message, $headers)){
+				return true;
+			}
+		}
+    	return false;
     }    		      
 	
     public function adminCountry()
@@ -5682,7 +5331,7 @@ $menu_html.="</li>";
     		} else $alt=$country_code_ups;
     		if (file_exists($path_flag."/flags/$file")){    			
     			return  "<img class=\"flags\" src=\"$base_url/flags/$file\" alt=\"$alt\" title=\"$alt\" />";
-    		} else return  "<img class=\"flags\" src=\"$base_url/flags/us.png\" alt=\"$alt\" title=\"$alt\" />";
+    		}
     	}
     	return false;    
     }
@@ -5832,7 +5481,7 @@ $menu_html.="</li>";
     {    	
     	$code= array(
     	  'paypal'=>"pyp",
-    	  'creditcard'=>"ocr",
+    	  'creditcard'=>"ccr",
     	  'stripe'=>"stp",
     	  'mercadopago'=>"mcd",
     	  "payline"=>"pyl",
@@ -5874,7 +5523,7 @@ $menu_html.="</li>";
     	$db_ext=new DbExt;
     	$params=array(
     	  'user_lang'=>$lang_id,
-    	  'date_modified'=>FunctionsV3::dateNow()
+    	  'date_modified'=>date('Y-m-d H:i:s')
     	);
     	$db_ext->updateData("{{admin_user}}",$params,'admin_id',$user_id);
     }
@@ -5884,7 +5533,7 @@ $menu_html.="</li>";
     	$db_ext=new DbExt;
     	$params=array(
     	  'user_lang'=>$lang_id,
-    	  'date_modified'=>FunctionsV3::dateNow()
+    	  'date_modified'=>date('Y-m-d H:i:s')
     	);
     	$db_ext->updateData("{{merchant}}",$params,'merchant_id',$user_id);
     }    
@@ -6140,7 +5789,6 @@ $menu_html.="</li>";
     	AND
     	status in ('paid')
     	";
-    	//dump($stmt);
     	if ($res=$db_ext->rst($stmt)){
     		return $res[0]['total_credits']-$res[0]['total_send'];
     	}
@@ -6289,10 +5937,8 @@ $menu_html.="</li>";
         	$in_msg=t("OrderNo:").$order_info['order_id']." ";
             $in_msg.=t("ClientName:").$order_info['full_name']." "; 
         	
-        	foreach ($data['item'] as $val) {        		        		
-        		if (!empty($val['size_words'])){
-        			$item_order.="(".$val['qty']."x)".$val['item_name']. " (".$val['size_words'].")" ." ".$val['order_notes'].",";
-        		} else $item_order.="(".$val['qty']."x)".$val['item_name']." ".$val['order_notes'].",";        		
+        	foreach ($data['item'] as $val) {        		
+        		$item_order.="(".$val['qty']."x)".$val['item_name']." ".$val['order_notes'].",";
         		if (isset($val['sub_item'])){
 	        		if (is_array($val['sub_item']) && count($val['sub_item'])>=1){        			
 	        			foreach ($val['sub_item'] as $sub_val) {        			
@@ -6303,7 +5949,7 @@ $menu_html.="</li>";
 	        		}
         		}
         	}          	
-        	$item_order=substr($item_order,0,-1);        	
+        	$item_order=substr($item_order,0,-1);         	   	        
             $sms_alert_message=$this->smarty("receipt",$in_msg.$item_order,$sms_alert_message);                                
         }                         
 
@@ -6388,8 +6034,8 @@ $menu_html.="</li>";
 	        	  'sms_message'=>$client_sms,
 	        	  'status'=>$resp2['msg'],
 	        	  'gateway_response'=>$resp2['raw'],
-	        	  'date_created'=>FunctionsV3::dateNow(),
-	        	  'date_executed'=>FunctionsV3::dateNow(),
+	        	  'date_created'=>date('Y-m-d H:i:s'),
+	        	  'date_executed'=>date('Y-m-d H:i:s'),
 	        	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
 	        	  'gateway'=>$sms_provider
 	        	);	  		        	  
@@ -6416,8 +6062,8 @@ $menu_html.="</li>";
 			        	  'sms_message'=>$sms_alert_message,
 			        	  'status'=>$resp['msg'],
 			        	  'gateway_response'=>$resp['raw'],
-			        	  'date_created'=>FunctionsV3::dateNow(),
-			        	  'date_executed'=>FunctionsV3::dateNow(),
+			        	  'date_created'=>date('Y-m-d H:i:s'),
+			        	  'date_executed'=>date('Y-m-d H:i:s'),
 			        	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
 			        	  'gateway'=>$sms_provider
 			        	);	    	        	
@@ -6435,8 +6081,8 @@ $menu_html.="</li>";
 				        	  'sms_message'=>$client_sms,
 				        	  'status'=>$resp['msg'],
 				        	  'gateway_response'=>$resp['raw'],
-				        	  'date_created'=>FunctionsV3::dateNow(),
-				        	  'date_executed'=>FunctionsV3::dateNow(),
+				        	  'date_created'=>date('Y-m-d H:i:s'),
+				        	  'date_executed'=>date('Y-m-d H:i:s'),
 				        	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
 				        	  'gateway'=>$sms_provider
 				        	);	  		        	  
@@ -6450,7 +6096,7 @@ $menu_html.="</li>";
         }
     }
     
-    public function sendSMS($to='',$message='' , $record_id='')
+    public function sendSMS($to='',$message='')
     {
     	$to=trim($to);
     	$message=trim($message);
@@ -6460,8 +6106,6 @@ $menu_html.="</li>";
     	    	    	
     	//if ($sms_provider=="nexmo"){    
     	$sms_provider=strtolower($sms_provider);
-    	
-    	//dump($sms_provider);
     	        
     	switch ($sms_provider) {
     		
@@ -6623,53 +6267,8 @@ $menu_html.="</li>";
 	    			$msg=$e->getMessage();
 	    		}     
     		    break;
-    		    
-    		    
-    		case "plivo":   
-    		    		    
-    		   $Plivo=new Plivo;
-    		   $Plivo->auth_id=getOptionA('plivo_auth_id');
-    		   $Plivo->auth_token=getOptionA('plivo_auth_token');
-    		   $Plivo->sender=getOptionA('plivo_sender_number');
-    		   $Plivo->message=$message;
-    		   $Plivo->to=$to;
-    		   try {    		   	 
-    		   	  $raw=$Plivo->sendSMS();    		   	  
-    		   	  $msg="process";
-    		   } catch (Exception $e){
-    		   	  $msg=$e->getMessage();
-    		   }    		   
-    		
-    		   break;
-    		   
-    		case "msg91":    	    		   
-    		  /* $msg_resp=Msg91::sendSMS(
-    		      getOptionA('msg91_authkey'),
-    		      $to,
-    		      getOptionA('msg91_senderid'),
-    		      $message,
-    		      getOptionA('msg91_unicode'),
-    		      !empty(getOptionA('msg91_route'))?getOptionA('msg91_route'):'default'
-    		   );*/
-    		   $msg91_route=getOptionA('msg91_route');
-    		   if(empty($msg91_route)){
-    		   	  $msg91_route='default';
-    		   }
-    		   $msg_resp=Msg91::sendSMS(
-    		      getOptionA('msg91_authkey'),
-    		      $to,
-    		      getOptionA('msg91_senderid'),
-    		      $message,
-    		      getOptionA('msg91_unicode'),
-    		      $msg91_route
-    		   );
-    		   if($msg_resp){
-    		   	  $msg="process";
-    		   	  $raw=$msg_resp;
-    		   } else $msg=Msg91::$msg;
-    		   break;
     			    
-    		case "twilio":
+    		default:    	
     		
 		    	require_once "Twilio.php";		
 				$sms_sender_id=Yii::app()->functions->getOptionAdmin('sms_sender_id');
@@ -6688,65 +6287,9 @@ $menu_html.="</li>";
 					$msg="process";
 				} else $msg=$twilio->getError();			
 			
-			    break;		
-			    
-    		case "spothit":
-    			$spothit_apikey=getOptionA('spothit_apikey');
-    			$spothit_sms_type=getOptionA('spothit_sms_type');
-    			$spothit_sender=getOptionA('spothit_sender');
-    			$spothit_truncated=getOptionA('spothit_truncated');
-    			$spothit_use_curl=getOptionA('spothit_use_curl');
-    			if ($spot_resp=SpotHit::sendSMS($to,$message, $spothit_apikey,$spothit_sms_type,$spothit_sender,
-    			    $spothit_truncated,$spothit_use_curl)){
-    				$raw=$spot_resp;				
-					$msg="process";
-    			} else $msg=SpotHit::$msg;
-    			break;		
-    			
-    		case "libonet":	
-    		   $Libonet=new Libonet(
-    		     getOptionA('libonet_username'),
-    		     getOptionA('libonet_password'),
-    		     getOptionA('libonet_sender'),
-    		     getOptionA('libonet_use_curl'),
-    		     getOptionA('libonet_use_unicode')
-    		   );
-    		   if ($libonet_res=Libonet::sendSMS($to,$message)){
-    		   	   $raw=$libonet_res;				
-				   $msg="process";
-    		   } else $msg=Libonet::$msg;
-    		   break;		
-    			
-		    default:
-		       $msg="No sms gateway selected";
-			   break;		
-			    	
+			    break;			
     	}
 		
-    	/*logs*/
-    	$params_logs=array(
-    	  'contact_phone'=>$to,
-    	  'sms_message'=>$message,
-    	  'status'=>$msg,
-    	  'gateway_response'=>$raw,
-    	  'gateway'=>$sms_provider,
-    	  'date_created'=>FunctionsV3::dateNow(),
-    	  'date_executed'=>FunctionsV3::dateNow(),
-    	  'ip_address'=>$_SERVER['REMOTE_ADDR']
-    	);
-    	$db=new DbExt;
-    	if($record_id>0){
-    		$params_logs=array(
-    		  'status'=>$msg,
-    	      'gateway_response'=>$raw,
-    	      'date_executed'=>FunctionsV3::dateNow(),
-    	      'gateway'=>$sms_provider,
-    	      'ip_address'=>$_SERVER['REMOTE_ADDR']
-    		);
-    		$db->updateData("{{sms_broadcast_details}}",$params_logs,'id', $record_id);
-    	} else $db->insertData("{{sms_broadcast_details}}",$params_logs);    	
-    	unset($db);    	
-    	
 		return array(
 		  'msg'=>$msg,
 		  'raw'=>$raw,
@@ -6885,7 +6428,7 @@ $menu_html.="</li>";
     	  'voucher_code'=>$voucher_code,
     	  'status'=>"used",
     	  'client_id'=>$client_id,
-    	  'date_used'=>FunctionsV3::dateNow(),
+    	  'date_used'=>date('Y-m-d H:i:s'),
     	  'order_id'=>$order_id
     	);
     	$db_ext=new DbExt;    	
@@ -6910,8 +6453,6 @@ $menu_html.="</li>";
     	$start=$page*$limit;
     	
     	$db_ext=new DbExt;    	
-    	$db_ext->qry("SET SQL_BIG_SELECTS=1");
-    	
     	$stmt=" 
     	SELECT SQL_CALC_FOUND_ROWS a.*,
     	concat(street,' ',city,' ',state,' ',post_code) as merchant_address  
@@ -6950,35 +6491,13 @@ $menu_html.="</li>";
     	$db_ext=new DbExt;    	
     	$db_ext->qry("SET SQL_BIG_SELECTS=1");
     	
-    	$sortby='';
-    	$sort_options=getOptionA('browse_page_sort');
-    	
-    	switch ($sort_options) {
-    		case 1:
-    			$sortby='ORDER BY RAND()';
-    			break;
-    			
-    	    case 2:
-    			$sortby='ORDER BY restaurant_name ASC';
-    			break;
-    			
-    		case 3:
-    			$tbl='view_merchant';
-    			$sortby='ORDER BY ratings DESC';
-    			break;	
-    			
-    		default:
-    			$sortby='ORDER BY membership_expired DESC';
-    			break;
-    	}
-    	
     	$stmt="SELECT SQL_CALC_FOUND_ROWS a.*,
     	concat(street,' ',city,' ',state,' ',post_code) as merchant_address  
     	 FROM
     	{{view_merchant}} a    	
     	WHERE is_ready ='2'
     	AND status in ('active')
-    	$sortby
+    	ORDER BY membership_expired DESC
     	LIMIT $start,$limit    	
     	";     	    	
     	//dump($stmt);
@@ -7197,7 +6716,7 @@ $menu_html.="</li>";
 	   	   	  
 	   	   }
 	   	   /*dump(Yii::app()->timeZone);
-	   	   echo FunctionsV3::dateNow();*/
+	   	   echo date('Y-m-d H:i:s');*/
 	   	   //dump($times);
 							   	   
 			$now = strtotime(date("h:ia"));
@@ -7372,8 +6891,8 @@ $menu_html.="</li>";
     	  'days'=>Yii::t("default","days"),
     	  'week'=>Yii::t("default","week"),
     	  'weeks'=>Yii::t("default","weeks"),
+    	  'month'=>Yii::t("default","month"),
     	  'months'=>Yii::t("default","months"),
-    	  'month'=>Yii::t("default","month"),    	  
     	  'ago'=>Yii::t("default","ago"),
     	  'In'=>Yii::t("default","In"),
     	  'minute'=>Yii::t("default","minute"),
@@ -7425,8 +6944,7 @@ $menu_html.="</li>";
     	  ORDER BY stats_id";	    	
     	if ($res=$db_ext->rst($stmt)){
     		foreach ($res as $val) {    			    			
-    			//$list[$val['description']]=ucwords($val['description']);
-    			$list[$val['description']]=t($val['description']);
+    			$list[$val['description']]=ucwords($val['description']);
     		}
     		return $list;
     	}
@@ -7465,12 +6983,15 @@ $menu_html.="</li>";
     	if (empty($subject)){
     	    $subject=Yii::t("default","Bank Deposit instructions");
     	}
-    	    	
+
+
+    	//Below two lines added by harish   	
+		$subject_title='=?UTF-8?B?'.base64_encode($subject).'?=';	
+		$subject=$subject_title;
+
     	$to=$merchant_email; 
-    	    	
-    	$link= FunctionsV3::getHostURL().Yii::app()->createUrl('store/bankdepositverify',array(
-    	  'ref'=>$merchant['activation_token']
-    	));
+    	
+    	$link=Yii::app()->getBaseUrl(true)."/store/bankdepositverify/?ref=".$merchant['activation_token'];
     	$links="<a href=\"$link\" target=\"_blank\" >".Yii::t("default","Click on this link")."</a>";
     	$tpl=Yii::app()->functions->getOptionAdmin('admin_deposit_instructions');
     	if (!empty($tpl)){    	   
@@ -7488,7 +7009,7 @@ $menu_html.="</li>";
     	   	     'price'=>$package_price,
     	   	     'payment_type'=>'obd',
     	   	     'membership_expired'=>$membership_expired,
-    	   	     'date_created'=>FunctionsV3::dateNow(),
+    	   	     'date_created'=>date('Y-m-d H:i:s'),
     	   	     'ip_address'=>$_SERVER['REMOTE_ADDR']
     	   	   );
     	   	   $db_ext->insertData("{{package_trans}}",$params2);
@@ -7529,16 +7050,11 @@ $menu_html.="</li>";
     
     public function displayPrice($currency='',$amount='')
     {    	
-    	$spacer="";
-    	$spacer_enabled=getOptionA("admin_add_space_between_price");
-    	if($spacer_enabled==1){
-    		$spacer=" ";
-    	}
     	$pos=Yii::app()->functions->getOptionAdmin('admin_currency_position');    	
     	if ( $pos=="right"){
-    		return $amount.$spacer.$currency;
+    		return $amount." ".$currency;
     	} else {    		
-    		return $currency.$spacer.$amount;
+    		return $currency." ".$amount;
     	}
     }
     
@@ -7864,8 +7380,6 @@ $menu_html.="</li>";
 			status in ('active')
 			AND
 			is_featured='2'
-			AND
-			is_ready='2'
 			ORDER BY restaurant_name ASC
 			LIMIT 0,20
 		";    	
@@ -7933,7 +7447,7 @@ $menu_html.="</li>";
     		  'orderid'=>$orderid,
     		  'token'=>$token,
     		  'transaction_type'=>$trans,
-    		  'date_created'=>FunctionsV3::dateNow(),
+    		  'date_created'=>date('Y-m-d H:i:s'),
     		  'ip_address'=>$_SERVER['REMOTE_ADDR'],
     		  'param1'=>isset($param1)?$param1:'',
     		  'param2'=>isset($param2)?$param2:'',
@@ -7990,7 +7504,7 @@ $menu_html.="</li>";
 				          'price'=>$res['package_price'],
 				          'payment_type'=>Yii::app()->functions->paymentCode('paysera'),
 				          'membership_expired'=>$membership_info['membership_expired'],
-				          'date_created'=>FunctionsV3::dateNow(),
+				          'date_created'=>date('Y-m-d H:i:s'),
 				          'ip_address'=>$_SERVER['REMOTE_ADDR'],
 				          'PAYPALFULLRESPONSE'=>json_encode($_POST),
 				          'TRANSACTIONID'=>$orderid,
@@ -8003,7 +7517,7 @@ $menu_html.="</li>";
 				           'price'=>$res['package_price'],
 				           'payment_type'=>Yii::app()->functions->paymentCode('epaybg'),
 				           'membership_expired'=>$res['membership_expired'],
-				           'date_created'=>FunctionsV3::dateNow(),
+				           'date_created'=>date('Y-m-d H:i:s'),
 				           'ip_address'=>$_SERVER['REMOTE_ADDR'],
 				           'PAYPALFULLRESPONSE'=>json_encode($_POST),
 				           'TRANSACTIONID'=>$orderid,
@@ -8023,7 +7537,7 @@ $menu_html.="</li>";
 			          'payment_reference'=>$orderid,
 			          'payment_type'=>Yii::app()->functions->paymentCode('epaybg'),
 			          'raw_response'=>json_encode($_POST),
-			          'date_created'=>FunctionsV3::dateNow(),
+			          'date_created'=>date('Y-m-d H:i:s'),
 			          'ip_address'=>$_SERVER['REMOTE_ADDR']
 			        );				        			       
 			        if(!$this->epayBgValidatePaymentOrder($info['token'],$orderid)){			           
@@ -8130,7 +7644,7 @@ $menu_html.="</li>";
 	{
 		if (!empty($_SESSION['kr_merchant_user'])){
 			$user=json_decode($_SESSION['kr_merchant_user']);			
-			if (is_array($user) && count($user)>=1){				
+			if (is_array($user) && count($user)>=1){
 				return $user[0]->is_commission;
 			}
 		}
@@ -8148,12 +7662,9 @@ $menu_html.="</li>";
 		LIMIT 0,1
 		";		
 		if ( $res=$this->db_ext->rst($stmt)){
-			/*if ($res[0]['is_commission']==2){
+			if ($res[0]['is_commission']==2){
 				return true;				
-			}*/				
-			if ($res[0]['merchant_type']==2 || $res[0]['merchant_type']==3){
-				return true;				
-			}			
+			}				
 		}
 		return false;
 	}
@@ -8187,7 +7698,7 @@ $menu_html.="</li>";
     	if ($res=$this->db_ext->rst($stmt)){    		
     		if ( $as_list==TRUE){
     			foreach ($res as $val) {    				
-    			    $data[$val['merchant_id']]=stripslashes($val['restaurant_name']);
+    			    $data[$val['merchant_id']]=ucwords($val['restaurant_name']);
     			}
     			return $data;
     		} else return $res;    	
@@ -8347,9 +7858,8 @@ $menu_html.="</li>";
     	$include_merchant_cod=Yii::app()->functions->getOptionAdmin('admin_include_merchant_cod');
     	//dump($include_merchant_cod);
     	
-    	$and_cash='';
     	if ( $include_merchant_cod !="yes"){
-    	    $and_cash=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
+    	    $and_cash=" AND payment_type NOT IN ('cod','pyr','ccr') ";
     	}
     	
     	$stmt="SELECT
@@ -8379,13 +7889,7 @@ $menu_html.="</li>";
     
    public function getMerchantBalanceThisMonth($merchant_id='')
    {
-    
-   	    $include_merchant_cod=Yii::app()->functions->getOptionAdmin('admin_include_merchant_cod');	
-   	    $and_cash='';
-    	if ( $include_merchant_cod !="yes"){
-    	    $and_cash=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
-    	}
-   	
+    	
     	$status=$this->getCommissionOrderStats();
     	
     	$query_date = date("Y-m-d");
@@ -8403,9 +7907,7 @@ $menu_html.="</li>";
     	WHERE status IN ($status)
     	AND merchant_id=".Yii::app()->functions->q($merchant_id)."
     	$and
-    	$and_cash
     	";    	       	
-    	//dump($stmt);
     	if ( $res=$this->db_ext->rst($stmt)){    		    		
     		return $res[0];
     	}	
@@ -8414,13 +7916,6 @@ $menu_html.="</li>";
     
    public function getMerchantTotalSales($merchant_id='')
    {    	
-   	
-   	    $include_merchant_cod=Yii::app()->functions->getOptionAdmin('admin_include_merchant_cod');
-   	    $and_cash='';
-    	if ( $include_merchant_cod !="yes"){
-    	    $and_cash=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
-    	}
-   	
    	    $status=$this->getCommissionOrderStats();
     	$stmt="SELECT 
     	sum(total_w_tax) as total_w_tax,
@@ -8429,11 +7924,8 @@ $menu_html.="</li>";
     	{{order}}
     	WHERE status IN ($status)
     	AND merchant_id=".Yii::app()->functions->q($merchant_id)."    	
-    	$and_cash
-    	";       
-    	//dump($stmt);	
+    	";       	
     	if ( $res=$this->db_ext->rst($stmt)){    		    		
-    		//dump($res);
     		return $res[0];
     	}	
     	return false;    	
@@ -8580,7 +8072,7 @@ $menu_html.="</li>";
     			  'payment_method'=>$data['payment_method'],
     			  'amount'=>$data['amount'],
     			  'currency_code'=>adminCurrencyCode(),
-    			  'date_created'=>FunctionsV3::dateNow(),
+    			  'date_created'=>date('Y-m-d H:i:s'),
     			  'ip_address'=>$_SERVER['REMOTE_ADDR'],
     			  'account'=>$data['account'],
     			  'date_to_process'=>$process_date,
@@ -8607,7 +8099,7 @@ $menu_html.="</li>";
     			  'payment_method'=>$data['payment_method'],
     			  'amount'=>$data['amount'],
     			  'currency_code'=>adminCurrencyCode(),
-    			  'date_created'=>FunctionsV3::dateNow(),
+    			  'date_created'=>date('Y-m-d H:i:s'),
     			  'ip_address'=>$_SERVER['REMOTE_ADDR'],
     			  'account_name'=>$data['account_name'],
     			  'bank_account_number'=>$data['bank_account_number'],
@@ -8857,6 +8349,11 @@ $menu_html.="</li>";
     {
     	$sender=$this->getOptionAdmin("admin_deposit_sender");
     	$subject=$this->getOptionAdmin("admin_deposit_subject");
+		
+		// Below two lines added by Harish
+		$subject_title='=?UTF-8?B?'.base64_encode($subject).'?=';	
+		$subject=$subject_title;
+
     	$content=$this->getOptionAdmin("admin_deposit_instructions");
     	return array(
     	  'sender'=>$sender,
@@ -8898,7 +8395,8 @@ $menu_html.="</li>";
     }    
     
     public function sendFax($merchant_id='',$order_id='')
-    {    	    	
+    {
+    	$merchant_id=Yii::app()->functions->getMerchantID();
     	$enabled=$this->getOption('fax_merchant_enabled',$merchant_id);
     	if ( $enabled==2){
     		$params=array(
@@ -8906,7 +8404,7 @@ $menu_html.="</li>";
     		  'faxno'=>$this->getOption('fax_merchant_number',$merchant_id),
     		  'recipname'=>$this->getOption('fax_merchant_recipient',$merchant_id),
     		  'faxurl'=>websiteUrl()."/store/fax/?id=$order_id",  
-    		  'date_created'=>FunctionsV3::dateNow(),
+    		  'date_created'=>date('Y-m-d H:i:s'),
     		  'ip_address'=>$_SERVER['REMOTE_ADDR']
     		);
     		$this->db_ext->insertData("{{fax_broadcast}}",$params);
@@ -9023,9 +8521,6 @@ $menu_html.="</li>";
     {
 	   $business_hours=Yii::app()->functions->getBusinnesHours($merchant_id);
 	   //dump($business_hours);	   
-	   /*dump($merchant_id);
-	   dump($full_booking_day);
-	   dump($booking_time);*/
 		if (is_array($business_hours) && count($business_hours)>=1){
 			if (!array_key_exists($full_booking_day,$business_hours)){
 				return false;
@@ -9049,22 +8544,16 @@ $menu_html.="</li>";
 						//dump($selected_date);
 						$t1=trim($selected_date[0]);
 						$t2=trim($selected_date[1]);
-																		
+												
 						if ( !Yii::app()->functions->checkBetweenTime($booking_time,$t1,$t2)){	
-							if (isset($selected_date[1])){												
-								if(!isset($temp_selected[1])){
-									$temp_selected[1]='';
-								}
-								$selected_date=explode("-",$temp_selected[1]);
-								if(!isset($selected_date[1])){
-									$selected_date[1]='';
-								}
+							if (isset($selected_date[1])){								
+								$selected_date=explode("-",$temp_selected[1]);								
 								$t1=trim($selected_date[0]);
 						        $t2=trim($selected_date[1]);						        
 						        if ( Yii::app()->functions->checkBetweenTime($booking_time,$t1,$t2)){
 						        	return true;
 						        } 
-							}										
+							}							
 							return false;
 						}
 					}
@@ -9171,7 +8660,7 @@ $menu_html.="</li>";
 	
 	public function sendVerificationCode($mobile='',$code='')
 	{		
-		$msg=t("Your verification code is")." ".$code;;		
+		$msg=t("Your verificatio code is")." ".$code;;		
 		if ( $res = $this->sendSMS($mobile,$msg)){			
 			$params=array(
 			  'contact_phone'=>$mobile,
@@ -9179,7 +8668,7 @@ $menu_html.="</li>";
 			  'status'=>isset($res['msg'])?$res['msg']:'',
 			  'gateway_response'=>isset($res['raw'])?$res['raw']:'',
 			  'gateway'=>$res['sms_provider'],
-			  'date_created'=>FunctionsV3::dateNow(),
+			  'date_created'=>date('Y-m-d H:i:s'),
 			  'ip_address'=>$_SERVER['REMOTE_ADDR']
 			);
 			$DbExt=new DbExt;
@@ -9189,46 +8678,17 @@ $menu_html.="</li>";
 		return false;
 	}
 	
-    public function getCategoryList2($merchant_id='', $food_name='')
-	{		
-		$data_feed='';		
-		$and=''; $category_ids='';
-		if (!empty($food_name)){			
-			$stmt_sub="
-			SELECT category FROM
-			{{item}}
-			WHERE
-			item_name LIKE '%$food_name%'
-			AND merchant_id=".FunctionsV3::q($merchant_id)."
-			";
-			$DbExt=new DbExt;
-			if($res=$DbExt->rst($stmt_sub)){
-			   foreach ($res as $val) {			   	   
-			   	   $t=json_decode($val['category']);			   	   
-			   	   if(is_array($t) && count($t)>=1){
-			   	   	  foreach ($t as $tval) {			   	   	  	
-			   	   	  	$category_ids.="'$tval',";
-			   	   	  }
-			   	   }
-			   }			   
-			}
-		}
-		
-		if (!empty($category_ids)){
-			$category_ids=substr($category_ids,0,-1);			
-			$and=" AND cat_id IN ($category_ids) ";
-		}
-		
+    public function getCategoryList2($merchant_id='')
+	{
+		$data_feed='';
 		$stmt="
 		SELECT * FROM
 		{{category}}
 		WHERE 
 		merchant_id='".$merchant_id."'
 		AND status in ('publish','published')
-		$and
 		ORDER BY sequence ASC
-		";						
-		//dump($stmt);
+		";				
 		$connection=Yii::app()->db;
 		$rows=$connection->createCommand($stmt)->queryAll(); 				
 		if (is_array($rows) && count($rows)>=1){
@@ -9239,8 +8699,7 @@ $menu_html.="</li>";
 				     'category_description'=>$val['category_description'],
 				     'dish'=>$val['dish'],
 				     'category_name_trans'=>$val['category_name_trans'],
-				     'category_description_trans'=>$val['category_description_trans'],
-				     'photo'=>$val['photo'],
+				     'category_description_trans'=>$val['category_description_trans']
 				   );
 				}
 				return $data_feed;
@@ -9254,8 +8713,6 @@ $menu_html.="</li>";
 	public function AA($tag='')
 	{		
 		if ( $access=$this->AAccess()){			
-			$tag=strtolower($tag);
-            $access = array_map('strtolower', $access);            
 			if (in_array($tag,(array)$access)){
 				return true;
 			}
@@ -9669,7 +9126,7 @@ $menu_html.="</li>";
     }
         
 	/** END CODE ADDED FOR VERSION 2.1.1*/
-		       
+       
 }/* END CLASS*/
 
 
@@ -9845,9 +9302,9 @@ function adminCurrencyCode()
 	return Yii::app()->functions->adminCurrencyCode();
 }
 
-function sendEmail($to='',$from='',$subject='',$body='' , $record_id='')
+function sendEmail($to='',$from='',$subject='',$body='')
 {
-	return Yii::app()->functions->sendEmail($to,$from,$subject,$body,$record_id);
+	return Yii::app()->functions->sendEmail($to,$from,$subject,$body);
 }
 
 function generateCouponCode($length = 8) {
@@ -9984,27 +9441,23 @@ function createUrl($url='')
 
 function qTranslate($text='',$key='',$data='',$cookie_lang_id='kr_lang_id')
 {		
-	$p = new CHtmlPurifier();
 	if (Yii::app()->functions->getOptionAdmin("enabled_multiple_translation")!=2){
 		return stripslashes($text);
 	}
-	$key=$key."_trans";				
-	$id=Yii::app()->language;	
-	//dump($text);dump($key); dump($data);
-	if(!empty($id)){
+	$key=$key."_trans";			
+	$id=isset($_COOKIE[$cookie_lang_id])?$_COOKIE[$cookie_lang_id]:'';		
+	if ( $id>0){
 		if (is_array($data) && count($data)>=1){
-			if (isset($data[$key])){					
+			if (isset($data[$key])){
 				if (array_key_exists($id,(array)$data[$key])){
-					if (!empty($data[$key][$id])){							
-					    //return stripslashes($data[$key][$id]);					    
-					    return $p->purify(stripslashes($data[$key][$id]));
+					if (!empty($data[$key][$id])){
+					    return stripslashes($data[$key][$id]);
 					}
 				}
 			}
 		}
-	}			
-	return $p->purify(stripslashes($text));
-	//return stripslashes($text);
+	}	
+	return stripslashes($text);
 }
 
 function okToDecode()
