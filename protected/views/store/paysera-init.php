@@ -129,7 +129,7 @@ if ( $res=Yii::app()->functions->getMerchantByToken($my_token)){
             	 }
             	
             	 if (isset($_GET['renew'])){
-                     header('Location: '.Yii::app()->request->baseUrl."/store/renewsuccesful");
+                     header('Location: '.Yii::app()->request->baseUrl."/store/renewSuccesful");
                  } else header('Location: '.Yii::app()->request->baseUrl."/store/merchantSignup/Do/step4/token/$my_token");				     		     die();
                  
             } else $error=t("ERROR: api returns empty");

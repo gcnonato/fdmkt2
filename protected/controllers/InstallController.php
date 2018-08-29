@@ -34,14 +34,7 @@ class InstallController extends CController
 		$cs->registerCssFile($baseUrl."/assets/vendor/font-awesome/css/font-awesome.min.css");			 
 		$cs->registerCssFile($baseUrl."/assets/vendor/bootstrap/css/bootstrap.min.css");
 		$cs->registerCssFile($baseUrl."/assets/css/install.css");			 
-
-		if (FunctionsV3::checkIfTableExist('option')){
-			$installation_done = Yii::app()->functions->getOptionAdmin("installation_done");			
-			if($installation_done==1){			 
-				return false;
-			}
-		}
-		
+				
 		return true;
 	}	
 	
@@ -166,16 +159,14 @@ class InstallController extends CController
 	    	        $stmt_country
 	    	        ";
 	    	        $DbExt->qry($stmt);
-	    	        	    	        
+	    	        
+	    	        
 	    	        /*INSERT DEFAULT TEMPLATE*/
 	    	        $options_template=InstallHelper::optionDefaultValue();
 	    	        foreach ($options_template as $option_params) {
 	    	        	$DbExt->insertData("{{option}}",$option_params);
 	    	        }
 	    	        
-	    	        /*MARK THE INSTALLATION AS DONE*/
-	    	        Yii::app()->functions->updateOptionAdmin("installation_done",1);	
-	    	        	    	        
 	    	        $code=1;
 					
 			   } else $msg="Confirm password does not match";

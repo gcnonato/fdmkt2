@@ -90,18 +90,6 @@ $paymode=Yii::app()->functions->getOption('merchant_mol_mode',$merchant_id);
 
 
 <div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("Card fee")?></label>
-  <?php 
-  echo CHtml::textField('merchant_mollie_card_fee',
-  Yii::app()->functions->getOption('merchant_mollie_card_fee',$merchant_id)
-  ,array(
-    'class'=>"uk-form numeric_only"
-  ))
-  ?>
-</div>
-
-
-<div class="uk-form-row">
 <label class="uk-form-label"></label>
 <input type="submit" value="<?php echo Yii::t("default","Save")?>" class="uk-button uk-form-width-medium uk-button-success">
 </div>

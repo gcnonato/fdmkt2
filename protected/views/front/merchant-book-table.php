@@ -42,23 +42,6 @@
    </div>
 </div> <!--row-->
 
-<?php $detect = new Mobile_Detect;?>     
- <?php if ( $detect->isMobile() ) :?>
- <div class="row top10">
-   <div class="col-md-3 ">
-     <?php echo t("Time")?>
-   </div>
-   <div class="col-md-3 ">
-	 <?php
-	 echo CHtml::dropDownList('booking_time','',
-             (array)FunctionsV3::timeList()
-             ,array(
-              'class'=>"grey-inputs"
-             ))
-	 ?>
-   </div>
-</div> <!--row-->
- <?php else :?>
 <div class="row top10">
    <div class="col-md-3 ">
      <?php echo t("Time")?>
@@ -66,12 +49,11 @@
    <div class="col-md-3 ">
 	 <?php echo CHtml::textField('booking_time',''			 
 	  ,array(
-	  'class'=>'grey-inputs booking_time_desktop',
+	  'class'=>'grey-inputs',
 	  'required'=>true,
 	  ))?>
    </div>
 </div> <!--row-->
-<?php endif;?>
 
 <div class="section-label">
     <a class="section-label-a">

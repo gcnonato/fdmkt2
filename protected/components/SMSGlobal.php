@@ -41,16 +41,7 @@ class SMSGlobal
 	                '&from='.rawurlencode($this->_smssender).
 	                '&text='.rawurlencode($msg);
 
-	    //dump($this->_sms_url . $content); die();
-        $resp  = @file_get_contents($this->_sms_url . $content);        
-        
-        /*$ch = curl_init($this->_sms_url . $content);
-		curl_setopt( $ch, CURLOPT_CUSTOMREQUEST, 'GET' );
-		curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
-		curl_setopt($ch, CURLOPT_HEADER, 0);
-        curl_setopt($ch, CURLOPT_RETURNTRANSFER, 1);
-		$res=curl_exec ($ch);		*/
-                
+        $resp  = @file_get_contents($this->_sms_url . $content);
         $explode_resp = explode('SMSGlobalMsgID:', $resp);
         
         if ($this->_debug==TRUE){

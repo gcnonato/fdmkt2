@@ -18,7 +18,6 @@
 			 <th width="5%"><?php echo Yii::t('default',"Orders Over")?></th>			 
 			 <th width="5%"><?php echo Yii::t('default',"Valid From")?></th>
 			 <th width="5%"><?php echo Yii::t('default',"Valid To")?></th>
-			 <th width="5%"><?php echo Yii::t('default',"Applicable")?></th>
 			 <th width="5%"><?php echo Yii::t('default',"Date Created")?></th>
         </tr>
     </thead>

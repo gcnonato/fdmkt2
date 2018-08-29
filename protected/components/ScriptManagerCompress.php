@@ -95,9 +95,6 @@ class ScriptManagerCompress
 		$cs->registerScriptFile($baseUrl."/assets/vendor/typehead/bootstrap3-typeahead.min.js"
 		,CClientScript::POS_END); 
 		
-		$cs->registerScriptFile($baseUrl."/assets/js/uploader.js"
-		,CClientScript::POS_END); 
-		
 		$cs->registerScriptFile($baseUrl."/assets/js/store.js?ver=3"
 		,CClientScript::POS_END); 
 		

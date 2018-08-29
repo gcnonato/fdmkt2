@@ -395,7 +395,6 @@ CREATE TABLE IF NOT EXISTS ".$prefix."offers (
   `date_created` datetime NOT NULL,
   `date_modified` datetime NOT NULL,
   `ip_address` varchar(50) NOT NULL,
-  `applicable_to` varchar(100) NOT NULL DEFAULT 'all',
   PRIMARY KEY (`offers_id`)
 ) ENGINE=InnoDB  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 ";
@@ -1273,27 +1272,9 @@ echo "(Done)<br/>";
 		$this->addIndex("sms_package_trans","sms_package_id");
 		$this->addIndex("sms_package_trans","payment_type");
 		
-		/*4.4*/				
-		echo "Updating table order<br/>";		
-		$new_field=array( 		  
-		   'sofort_trans_id'=>"varchar(255) NOT NULL DEFAULT ''",		  
-		);
-		$this->alterTable('order',$new_field);
-		
-		echo "Updating table offers<br/>";		
-		$new_field=array( 		  
-		   'applicable_to'=>"varchar(100) NOT NULL DEFAULT 'all'",		  
-		);
-		$this->alterTable('offers',$new_field);
+		/*4.4*/
 		
 		
-		/*4.5*/				
-		echo "Updating table order<br/>";		
-		$new_field=array( 		  
-		   'calculation_method'=>"int(1) NOT NULL DEFAULT '1'",		  
-		);
-		$this->alterTable('order',$new_field);
-					
 		
 		/*ADD INDEX*/
 		/*MERCHANT TABLE*/

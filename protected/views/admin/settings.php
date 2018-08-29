@@ -84,39 +84,6 @@ if (!empty($merchant_specific_country)){
 
 <hr/>
 
-<!--<h2><?php echo t("Receipt Computation Options")?></h2>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("use method 1 (default)")?><br/>
-  <p style="font-size:10px;margin:0;" class="uk-text-muted"><?php echo t("All discount will be taxable")?>.</p>
-  </label>  
-  <?php 
-  echo CHtml::radioButton('receipt_computation_method',
-   getOptionA('receipt_computation_method')==1?true:false
-   ,array(
-   'class'=>"icheck",
-   'value'=>1
-  ))
-  ?>    
-</div>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("use method 2")?><br/>
-  <p style="font-size:10px;margin:0;" class="uk-text-muted"><?php echo t("All discount will not taxable")?>.</p>
-  </label>  
-  <?php 
-  echo CHtml::radioButton('receipt_computation_method',
-   getOptionA('receipt_computation_method')==2?true:false
-   ,array(
-   'class'=>"icheck",
-   'value'=>2
-  ))
-  ?>    
-</div>-->
-
-<!--<hr/>-->
-
-
 <h2><?php echo Yii::t("default","Google API Key")?></h2>
 
 <div class="uk-form-row">
@@ -797,19 +764,6 @@ Yii::app()->functions->getOptionAdmin("website_time_picker_format")
    ,array(
    'class'=>"icheck",
    'value'=>"yes"
-  ))
-  ?>  
-</div>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("Disabled Cart Price Validation")?>      
-  </label>  
-  <?php 
-  echo CHtml::checkBox('website_disabled_cart_validation',
-   Yii::app()->functions->getOptionAdmin('website_disabled_cart_validation')==2?true:false
-   ,array(
-   'class'=>"icheck",
-   'value'=>2
   ))
   ?>  
 </div>

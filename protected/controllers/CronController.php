@@ -423,23 +423,18 @@ class CronController extends CController
 		$datenow=date("Y-m-d");
 		$stmt="
 		SELECT 
-		a.order_id,
-		a.merchant_id,
-		a.date_created,
-		b.restaurant_name
+		order_id,
+		merchant_id,
+		date_created 
 		
-		FROM {{order}} a
-		LEFT JOIN {{merchant}} b
-		ON 
-		a.merchant_id = b.merchant_id
-		
+		FROM {{order}}
 		WHERE
-		a.date_created LIKE '$datenow%'
+		date_created LIKE '$datenow%'
 		AND
-		a.status = 'pending'
+		status = 'pending'
 		AND
-		a.critical = '1'
-		ORDER BY a.order_id ASC
+		critical = '1'
+		ORDER BY order_id ASC
 		limit 0,10
 		";
 		if(isset($_GET['debug'])){

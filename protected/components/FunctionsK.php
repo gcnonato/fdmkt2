@@ -62,7 +62,7 @@ class FunctionsK extends DbExt
     	$stmt="SELECT * FROM
     	{{fax_package}}
     	WHERE
-    	fax_package_id=".FunctionsV3::q($package_id)."
+    	fax_package_id='$package_id'
     	LIMIT 0,1
     	";
     	if ( $res=$this->rst($stmt)){
@@ -158,7 +158,7 @@ class FunctionsK extends DbExt
     	 FROM
     	{{fax_package_trans}} a
     	WHERE
-    	id= ".FunctionsV3::q($package_id)."
+    	id='$package_id'
     	AND
     	merchant_id=".Yii::app()->db->quoteValue($merchant_id)."
     	LIMIT 0,1    	

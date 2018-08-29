@@ -90,7 +90,7 @@ if (isset($_GET['status'])){
 										  ),'merchant_id',$res['merchant_id']);
 										  
                         if (isset($_GET['renew'])){
-                        	header('Location: '.Yii::app()->request->baseUrl."/store/renewsuccesful");
+                        	header('Location: '.Yii::app()->request->baseUrl."/store/renewSuccesful");
                         } else header('Location: '.Yii::app()->request->baseUrl."/store/merchantSignup/Do/step4/token/$my_token");				     
             		} else $error=Yii::t("default","Failed. Cannot process payment");            		        
                 } else $error=Yii::t("default","Failed. Cannot process payment")." ".$searchResult['status'];

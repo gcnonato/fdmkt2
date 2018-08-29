@@ -88,17 +88,6 @@ $paymode=Yii::app()->functions->getOptionAdmin('admin_mol_mode');
 
 
 <div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("Card fee")?></label>
-  <?php 
-  echo CHtml::textField('admin_mollie_card_fee',
-  Yii::app()->functions->getOptionAdmin('admin_mollie_card_fee')
-  ,array(
-    'class'=>"uk-form numeric_only"
-  ))
-  ?>
-</div>
-
-<div class="uk-form-row">
   <label class="uk-form-label"><?php echo t("WEBHOOK URL")?></label>
   <?php 
   echo websiteUrl()."/molliewebhook/"

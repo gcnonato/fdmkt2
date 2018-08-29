@@ -138,12 +138,11 @@ echo CHtml::hiddenField('merchant_tax',$merchant_tax);
 	 if ( !$selected_require_addon=getSelectedItemArray($addonid,$require_addon)){	 	
 	 	$selected_require_addon[]='';
 	 }	 	 
-	 //dump($val);
 	 ?>
 	 <li>
 	    <div class="uk-grid">
 	      <div class="uk-width-1-3">
-	       <b><?php echo $val['addon_item_name']?></b>
+	      <?php echo $val['addon_item_name']?>
 	      </div>
 	      <div class="uk-width-1-3">
 	      <?php echo CHtml::dropDownList("multi_option[$addonid][]",$selected_item_array[0],(array)Yii::app()->functions->multiOptions(),array(
@@ -179,16 +178,7 @@ echo CHtml::hiddenField('merchant_tax',$merchant_tax);
 	   ,array(
 	     'class'=>"require_addon",
 	     'value'=>2
-	   ))?>	   
-	   &nbsp;&nbsp;
-	   <?php echo t("Check all/uncheck");?>
-	   <?php 
-         echo CHtml::checkBox('check_all',false,array( 
-           'class'=>"check_all",
-           'value'=>$addonid
-         ));
-        ?>
-	   
+	   ))?>
 	   </li>
 	   
 	   <?php if (is_array($val['item']) && count($val['item'])>=1):?>
@@ -201,10 +191,7 @@ echo CHtml::hiddenField('merchant_tax',$merchant_tax);
 	      ?>
 	      <?php echo CHtml::checkBox("sub_item_id[$addonid][]",
 	      in_array($item_id,(array)$selected_item_array)?true:false
-	      ,array(
-	        'value'=>$item_id,
-	        'class'=>"check_all_".$addonid
-	      ));?>
+	      ,array('value'=>$item_id))?>
 	      <?php 
 	      if ($merchant_apply_tax==1){
 	      	  $price_w_tax=$add_on_price['price']+( $add_on_price['price'] * $merchant_tax );

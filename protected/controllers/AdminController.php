@@ -21,7 +21,7 @@ class AdminController extends CController
 	public function beforeAction($action)
     {    	    	
     	$action_name= $action->id ;
-    	$accept_controller=array('login','ajax','noaccess');
+    	$accept_controller=array('login','ajax');
 	    if(!Yii::app()->functions->isAdminLogin() )
 	    {
 	    	if (!in_array($action_name,$accept_controller)){	    		
@@ -34,28 +34,12 @@ class AdminController extends CController
 	    
 	    $aa_access=Yii::app()->functions->AAccess();
 	    $menu_list=Yii::app()->functions->AAmenuList();	    
-	    
-	    /*dump($action_name); 
-	    dump($menu_list);*/
-	    
-	    switch ($action_name) {
-	    	case "viewemail":
-	    		$action_name='emailogs';
-	    		break;
-	    
-	    	case "merchantAdd":
-	    	case "merchantadd":
-	    		$action_name='merchant';
-	    		break;
-	    	default:
-	    		break;
-	    }
-	    
 	    if (in_array($action_name,(array)$menu_list)){
-	    	if (!in_array($action_name,(array)$aa_access)){	    			    		
+	    	if (!in_array($action_name,(array)$aa_access)){	    		
+	    		//dump($_SESSION['kr_user']);
 	    		$this->redirect(Yii::app()->createUrl('/admin/noaccess'));
 	    	}
-	    } 	    
+	    }	    
 	    	    	    
 	    //echo Yii::app()->language;
 	    return true;	    
@@ -106,18 +90,10 @@ class AdminController extends CController
 		  CClientScript::POS_HEAD
 		);
 		
-		/*ADD SECURITY VALIDATION*/
 		$yii_session_token=session_id();		
 		$cs->registerScript(
 		  'yii_session_token',
 		 "var yii_session_token='$yii_session_token';",
-		  CClientScript::POS_HEAD
-		);				
-		$csrfTokenName = Yii::app()->request->csrfTokenName;
-        $csrfToken = Yii::app()->request->csrfToken;
-		$cs->registerScript(
-		  "$csrfTokenName",
-		 "var $csrfTokenName='$csrfToken';",
 		  CClientScript::POS_HEAD
 		);
 		
@@ -171,31 +147,6 @@ class AdminController extends CController
 		if (isset($data['debug'])){
 			dump($data);
 		}
-		
-			
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/
-		$validate_request_session = Yii::app()->params->validate_request_session;
-		$validate_request_csrf = Yii::app()->params->validate_request_csrf;
-				
-		$class_validate=new AjaxAdmin;
-		
-		if($validate_request_session){
-			$session_id=session_id();		
-			if($data['yii_session_token']!=$session_id){			
-				$class_validate->msg = t("Session token not valid");
-				echo $class_validate->output();
-				Yii::app()->end();
-			}		
-		}
-						
-		if($validate_request_csrf){
-			if ( $data[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
-				$class_validate->msg = t("Request token not valid");
-				echo $class_validate->output();
-				Yii::app()->end();
-			}		
-		}
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/	
 		
 		/**add ons */     
 		if (isset($data['addon'])){
@@ -488,7 +439,7 @@ class AdminController extends CController
 	
 	public function actionSMStransaction()
 	{
-		if (isset($_GET['do']) || isset($_GET['Do']) ){	
+		if (isset($_GET['do'])){	
 			$this->crumbsTitle=Yii::t("default","SMS Transaction Update");
 		    $this->render('sms-transaction-add');
 		} else {	
@@ -1047,70 +998,6 @@ class AdminController extends CController
 		$this->crumbsTitle=t("voguepay");
 		$this->render('voguepay');
 	}
-
-	
-	public function actionipay()
-	{
-		$this->crumbsTitle=t("Ipay");
-		$this->render('ipay');
-	}
-	
-	public function actionpipay()
-	{
-		$this->crumbsTitle=t("Pi Pay");
-		$this->render('pipay-settings');
-	}
-	
-	public function actionhubtelpayment()
-	{
-		$this->crumbsTitle=t("Hubtel Payments");
-		$this->render('hubtel-payemnt-settings');
-	}
-	
-	public function actionsofort()
-	{
-		$this->render('sofort-settings');
-	}
-	
-	public function actionjampie()
-	{
-		$this->render('jampie-settings');
-	}
-	
-	public function actionwing()
-	{
-		$this->crumbsTitle=t("Wing Settings");
-		$this->render('wing-settings');
-	}
-	
-	public function actionpaymill()
-	{
-		$this->crumbsTitle=t("Paymill Settings");
-		$this->render('paymill-settings');
-	}
-	
-	public function actionipay_africa()
-	{
-		$this->crumbsTitle=t("Ipay Africa");
-		$this->render('ipay-africa');
-	}
-	
-	public function actiondixipay()
-	{
-		$this->crumbsTitle=t("DIXIPAY");
-		$this->render('dixipay-settings');
-	}
-	
-	public function actionwirecard()
-	{
-		$this->crumbsTitle=t("WireCard");
-		$this->render('wirecard-settings');
-	}
-	
-	public function actionpayulatam()
-	{
-		$this->crumbsTitle=t("PayU Latam");
-		$this->render('payulatam-settings');
-	}
+		
 } 
 /*END CONTROLLER*/

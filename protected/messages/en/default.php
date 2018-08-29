@@ -2436,18 +2436,5 @@ $lang['Dinein']='';
 $lang['This merchant has reach the maximum sells per month'] = '';
 $lang['No recods found']= '';
 
-/*VERSION 4.5*/
-$lang['when you checkout via']='';
-$lang['Applicable']='';
-$lang['Applicable to']='';
-$lang['if']='';
-$lang['Off over']='';
-$lang['use method 1 (default)'] ='';
-$lang['use method 2'] ='';
-
-/*START POINTS LANGUAGE*/
-
-/*END POINTS LANGUAGE*/
-
 
 return $lang;

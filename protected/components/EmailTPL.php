@@ -155,8 +155,7 @@ HTML;
 				    $tr.="<td>".FunctionsV3::prettyPrice($item_total)."</td>";
 				    $tr.="</tr>";
 				    
-				    //$sms_details.=$item['qty']." x ".$item_name." ".standardPrettyFormat($item_total);
-				    $sms_details.=$item['qty']." x ".$item_name.$size.$notes.$cookref.$ingredients." ".standardPrettyFormat($item_total);
+				    $sms_details.=$item['qty']." x ".$item_name." ".standardPrettyFormat($item_total);
 				    $sms_details.=FunctionsV3::smsSeparator();
 				    				    				 				   
 				    /*if (isset($item['sub_item'])){
@@ -219,8 +218,6 @@ HTML;
 		$tr.="<td colspan=\"2\">&nbsp;</td>";
 		$tr.="</tr>";
 		
-		//dump($item_details);
-		
 		Yii::app()->functions->additional_details=$sms_details;
 		
 		if (isset($item_details['total'])){
@@ -252,18 +249,15 @@ HTML;
 			if(!isset($item_details['total']['discounted_amount'])){
 				$item_details['total']['discounted_amount']=0;
 			}
-			
-			if($item_details['total']['calculation_method']==1){
-				if($item_details['total']['discounted_amount']>0.001){
-					$tr.="<tr>";
-				    $tr.="<td>".Yii::t("default","Discount")." " . $item_details['total']['merchant_discount_amount']  ."% :</td>";
-				    $tr.="<td>".FunctionsV3::prettyPrice($item_details['total']['discounted_amount'])."</td>";
-				    $tr.="</tr>";
-				}
+			if($item_details['total']['discounted_amount']>0.001){
+				$tr.="<tr>";
+			    $tr.="<td>".Yii::t("default","Discount")." " . $item_details['total']['merchant_discount_amount']  ."% :</td>";
+			    $tr.="<td>".FunctionsV3::prettyPrice($item_details['total']['discounted_amount'])."</td>";
+			    $tr.="</tr>";
 			}
 						
 			$tr.="<tr>";
-			$tr.="<td>".Yii::t("default","Sub Total").":</td>";
+			$tr.="<td>".Yii::t("default","Subtotal").":</td>";
 			$tr.="<td>".FunctionsV3::prettyPrice($item_details['total']['subtotal'])."</td>";
 			$tr.="</tr>";
 			
@@ -309,29 +303,6 @@ HTML;
 				$tr.="</tr>";
 			}
 			
-			if($item_details['total']['calculation_method']==2){
-				if($item_details['total']['less_voucher_orig']>0.01){
-					$tr.="<tr>";
-					$tr.="<td>".Yii::t("default","Voucher"). ":</td>";
-					$tr.="<td>(".FunctionsV3::prettyPrice($item_details['total']['less_voucher_orig']).")</td>";
-					$tr.="</tr>";
-				}
-				
-				if($item_details['total']['pts_redeem_amt_orig']>0.01){
-					$tr.="<tr>";
-					$tr.="<td>".Yii::t("default","Points Discount"). ":</td>";
-					$tr.="<td>(".FunctionsV3::prettyPrice($item_details['total']['pts_redeem_amt_orig']).")</td>";
-					$tr.="</tr>";
-				}
-				
-				if($item_details['total']['discounted_amount']>0.001){
-					$tr.="<tr>";
-				    $tr.="<td>".Yii::t("default","Discount")." " . $item_details['total']['merchant_discount_amount']  ."% :</td>";
-				    $tr.="<td>(".FunctionsV3::prettyPrice($item_details['total']['discounted_amount']).")</td>";
-				    $tr.="</tr>";
-				}
-			}
-			
 			$tr.="<tr>";
 			$tr.="<td>".Yii::t("default","Total").":</td>";
 			$tr.="<td>".FunctionsV3::prettyPrice($item_details['total']['total'])."</td>";
@@ -365,7 +336,7 @@ HTML;
 HTML;
 	}
 	
-	public static function bookingApproved()
+	public function bookingApproved()
 	{
 		return <<<HTML
 <p>Dear {customer-name},</p>
@@ -379,7 +350,7 @@ HTML;
 HTML;
 	}	
 	
-	public static function bookingDenied()
+	public function bookingDenied()
 	{
 		return <<<HTML
 <p>Dear {customer-name},</p>
@@ -408,7 +379,7 @@ HTML;
 	}			
 	
 
-	public static function bankDepositTPL()
+	public function bankDepositTPL()
 	{
 		return <<<HTML
 <p><strong>Deposit Instructions</strong></p>
@@ -430,7 +401,7 @@ Account Name : Your bank account name<br/>
 HTML;
 	}	
 	
-	public static function bankDepositedReceive()
+	public function bankDepositedReceive()
 	{
 		return <<<HTML
 <p>hi Admin,</p>
@@ -480,7 +451,7 @@ or simply visit this link {confirmation-link}
 HTML;
 	}	
 	
-	public static function payoutRequest()
+	public function payoutRequest()
 	{
 		return <<<HTML
 <p>Hi {merchant-name},</p>
@@ -502,7 +473,7 @@ We will complete this request on the {process-date} (or the next business day), 
 HTML;
 	}
 	
-	public static function payoutProcess()
+	public function payoutProcess()
 	{
 return <<<HTML
 <p>Hi {merchant-name},</p>

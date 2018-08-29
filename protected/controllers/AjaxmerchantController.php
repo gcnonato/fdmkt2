@@ -18,30 +18,6 @@ class AjaxmerchantController extends CController
 			   $this->data=$_GET;
 			}
 		}
-		
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/		
-		$validate_request_session = Yii::app()->params->validate_request_session;
-        $validate_request_csrf = Yii::app()->params->validate_request_csrf;	
-        		
-        if($validate_request_session){
-			$session_id=session_id();		
-			if($this->data['yii_session_token']!=$session_id){			
-				$this->msg = Yii::t("default","Session token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}		
-        }
-					
-        if($validate_request_csrf){
-			if ( $this->data[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
-				$this->msg = Yii::t("default","Request token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}
-        }
-				
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/	
-		
 		self::$db=new DbExt;
 	}	
 	

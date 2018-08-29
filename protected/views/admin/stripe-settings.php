@@ -9,7 +9,7 @@ $paymode=Yii::app()->functions->getOptionAdmin('admin_stripe_mode');
 <?php echo CHtml::hiddenField('action','adminStripeSettings')?>
 
 <div class="uk-form-row">
-  <label class="uk-form-label"><?php echo Yii::t("default","Enabled Stripe")?></label>
+  <label class="uk-form-label"><?php echo Yii::t("default","Enabled Stripe")?>?</label>
   <?php 
   echo CHtml::checkBox('admin_stripe_enabled',
   $enabled=="yes"?true:false
@@ -85,39 +85,6 @@ $paymode=Yii::app()->functions->getOptionAdmin('admin_stripe_mode');
   ,array(
     'class'=>"uk-form-width-large"
   ))
-  ?>
-</div>
-
-<h3><?php echo t("Stripe Ideal")?></h3>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo Yii::t("default","Enabled Stripe Ideal")?></label>
-  <?php 
-  $admin_stripe_ideal_enabled=getOptionA('admin_stripe_ideal_enabled');
-  echo CHtml::checkBox('admin_stripe_ideal_enabled',
-  $admin_stripe_ideal_enabled==1?true:false
-  ,array(
-    'value'=>1,
-    'class'=>"icheck"
-  ))
-  ?> 
-</div>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo Yii::t("default","Card Fee")?></label>
-  <?php 
-  echo CHtml::textField('admin_stripe_ideal_fee',
-  getOptionA('admin_stripe_ideal_fee')
-  ,array(
-    'class'=>"uk-form-width-large"
-  ))
-  ?>
-</div>
-
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("Webhook URL")?></label>
-  <?php 
-  echo websiteUrl()."/stripe_ideal_webhook";
   ?>
 </div>
 

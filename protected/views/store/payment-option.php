@@ -189,13 +189,14 @@ Yii::app()->functions->getOptionAdmin("admin_currency_position"));
             <?php Widgets::AddressByMap()?>
             </div>
             <?php endif;?>
-                        
-            <?php $address_list=Yii::app()->functions->addressBook(Yii::app()->functions->getClientId());?>
-            <?php if(is_array($address_list) && count($address_list)>=1):?>
+            
+            
+            <?php if ( $address_book):?>
             <div class="address_book_wrap">
             <div class="row top10">
                 <div class="col-md-10">
-               <?php                
+               <?php 
+               $address_list=Yii::app()->functions->addressBook(Yii::app()->functions->getClientId());
                echo CHtml::dropDownList('address_book_id',$address_book['id'],
                (array)$address_list,array(
                   'class'=>"grey-fields full-width"
@@ -508,7 +509,7 @@ Yii::app()->functions->getOptionAdmin("admin_currency_position"));
             <?php 
             if (FunctionsV3::hasModuleAddon("pointsprogram")){
             	/*POINTS PROGRAM*/
-                PointsProgram::redeemForm($merchant_id);
+                PointsProgram::redeemForm();
             }
             ?>
 	         

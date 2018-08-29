@@ -7,17 +7,16 @@ if ( $data=Yii::app()->functions->getOrder2($_GET['id'])){
 	$json_details=!empty($data['json_details'])?json_decode($data['json_details'],true):false;
 	if ( $json_details !=false){
 		Yii::app()->functions->displayOrderHTML(array(
+		  /*'merchant_id'=>$data['merchant_id'],
+		  'delivery_type'=>$data['trans_type']*/
 		  'merchant_id'=>$data['merchant_id'],
 		  'delivery_type'=>$data['trans_type'],
 		  'delivery_charge'=>$data['delivery_charge'],
 		  'packaging'=>$data['packaging'],
 		  'cart_tip_value'=>$data['cart_tip_value'],
-		  'cart_tip_percentage'=>$data['cart_tip_percentage']/100,
+		  'cart_tip_percentage'=>$data['cart_tip_percentage'],
 		  'card_fee'=>$data['card_fee'],
-		  'tax'=>$data['tax'],
-		  'points_discount'=>isset($data['points_discount'])?$data['points_discount']:'' /*POINTS PROGRAM*/,
-		  'voucher_amount'=>$data['voucher_amount'],
-		  'voucher_type'=>$data['voucher_type']
+		  'points_discount'=>isset($data['points_discount'])?$data['points_discount']:'' /*POINTS PROGRAM*/		  
 		  ),$json_details,true);
 		if ( Yii::app()->functions->code==1){
 			$ok=true;
@@ -25,8 +24,7 @@ if ( $data=Yii::app()->functions->getOrder2($_GET['id'])){
 	}	
 }
 $print='';
-//dump(Yii::app()->functions->details['raw']);
-//die();
+//dump($data);
 ?>
 
 <div class="page" id="fax_page">
@@ -215,13 +213,7 @@ $print='';
 		       
 		       <div class="input-block">
 		         <div class="label"><?php echo Yii::t("default","Deliver to")?> :</div>
-		         <div class="value">
-		         <?php 		         
-		         if (!empty($data['client_full_address'])){		         	
-		         	echo $delivery_address=$data['client_full_address'];
-		         } else echo $delivery_address=$data['full_address'];		         
-		         ?>
-		         </div>
+		         <div class="value"><?php echo $data['full_address']?></div>
 		         <div class="clear"></div>
 		       </div>
 				<?php 	       

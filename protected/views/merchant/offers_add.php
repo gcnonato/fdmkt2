@@ -69,37 +69,6 @@ if (isset($_GET['id'])){
   ))?>
 </div>
 
-<?php 
-$applicable_to=array();
-if (isset($data['applicable_to'])){
-	$applicable_to=json_decode($data['applicable_to'],true);
-	//dump($applicable_to);
-}
-?>
-<div class="uk-form-row">
-  <label class="uk-form-label"><?php echo t("Applicable to")?></label>
-  <?php 
-  echo CHtml::checkBox('applicable_to[]',
-  in_array('delivery',(array)$applicable_to)?true:false
-  ,array('value'=>'delivery'));
-  echo "&nbsp;".t("Delivery");
-  
-  echo "&nbsp;";
-  
-  echo CHtml::checkBox('applicable_to[]',
-  in_array('pickup',(array)$applicable_to)?true:false
-  ,array('value'=>'pickup'));
-  echo "&nbsp;".t("Pickup");
-  
-  echo "&nbsp;";
-  
-  echo CHtml::checkBox('applicable_to[]',
-  in_array('dinein',(array)$applicable_to)?true:false
-  ,array('value'=>'dinein'));
-  echo "&nbsp;".t("Dinein");
-  ?>
-</div>
-
 <div class="uk-form-row">
   <label class="uk-form-label"><?php echo Yii::t("default","Status")?></label>
   <?php echo CHtml::dropDownList('status',

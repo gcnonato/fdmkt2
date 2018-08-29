@@ -57,14 +57,6 @@ foreach ($data['item'] as $row => $item):
       <?php endif;?>
       <?php endif;?>
       
-      
-     <?php if(isset($item['order_notes'])):?>
-	     <?php if(!empty($item['order_notes'])):?>
-	     <p class="small"><?php echo $item['order_notes']?></p>
-	     <?php endif;?>
-     <?php endif;?>
-     
-      
   </div>
   
   <div class="col-xs-3 text-center">

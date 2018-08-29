@@ -149,7 +149,7 @@ $transaction_type=$data['trans_type'];
 	       $print[]=array(
 	         'label'=>Yii::t("default","TRN Type"),
 	         'value'=>t($data['trans_type'])
-	       );	       
+	       );
 	       ?>
 	       	       
 	       <tr>
@@ -215,7 +215,7 @@ $transaction_type=$data['trans_type'];
 	       <?php
 	       $print[]=array(
 	         'label'=>Yii::t("default","Payment Ref"),
-	         'value'=>$data['payment_reference']
+	         'value'=>Yii::app()->functions->formatOrderNumber($data['order_id'])
 	       );
 	       ?>
 	       <?php endif;?>
@@ -525,7 +525,8 @@ if (!isset($_SESSION['kr_receipt'])){
 	$_SESSION['kr_receipt']='';
 }
 
-/*dump($receipt);*/
+/*dump($receipt);
+dump(Yii::app()->functions->additional_details);*/
 
 if (!in_array($data['order_id'],(array)$_SESSION['kr_receipt'])){
 	if ($order_ok==true){		
@@ -539,22 +540,6 @@ if (!in_array($data['order_id'],(array)$_SESSION['kr_receipt'])){
 	   
 	   // SEND FAX
        Yii::app()->functions->sendFax($merchant_id,$_GET['id']);
-       
-       /*PRINTER ADDON*/
-       if (FunctionsV3::hasModuleAddon("printer")){
-			Yii::app()->setImport(array('application.modules.printer.components.*',));
-			
-			$html=getOptionA('printer_receipt_tpl');
-			if($print_receipt = ReceiptClass::formatReceipt($html,$print,Yii::app()->functions->details['raw'],$data)){							
-				PrinterClass::printReceipt($data['order_id'],$print_receipt);												
-			}
-			
-			$html = getOption($merchant_id,'mt_printer_receipt_tpl');
-			if($print_receipt = ReceiptClass::formatReceipt($html,$print,Yii::app()->functions->details['raw'],$data)){
-		       PrinterClass::printReceiptMerchant($merchant_id,$data['order_id'],$print_receipt);		
-			}		
-			FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("printer/cron/processprint"));		
-		}
 	}
 }
 

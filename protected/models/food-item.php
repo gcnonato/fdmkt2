@@ -26,6 +26,7 @@ echo CHtml::hiddenField('hide_foodprice',$hide_foodprice);
 <?php 
 $data=$data[0];
 
+//dump($data);
 $mtid=$data['merchant_id'];
 $apply_tax=getOption($mtid,'merchant_apply_tax');
 $tax=FunctionsV3::getMerchantTax($mtid);
@@ -57,7 +58,7 @@ if ($data['two_flavors']==2){
 	);	
 	echo CHtml::hiddenField('two_flavors',$data['two_flavors']);
 }
-dump($data['dish']);
+//dump($data);
 ?>
 
 <div class="container  view-food-item-wrap">
@@ -109,30 +110,24 @@ dump($data['dish']);
       <b></b>
     </a>     
     <div class="row">
-    <?php //dump($data['prices']);?>
     <?php if (is_array($data['prices']) && count($data['prices'])>=1):?>  
       <?php foreach ($data['prices'] as $price):?>
           <?php $price['price']=Yii::app()->functions->unPrettyPrice($price['price'])?>
           <div class="col-md-5 ">
-             <?php if ( !empty($price['size'])):?>                 
-                 <?php 
-                 echo CHtml::hiddenField('with_size',2);
-                 $size_id=isset($price['size_id'])?$price['size_id']:'';
-                 ?>
+             <?php if ( !empty($price['size'])):?>
                  <?php echo CHtml::radioButton('price',
 		          $size_select==$price['size']?true:false
 		          ,array(
-		            'value'=>$price['price']."|".$price['size']."|".$size_id,
+		            'value'=>$price['price']."|".$price['size'],
 		            'class'=>"price_cls item_price"
 		          ))?>
 		          <?php echo qTranslate($price['size'],'size',$price)?>
               <?php else :?>
-                  <?php echo CHtml::hiddenField('with_size',1)?>              
                   <?php echo CHtml::radioButton('price',
 		            count($price['price'])==1?true:false
 		            ,array(
 		            'value'=>$price['price'],
-		            'class'=>"price_cls item_price"
+		            'class'=>"item_price"
 		          ))?>
              <?php endif;?>
              
@@ -207,14 +202,11 @@ dump($data['dish']);
   <?php if (isset($data['cooking_ref'])):?>
   <?php if (is_array($data['cooking_ref']) && count($data['cooking_ref'])>=1):?>
   <div class="section-label">
-  
-    <div class="section-label-a">
+    <a class="section-label-a">
       <span class="bold">
       <?php echo t("Cooking Preference")?></span>
       <b></b>
-       <!--<a href="javascript:;"><i class="ion-ios-plus-outline"></i></a>-->
-    </div>        
-    
+    </a>        
     <div class="row">    
       <?php foreach ($data['cooking_ref'] as $cooking_ref_id=>$val):?>
       
@@ -414,9 +406,7 @@ dump($data['dish']);
 	           	 $item_data['addon_qty']='';
 	          }
 	          if (array_key_exists($subcat_id,(array)$item_data['addon_qty'])){            	            
-	          	  if(isset($item_data['addon_qty'][$subcat_id][$x])){
-	                $qty_selected=$item_data['addon_qty'][$subcat_id][$x];
-	          	  }
+	              $qty_selected=$item_data['addon_qty'][$subcat_id][$x];
 	          }            
 	          ?>
 	          

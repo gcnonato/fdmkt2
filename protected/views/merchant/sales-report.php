@@ -49,7 +49,6 @@ $order_stats=Yii::app()->functions->orderStatusList(false);
         <tr> 
             <th width="2%"><?php echo Yii::t('default',"Ref#")?></th>
             <th width="6%"><?php echo Yii::t('default',"Name")?></th>
-            <th width="6%"><?php echo Yii::t('default',"Contact#")?></th>
             <th width="3%"><?php echo Yii::t('default',"Item")?></th>            
             <th width="3%"><?php echo Yii::t('default',"TransType")?></th>
             <th width="3%"><?php echo Yii::t('default',"Payment Type")?></th>

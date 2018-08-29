@@ -39,29 +39,6 @@ class StoreController extends CController
 			 "var card_fee='';",
 			  CClientScript::POS_HEAD
 			);
-			
-			$csrfTokenName = Yii::app()->request->csrfTokenName;
-            $csrfToken = Yii::app()->request->csrfToken;            
-            $cs->registerScript(
-			  "csrf_token",
-			  "var csrf_token='$csrfToken';",
-			  CClientScript::POS_HEAD
-			);
- 					
-	        /*ADD SECURITY VALIDATION*/
-			$yii_session_token=session_id();		
-			$cs->registerScript(
-			  'yii_session_token',
-			 "var yii_session_token='$yii_session_token';",
-			  CClientScript::POS_HEAD
-			);				
-			$csrfTokenName = Yii::app()->request->csrfTokenName;
-	        $csrfToken = Yii::app()->request->csrfToken;
-			$cs->registerScript(
-			  "$csrfTokenName",
-			 "var $csrfTokenName='$csrfToken';",
-			  CClientScript::POS_HEAD
-			);
 				
 			return true;
 		}
@@ -88,11 +65,6 @@ class StoreController extends CController
 		
 	public function init()
 	{		
-		 /*CHECK IF KMRS IS ALREADY INSTALL*/		
-		 if (!FunctionsV3::checkIfTableExist('option')){
-		 	 $this->redirect(Yii::app()->request->baseUrl."/index.php/install");
-		 }
-		
 		 $name=Yii::app()->functions->getOptionAdmin('website_title');
 		 if (!empty($name)){		 	
 		 	 Yii::app()->name = $name;
@@ -143,7 +115,7 @@ class StoreController extends CController
 			    //Yii::app()->functions->paypalSetCancelOrder($_GET['token']);
 			}
 		}
-							
+				
 		$seo_title=Yii::app()->functions->getOptionAdmin('seo_home');
 		$seo_meta=Yii::app()->functions->getOptionAdmin('seo_home_meta');
 		$seo_key=Yii::app()->functions->getOptionAdmin('seo_home_keywords');
@@ -494,8 +466,6 @@ class StoreController extends CController
 	public function actionSearchArea()
 	{
 		unset($_SESSION['confirm_order_data']);
-		unset($_SESSION['kr_delivery_options']);
-		
 		
 		$seo_title=Yii::app()->functions->getOptionAdmin('seo_search');
 		$seo_meta=Yii::app()->functions->getOptionAdmin('seo_search_meta');
@@ -813,7 +783,6 @@ class StoreController extends CController
 		    	$merchant_delivery_distance='';
 		    	$delivery_fee=0; 
 		    	$distance_type_orig='';
-		    	$distance_type_raw='';
 		    			    			    	
 		    	/*double check if session has value else use cookie*/		    	
 		    	FunctionsV3::cookieLocation();
@@ -879,8 +848,7 @@ class StoreController extends CController
 		    	
 		    	/*CHECK IF MERCHANT HAS PROMO*/
 		    	$promo['enabled']=1;
-		    	//if($offer=FunctionsV3::getOffersByMerchant($merchant_id,2)){
-		    	if($offer=FunctionsV3::getOffersByMerchantNew($merchant_id)){
+		    	if($offer=FunctionsV3::getOffersByMerchant($merchant_id,2)){		    	   
 		    	   $promo['offer']=$offer;
 		    	   $promo['enabled']=2;
 		    	}		    			
@@ -922,14 +890,11 @@ class StoreController extends CController
 				
 				$food_viewing_private=getOption($merchant_id,'food_viewing_private');
 				
-				//dump($promo); die();
-				
 				$this->render('menu' ,array(
 				   'data'=>$res,
 				   'merchant_id'=>$merchant_id,
 				   'distance_type'=>$distance_type,
 				   'distance_type_orig'=>$distance_type_orig,
-				   'distance_type_raw'=>$distance_type_raw,
 				   'distance'=>$distance,
 				   'merchant_delivery_distance'=>$merchant_delivery_distance,
 				   'delivery_fee'=>$delivery_fee,
@@ -1060,8 +1025,6 @@ class StoreController extends CController
 	public function actionReceipt()
 	{
 		if ($data=Yii::app()->functions->getOrder2($_GET['id'])){
-			/*dump($data);
-			die();*/
 			$this->render('receipt',array(
 			  'data'=>$data
 			));
@@ -1323,7 +1286,7 @@ class StoreController extends CController
 	public function actionAutoResto()
 	{		
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="SELECT restaurant_name
 		FROM
@@ -1350,7 +1313,7 @@ class StoreController extends CController
 	public function actionAutoStreetName()
 	{
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="SELECT street
 		FROM
@@ -1378,7 +1341,7 @@ class StoreController extends CController
 	public function actionAutoCategory()
 	{
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="SELECT cuisine_name
 		FROM
@@ -1406,7 +1369,7 @@ class StoreController extends CController
 	public function actionAutoFoodName()
 	{
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="SELECT item_name
 		FROM
@@ -1560,7 +1523,7 @@ class StoreController extends CController
 					
 					         
 							if ( $res['transaction_type']=="renew"){
-                                header('Location: '.Yii::app()->request->baseUrl."/store/renewsuccesful");
+                                header('Location: '.Yii::app()->request->baseUrl."/store/renewSuccesful");
                             } else {
                    header('Location: '.Yii::app()->request->baseUrl."/store/merchantsignup/Do/step4/token/$my_token"); 
                             }
@@ -1914,7 +1877,7 @@ class StoreController extends CController
 	public function actionAutoZipcode()
 	{		
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="
 		SELECT DISTINCT zipcode,area,city FROM
@@ -1940,7 +1903,7 @@ class StoreController extends CController
 	public function actionAutoPostAddress()
 	{
 		$datas='';
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="
 		SELECT * FROM
@@ -2227,7 +2190,7 @@ class StoreController extends CController
 		  'message'=>t("Something went wrong during processing your request. Please try again later.")
 		));
 	}
-		
+	
 	public function actionrzrinit()
 	{				
 		$amount_to_pay=0; $error=''; $credentials='';
@@ -2563,7 +2526,6 @@ class StoreController extends CController
 		    	$distance='';
 		    	$merchant_delivery_distance='';
 		    	$delivery_fee=0;
-		    	$distance_type_raw='';
 		    			    			    	
 		    	/*double check if session has value else use cookie*/		    	
 		    	FunctionsV3::cookieLocation();
@@ -2639,7 +2601,6 @@ class StoreController extends CController
 			   'merchant_id'=>$merchant_id,
 			   'distance_type'=>$distance_type,
 			   'distance_type_orig'=>$distance_type_orig,
-			   'distance_type_raw'=>$distance_type_raw,
 			   'distance'=>$distance,
 			   'merchant_delivery_distance'=>$merchant_delivery_distance,
 			   'delivery_fee'=>$delivery_fee,
@@ -2654,7 +2615,7 @@ class StoreController extends CController
 	public function actionAutoFoodItem()
 	{
 		$datas='';		
-		$str=isset($_POST['search'])?addslashes($_POST['search']):'';
+		$str=isset($_POST['search'])?$_POST['search']:'';
 		$db_ext=new DbExt;
 		$stmt="SELECT item_name
 		FROM
@@ -3102,5 +3063,5 @@ class StoreController extends CController
 			));
 		}
 	}	
-	
+		
 } /*END CLASS*/

@@ -17,30 +17,6 @@ class AjaxController extends CController
 				$this->data=$_GET;	
 			}
 		}
-				
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/		
-		$validate_request_session = Yii::app()->params->validate_request_session;
-        $validate_request_csrf = Yii::app()->params->validate_request_csrf;	
-        
-		if($validate_request_session){
-			$session_id=session_id();		
-			if($this->data['yii_session_token']!=$session_id){			
-				$this->msg = Yii::t("default","Session token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}		
-		}
-				
-		if($validate_request_csrf){
-			if ( $this->data[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
-				$this->msg = Yii::t("default","Request token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}
-		}
-		
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/	
-				
 	}
 	
 	public function init()
@@ -164,22 +140,19 @@ class AjaxController extends CController
     
     public function actionUpdateClientCC()
     {
-    	
-    	$p = new CHtmlPurifier();
-    	
     	if (Yii::app()->functions->isClientLogin()){
     	$client_id=Yii::app()->functions->getClientId();    	    	
 	    	$params=array(
 	    	  'client_id'=>$client_id,
-	    	  'card_name'=> $p->purify($this->data['card_name']) ,
-	    	  'credit_card_number'=> $p->purify($this->data['credit_card_number']),
-	    	  'expiration_month'=> $p->purify($this->data['expiration_month']),
-	    	  'expiration_yr'=> $p->purify($this->data['expiration_yr']),
-	    	  'billing_address'=> $p->purify($this->data['billing_address']),
-	    	  'cvv'=> $p->purify($this->data['cvv']),
+	    	  'card_name'=>$this->data['card_name'],
+	    	  'credit_card_number'=>$this->data['credit_card_number'],
+	    	  'expiration_month'=>$this->data['expiration_month'],
+	    	  'expiration_yr'=>$this->data['expiration_yr'],
+	    	  'billing_address'=>$this->data['billing_address'],
+	    	  'cvv'=>$this->data['cvv'],
 	    	  'date_created'=>FunctionsV3::dateNow(),
 	    	  'ip_address'=>$_SERVER['REMOTE_ADDR']
-	    	);	    	
+	    	);
 	    	$DbExt=new DbExt;
 	    	if (isset($this->data['cc_id'])){
 	    		unset($params['date_created']);
@@ -476,5 +449,5 @@ class AjaxController extends CController
     	  'restriction_exit_link'=>getOptionA('age_restriction_exit_link'),
     	));
     }
-        
+    	
 } /*end class*/    

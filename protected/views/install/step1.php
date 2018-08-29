@@ -84,10 +84,6 @@ $host=$host=="/"?"":$host;
 $current_dir_folder=$host;
 $ht_file=$path."/.htaccess";    
 $current_dir_folder=str_replace("/index.php",'',$current_dir_folder);
-
-$windows_config='';
-$win_file=$path."/web.config";    
-
 if(!file_exists($ht_file)){
 	echo 'Creating .htaccess file<br/>';    
 	if ( $host=="htdocs" || $host=="public_html" || $host==""){
@@ -99,27 +95,6 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . /index.php [L]
 </IfModule>";  	
-
-$windows_config='
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-	<system.webServer>
-		<rewrite>
- <rules>
-     <rule name="Main Rule" stopProcessing="true">
-         <match url=".*" />
-         <conditions logicalGrouping="MatchAll">
-             <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
-             <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
-         </conditions>
-         <action type="Rewrite" url="index.php/{R:0}" />
-     </rule>
- </rules>
-</rewrite>
-	</system.webServer>
-</configuration>
-';
-
 } else {  
 	$current_dir_folder2=$current_dir_folder."/index.php";
 $htaccess="<IfModule mod_rewrite.c>
@@ -130,35 +105,9 @@ RewriteCond %{REQUEST_FILENAME} !-f
 RewriteCond %{REQUEST_FILENAME} !-d
 RewriteRule . $current_dir_folder2 [L]
 </IfModule>";
-
-$windows_config='
-<?xml version="1.0" encoding="UTF-8"?>
-<configuration>
-	<system.webServer>
-		<rewrite>
- <rules>
-     <rule name="Main Rule" stopProcessing="true">
-         <match url=".*" />
-         <conditions logicalGrouping="MatchAll">
-             <add input="{REQUEST_FILENAME}" matchType="IsFile" negate="true" />
-             <add input="{REQUEST_FILENAME}" matchType="IsDirectory" negate="true" />
-         </conditions>
-         <action type="Rewrite" url="'.$current_dir_folder.'/index.php/{R:0}" />
-     </rule>
- </rules>
-</rewrite>
-	</system.webServer>
-</configuration>
-';
-
 }
-	InstallHelper::dump($htaccess);	
+	InstallHelper::dump($htaccess);
 	InstallHelper::createFile($ht_file,$htaccess);
-			
-	if(!file_exists($win_file)){
-		InstallHelper::createFile($win_file,$windows_config);
-	}
-		
 }
 
 
@@ -169,36 +118,12 @@ if(!file_exists($path_to_upload)) {
   if (!@mkdir($path_to_upload,0777)){
   	  echo "Cannot create upload folder please create a folder manually"." $path_to_upload<br/>";
   	  $failed++;
-  } else {
-  	  $upload_ht_file = $path_to_upload."/.htaccess"; 
-$upload_ht_content='<Files *>
-SetHandler None
-</Files>
-
-<Files *.php>
-deny from all
-</Files>
-
-<Files *.html>
-deny from all
-</Files>
-
-<Files *.js>
-deny from all
-</Files>
-
-<Files *.cgi>
-deny from all
-</Files>
-  	  ';
-  	  InstallHelper::createFile($upload_ht_file,$upload_ht_content);
-  	  
   }		    
 }
 
 $path_helper=Yii::getPathOfAlias('webroot')."/cronHelper";
 
-echo 'Creating folder cronHelper<br/>';    
+echo 'Creating folder runtime<br/>';    
 if(!file_exists($path_helper)) {	
   if (!@mkdir($path_helper,0777)){
   	  echo "Cannot create upload folder please create a folder manually"." $path_helper<br/>";

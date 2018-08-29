@@ -18,29 +18,6 @@ class AjaxadminController extends CController
 			   $this->data=$_GET;
 			}
 		}
-				
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/		
-		$validate_request_session = Yii::app()->params->validate_request_session;
-        $validate_request_csrf = Yii::app()->params->validate_request_csrf;
-
-		if($validate_request_session){
-			$session_id=session_id();		
-			if($this->data['yii_session_token']!=$session_id){			
-				$this->msg = Yii::t("default","Session token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}		
-		}	
-					
-		if($validate_request_csrf){
-			if ( $this->data[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
-				$this->msg = Yii::t("default","Request token not valid");
-				$this->jsonResponse();
-				Yii::app()->end();
-			}		
-		}
-		/*ADD SECURITY VALIDATION TO ALL REQUEST*/	
-		
 		self::$db=new DbExt;
 	}	
 	
@@ -108,7 +85,18 @@ class AjaxadminController extends CController
 	
 	public function actionsaveTemplate()
 	{
-		
+
+		/*csrf validation*/
+    	if(!isset($_POST[Yii::app()->request->csrfTokenName])){
+    		$this->msg=t("The CSRF token is missing");
+    		return ;
+    	}	    
+    	if ( $_POST[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
+    		$this->msg=t("The CSRF token could not be verified");
+    		return ;
+    	}  	
+    	//dump($_POST);
+	    	
 		$lang=$this->data['template_lang_selection'];		
 		if ($lang=="0"){
 			$this->msg=t("Invalid language");
@@ -149,7 +137,16 @@ class AjaxadminController extends CController
 	
 	public function actionsaveTemplateSettings()
 	{				
-				
+		/*csrf validation*/
+    	if(!isset($_POST[Yii::app()->request->csrfTokenName])){
+    		$this->msg=t("The CSRF token is missing");
+    		return ;
+    	}	    
+    	if ( $_POST[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
+    		$this->msg=t("The CSRF token could not be verified");
+    		return ;
+    	}  	
+    	    	
 		$data=$this->data;
 		$order_stats = FunctionsV3::orderStatusTPL(2);		
 		$predefined=array(
@@ -249,7 +246,16 @@ class AjaxadminController extends CController
 	}
 	
 	public function actionnotiSettings()
-	{				
+	{		
+		/*csrf validation*/
+    	if(!isset($_POST[Yii::app()->request->csrfTokenName])){
+    		$this->msg=t("The CSRF token is missing");
+    		return ;
+    	}	    
+    	if ( $_POST[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
+    		$this->msg=t("The CSRF token could not be verified");
+    		return ;
+    	}  	
     		
 		Yii::app()->functions->updateOptionAdmin('noti_new_signup_email',
 		isset($this->data['noti_new_signup_email'])?$this->data['noti_new_signup_email']:'' );

@@ -245,7 +245,7 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	{
 		$DbExt=new DbExt;		
 		$where=$this->data['where'];
-		$and=" AND merchant_id=".FunctionsV3::q($this->data['mtid'])." ";
+		$and=" AND merchant_id='".$this->data['mtid']."'";
 		$and.=$this->data['and'];
 		
 				
@@ -356,7 +356,17 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	
 	public function merchantSignUp2()
 	{		
-									
+					
+		/*csrf validation*/
+		if(!isset($_POST[Yii::app()->request->csrfTokenName])){
+			$this->msg=t("The CSRF token is missing");
+			return ;
+		}	    
+		if ( $_POST[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
+			$this->msg=t("The CSRF token could not be verified");
+			return ;
+		}  	
+		
         /** check if admin has enabled the google captcha*/    	    	
     	if ( getOptionA('captcha_merchant_signup')==2){
     		if ( GoogleCaptcha::checkCredentials()){
@@ -588,7 +598,7 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		SELECT * FROM
 		{{ingredients}}
 		WHERE			
-		merchant_id=". FunctionsV3::q(Yii::app()->functions->getMerchantID()) ."
+		merchant_id='".Yii::app()->functions->getMerchantID()."'
 		ORDER BY ingredients_id  DESC
 		";
 		$connection=Yii::app()->db;
@@ -919,9 +929,9 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		if (isset($this->data['merchant_id'])){
 			if (!empty($this->data['merchant_id'])){
 				if (!empty($and)){
-					$and.=" AND merchant_id='".addslashes($this->data['merchant_id'])."'";
+					$and.=" AND merchant_id='".$this->data['merchant_id']."'";
 				} else {
-					$and=" WHERE merchant_id='".addslashes($this->data['merchant_id'])."'";
+					$and=" WHERE merchant_id='".$this->data['merchant_id']."'";
 				}
 			}
 		}	
@@ -2579,9 +2589,6 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	
 	public function addDish()
 	{		
-		
-	   $p = new CHtmlPurifier();
-		
 	   $Validator=new Validator;
 		$req=array(
 		  'dish_name'=>Yii::t("default","Dish name is required"),
@@ -2590,9 +2597,9 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$Validator->required($req,$this->data);
 		if ($Validator->validate()){
 			$params=array(
-			  'dish_name'=> $p->purify($this->data['dish_name']) ,
+			  'dish_name'=>$this->data['dish_name'],
 			  'photo'=>$this->data['spicydish'],
-			  'status'=>$p->purify($this->data['status']),
+			  'status'=>$this->data['status'],
 			  'date_created'=>FunctionsV3::dateNow(),
 			  'ip_address'=>$_SERVER['REMOTE_ADDR']
 			);			
@@ -2806,19 +2813,17 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      
      public function addAddressBook()
      {     	
-     	$p = new CHtmlPurifier();
-     	
      	$params=array(
      	  'client_id'=>Yii::app()->functions->getClientId(),
-     	  'street'=> $p->purify($this->data['street']) ,
-     	  'city'=>$p->purify($this->data['city']),
-     	  'state'=>$p->purify($this->data['state']),
-     	  'zipcode'=>$p->purify($this->data['zipcode']),
-     	  'location_name'=>isset($this->data['location_name'])?$p->purify($this->data['location_name']):'',
+     	  'street'=>$this->data['street'],
+     	  'city'=>$this->data['city'],
+     	  'state'=>$this->data['state'],
+     	  'zipcode'=>$this->data['zipcode'],
+     	  'location_name'=>isset($this->data['location_name'])?$this->data['location_name']:'',
      	  'as_default'=>isset($this->data['as_default'])?$this->data['as_default']:1,
      	  'date_created'=>FunctionsV3::dateNow(),
      	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-     	  'country_code'=>$p->purify($this->data['country_code'])
+     	  'country_code'=>$this->data['country_code']
      	);     	
      	
      	if (!isset($this->data['as_default'])){
@@ -3481,13 +3486,7 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	
 	public function getCartCount()
 	{
-		//$count=count($_SESSION['kr_item']);
-		$count = 0;		
-		if(isset($_SESSION['kr_item'])  && count($_SESSION['kr_item']>=1)){
-		   foreach ($_SESSION['kr_item'] as $val) {		   	 
-		   	 $count+= $val['qty'];
-		   }
-		}
+		$count=count($_SESSION['kr_item']);
 		if($count>0){
 			$this->code=1;
 			$this->msg="OK";
@@ -3560,11 +3559,6 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 					  'application.modules.driver.components.*',
 				    ));
 				    Driver::addToTask($order_id);
-				}
-				
-				/*UPDATE POINTS BASED ON ORDER STATUS*/
-				if (FunctionsV3::hasModuleAddon("pointsprogram")){
-					PointsProgram::updateOrderBasedOnStatus($this->data['status'],$order_id);
 				}
 	    		
 	    	} else $this->msg=Yii::t("default","ERROR: cannot update order.");	    	
@@ -3706,55 +3700,9 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	    		}	    
 	    		break;
 	    
-	    	case "paymill":	    		
-	    		if ( $credentials=KPaymill::getCredentials($mtid)){ 	    			
-	    			if($credentials['card_fee1']>0.001){
-	    			  $credentials['card_fee2']=is_numeric($credentials['card_fee2'])?$credentials['card_fee2']:0;
-	    			  $fee = $this->data['x_subtotal']*($credentials['card_fee1']/100)+$credentials['card_fee2'];
-	    			  $params['card_fee']=$fee;
-	    			}	    			    			
-	    		}	    		
-	    		break;
-	    		
-	    	case "strip_ideal":	
-	    	   if ( $credentials=StripeIdeal::getCredentials($mtid)){	    	   	   
-	    	   	   if(is_numeric($credentials['ideal_fee'])){
-		    	   	   if($credentials['ideal_fee']>=0.0001){
-		    	   	   	  $params['card_fee']=$credentials['ideal_fee'];
-		    	   	   }	    	   
-	    	   	   }
-	    	   }
-	    	   break;
-	    		
-	    	case "mol":
-	    		if ($credentials=MollieClass::getCredentials($mtid)){
-	    			if(is_numeric($credentials['card_fee'])){
-	    				if($credentials['card_fee']>=0.0001){
-	    					$params['card_fee']=$credentials['card_fee'];
-	    				}
-	    			}
-	    		}
-	    	   break;
-	    		   
-	    	case "wirecard":   
-	    	   if ($credentials = WireCard::getCredentials($mtid)){	    	   	  
-	    	   	  if(is_numeric($credentials['fee1'])){
-	    	   	  	 if($credentials['fee1']>0.0001){	    	   	  	 	
-	    	   	  	 	$credentials['fee2']=is_numeric($credentials['fee2'])?$credentials['fee2']:0;
-	    			    $fee = $this->data['x_subtotal']*($credentials['fee1']/100)+$credentials['fee2'];
-	    			    $params['card_fee']=$fee; 
-	    	   	  	 }	    	   	  
-	    	   	  }
-	    	   }	    
-	    	   break;
-	    	   
 	    	default:
 	    		break;
 	    }	    
-	    
-	    /*dump($params);
-	    die();*/
-	    	    
 	    $_SESSION['confirm_order_data']=$params;	    
 	    $this->code=1; $this->msg=t("Please wait while we redirect you");
 	    	    
@@ -4260,614 +4208,6 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		 } else echo t("No recods found");
 	     Yii::app()->end();	
 	}
-	
-	public function AdminIpaySettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_ipay_enabled",
-	    isset($this->data['admin_ipay_enabled'])?$this->data['admin_ipay_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_ipay_merchant_key",
-	    isset($this->data['admin_ipay_merchant_key'])?$this->data['admin_ipay_merchant_key']:'');
-	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-		
-	
-	public function MerchantIpaySettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_ipay_enabled",
-    	isset($this->data['merchant_ipay_enabled'])?$this->data['merchant_ipay_enabled']:'',$mtid);
-    	            
-    	Yii::app()->functions->updateOption("merchant_ipay_merchant_key",
-    	isset($this->data['merchant_ipay_merchant_key'])?$this->data['merchant_ipay_merchant_key']:'',$mtid); 
-		
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
 
-	public function AdminPiPaySettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_pipay_enabled",
-	    isset($this->data['admin_pipay_enabled'])?$this->data['admin_pipay_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_pipay_merchant_id",
-	    isset($this->data['admin_pipay_merchant_id'])?$this->data['admin_pipay_merchant_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_pipay_device_id",
-	    isset($this->data['admin_pipay_device_id'])?$this->data['admin_pipay_device_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_pipay_store_id",
-	    isset($this->data['admin_pipay_store_id'])?$this->data['admin_pipay_store_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_pipay_mode",
-	    isset($this->data['admin_pipay_mode'])?$this->data['admin_pipay_mode']:'');
-	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function MerchantPiPaySettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_pipay_enabled",
-    	isset($this->data['merchant_pipay_enabled'])?$this->data['merchant_pipay_enabled']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_pipay_merchant_id",
-    	isset($this->data['merchant_pipay_merchant_id'])?$this->data['merchant_pipay_merchant_id']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_pipay_device_id",
-    	isset($this->data['merchant_pipay_device_id'])?$this->data['merchant_pipay_device_id']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_pipay_store_id",
-    	isset($this->data['merchant_pipay_store_id'])?$this->data['merchant_pipay_store_id']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_pipay_mode",
-    	isset($this->data['merchant_pipay_mode'])?$this->data['merchant_pipay_mode']:'',$mtid); 
-		
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");		
-	}
-	
-	public function AdminHubtelPaymentSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_hubtel_enabled",
-	    isset($this->data['admin_hubtel_enabled'])?$this->data['admin_hubtel_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_client_id",
-	    isset($this->data['admin_hubtel_client_id'])?$this->data['admin_hubtel_client_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_client_secret",
-	    isset($this->data['admin_hubtel_client_secret'])?$this->data['admin_hubtel_client_secret']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_accountno",
-	    isset($this->data['admin_hubtel_accountno'])?$this->data['admin_hubtel_accountno']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_channel",
-	    isset($this->data['admin_hubtel_channel'])?$this->data['admin_hubtel_channel']:'');
-	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-
-	public function MerchantHubtelPaymentSettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_hubtel_enabled",
-    	isset($this->data['merchant_hubtel_enabled'])?$this->data['merchant_hubtel_enabled']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_hubtel_client_id",
-    	isset($this->data['merchant_hubtel_client_id'])?$this->data['merchant_hubtel_client_id']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_hubtel_client_secret",
-    	isset($this->data['merchant_hubtel_client_secret'])?$this->data['merchant_hubtel_client_secret']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_hubtel_accountno",
-    	isset($this->data['merchant_hubtel_accountno'])?$this->data['merchant_hubtel_accountno']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_hubtel_channel",
-    	isset($this->data['merchant_hubtel_channel'])?$this->data['merchant_hubtel_channel']:'',$mtid); 
-		
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");		
-	}
-	
-	public function SofortAdminSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_sofort_enabled",
-	    isset($this->data['admin_sofort_enabled'])?$this->data['admin_sofort_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_sofort_config_key",
-	    isset($this->data['admin_sofort_config_key'])?$this->data['admin_sofort_config_key']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_sofort_lang",
-	    isset($this->data['admin_sofort_lang'])?$this->data['admin_sofort_lang']:'');
-	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function SofortMerchantSettings()
-	{
-
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_sofort_enabled",
-    	isset($this->data['merchant_sofort_enabled'])?$this->data['merchant_sofort_enabled']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_sofort_config_key",
-    	isset($this->data['merchant_sofort_config_key'])?$this->data['merchant_sofort_config_key']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_sofort_lang",
-    	isset($this->data['merchant_sofort_lang'])?$this->data['merchant_sofort_lang']:'',$mtid); 
-		
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");		
-		
-	}
-	
-	public function JampieSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_jampie_enabled",
-	    isset($this->data['admin_jampie_enabled'])?$this->data['admin_jampie_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_jampie_email",
-	    isset($this->data['admin_jampie_email'])?$this->data['admin_jampie_email']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function MerchantJampieSettings()
-	{
-
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_jampie_enabled",
-    	isset($this->data['merchant_jampie_enabled'])?$this->data['merchant_jampie_enabled']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_jampie_email",
-    	isset($this->data['merchant_jampie_email'])?$this->data['merchant_jampie_email']:'',$mtid); 
-    	    	
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");		
-		
-	}
-	
-	public function MerchantPointsSettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("mt_disabled_pts",
-    	isset($this->data['mt_disabled_pts'])?$this->data['mt_disabled_pts']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_earn_points_status",
-    	isset($this->data['mt_pts_earn_points_status'])?json_encode($this->data['mt_pts_earn_points_status']):'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_earning_points",
-    	isset($this->data['mt_pts_earning_points'])?$this->data['mt_pts_earning_points']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_earning_points_value",
-    	isset($this->data['mt_pts_earning_points_value'])?$this->data['mt_pts_earning_points_value']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_disabled_redeem",
-    	isset($this->data['mt_pts_disabled_redeem'])?$this->data['mt_pts_disabled_redeem']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_redeeming_point",
-    	isset($this->data['mt_pts_redeeming_point'])?$this->data['mt_pts_redeeming_point']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_redeeming_point_value",
-    	isset($this->data['mt_pts_redeeming_point_value'])?$this->data['mt_pts_redeeming_point_value']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_points_apply_order_amt",
-    	isset($this->data['mt_points_apply_order_amt'])?$this->data['mt_points_apply_order_amt']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_points_minimum",
-    	isset($this->data['mt_points_minimum'])?$this->data['mt_points_minimum']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_points_max",
-    	isset($this->data['mt_points_max'])?$this->data['mt_points_max']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_points_based_earn",
-    	isset($this->data['mt_points_based_earn'])?$this->data['mt_points_based_earn']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_earn_above_amount",
-    	isset($this->data['mt_pts_earn_above_amount'])?$this->data['mt_pts_earn_above_amount']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_enabled_add_voucher",
-    	isset($this->data['mt_pts_enabled_add_voucher'])?$this->data['mt_pts_enabled_add_voucher']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("mt_pts_enabled_offers_discount",
-    	isset($this->data['mt_pts_enabled_offers_discount'])?$this->data['mt_pts_enabled_offers_discount']:'',$mtid); 
-    	    	
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");		
-	}
-	
-	public function WingSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_wing_enabled",
-	    isset($this->data['admin_wing_enabled'])?$this->data['admin_wing_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_loginid",
-	    isset($this->data['admin_wing_loginid'])?$this->data['admin_wing_loginid']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_mode",
-	    isset($this->data['admin_wing_mode'])?$this->data['admin_wing_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_password",
-	    isset($this->data['admin_wing_password'])?$this->data['admin_wing_password']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_biller",
-	    isset($this->data['admin_wing_biller'])?$this->data['admin_wing_biller']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_web_sandbox_url",
-	    isset($this->data['admin_wing_web_sandbox_url'])?$this->data['admin_wing_web_sandbox_url']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_web_live_url",
-	    isset($this->data['admin_wing_web_live_url'])?$this->data['admin_wing_web_live_url']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_mobile_sandbox_url",
-	    isset($this->data['admin_wing_mobile_sandbox_url'])?$this->data['admin_wing_mobile_sandbox_url']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wing_mobile_live_url",
-	    isset($this->data['admin_wing_mobile_live_url'])?$this->data['admin_wing_mobile_live_url']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function MerchantWingSettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_wing_enabled",
-    	isset($this->data['merchant_wing_enabled'])?$this->data['merchant_wing_enabled']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_wing_mode",
-    	isset($this->data['merchant_wing_mode'])?$this->data['merchant_wing_mode']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_wing_loginid",
-    	isset($this->data['merchant_wing_loginid'])?$this->data['merchant_wing_loginid']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_wing_password",
-    	isset($this->data['merchant_wing_password'])?$this->data['merchant_wing_password']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_wing_biller",
-    	isset($this->data['merchant_wing_biller'])?$this->data['merchant_wing_biller']:'',$mtid); 
-    	
-		$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function PaymillSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_paymill_enabled",
-	    isset($this->data['admin_paymill_enabled'])?$this->data['admin_paymill_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_mode",
-	    isset($this->data['admin_paymill_mode'])?$this->data['admin_paymill_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_test_private_key",
-	    isset($this->data['admin_paymill_test_private_key'])?$this->data['admin_paymill_test_private_key']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_test_public_key",
-	    isset($this->data['admin_paymill_test_public_key'])?$this->data['admin_paymill_test_public_key']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_live_private_key",
-	    isset($this->data['admin_paymill_live_private_key'])?$this->data['admin_paymill_live_private_key']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_live_public_key",
-	    isset($this->data['admin_paymill_live_public_key'])?$this->data['admin_paymill_live_public_key']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_card_fee1",
-	    isset($this->data['admin_paymill_card_fee1'])?$this->data['admin_paymill_card_fee1']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_paymill_card_fee2",
-	    isset($this->data['admin_paymill_card_fee2'])?$this->data['admin_paymill_card_fee2']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function PaymillMerchantSettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_paymill_enabled",
-    	isset($this->data['merchant_paymill_enabled'])?$this->data['merchant_paymill_enabled']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_mode",
-    	isset($this->data['merchant_paymill_mode'])?$this->data['merchant_paymill_mode']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_test_private_key",
-    	isset($this->data['merchant_paymill_test_private_key'])?$this->data['merchant_paymill_test_private_key']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_test_public_key",
-    	isset($this->data['merchant_paymill_test_public_key'])?$this->data['merchant_paymill_test_public_key']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_live_private_key",
-    	isset($this->data['merchant_paymill_live_private_key'])?$this->data['merchant_paymill_live_private_key']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_live_public_key",
-    	isset($this->data['merchant_paymill_live_public_key'])?$this->data['merchant_paymill_live_public_key']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_card_fee1",
-    	isset($this->data['merchant_paymill_card_fee1'])?$this->data['merchant_paymill_card_fee1']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_paymill_card_fee2",
-    	isset($this->data['merchant_paymill_card_fee2'])?$this->data['merchant_paymill_card_fee2']:'',$mtid);     	
-    	
-		$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function IpayAfricaSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_enabled",
-	    isset($this->data['admin_ipay_africa_enabled'])?$this->data['admin_ipay_africa_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_mode",
-	    isset($this->data['admin_ipay_africa_mode'])?$this->data['admin_ipay_africa_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_vendor_id",
-	    isset($this->data['admin_ipay_africa_vendor_id'])?$this->data['admin_ipay_africa_vendor_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_hashkey",
-	    isset($this->data['admin_ipay_africa_hashkey'])?$this->data['admin_ipay_africa_hashkey']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("mpesa_content",
-	    isset($this->data['mpesa_content'])?$this->data['mpesa_content']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("airtel_content",
-	    isset($this->data['airtel_content'])?$this->data['airtel_content']:'');
-
-	    Yii::app()->functions->updateOptionAdmin("ipay_africa_enabled_payment",
-	    isset($this->data['ipay_africa_enabled_payment'])?json_encode($this->data['ipay_africa_enabled_payment']):'');	    
-	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function MerchantIpayAfricaSettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();
-		
-		Yii::app()->functions->updateOption("merchant_ipay_africa_enabled",
-    	isset($this->data['merchant_ipay_africa_enabled'])?$this->data['merchant_ipay_africa_enabled']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_ipay_africa_mode",
-    	isset($this->data['merchant_ipay_africa_mode'])?$this->data['merchant_ipay_africa_mode']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_ipay_africa_vendor_id",
-    	isset($this->data['merchant_ipay_africa_vendor_id'])?$this->data['merchant_ipay_africa_vendor_id']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_ipay_africa_hashkey",
-    	isset($this->data['merchant_ipay_africa_hashkey'])?$this->data['merchant_ipay_africa_hashkey']:'',$mtid);  
-    	
-		$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function adminDixiPaySettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_dixipay_enabled",
-	    isset($this->data['admin_dixipay_enabled'])?$this->data['admin_dixipay_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_mode",
-	    isset($this->data['admin_dixipay_mode'])?$this->data['admin_dixipay_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_username",
-	    isset($this->data['admin_dixipay_username'])?$this->data['admin_dixipay_username']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_password",
-	    isset($this->data['admin_dixipay_password'])?$this->data['admin_dixipay_password']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_account_code",
-	    isset($this->data['admin_dixipay_account_code'])?$this->data['admin_dixipay_account_code']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_sandbox_url",
-	    isset($this->data['admin_dixipay_sandbox_url'])?$this->data['admin_dixipay_sandbox_url']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_production_url",
-	    isset($this->data['admin_dixipay_production_url'])?$this->data['admin_dixipay_production_url']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function merchantDixiPaySettings()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();		
-		
-		Yii::app()->functions->updateOption("merchant_dixipay_mode",
-    	isset($this->data['merchant_dixipay_mode'])?$this->data['merchant_dixipay_mode']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_dixipay_enabled",
-    	isset($this->data['merchant_dixipay_enabled'])?$this->data['merchant_dixipay_enabled']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_dixipay_username",
-    	isset($this->data['merchant_dixipay_username'])?$this->data['merchant_dixipay_username']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_dixipay_password",
-    	isset($this->data['merchant_dixipay_password'])?$this->data['merchant_dixipay_password']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_dixipay_account_code",
-    	isset($this->data['merchant_dixipay_account_code'])?$this->data['merchant_dixipay_account_code']:'',$mtid);  
-    	
-		$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function WireCardSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_wirecard_enabled",
-	    isset($this->data['admin_wirecard_enabled'])?$this->data['admin_wirecard_enabled']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_mode",
-	    isset($this->data['admin_wirecard_mode'])?$this->data['admin_wirecard_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_customer_id",
-	    isset($this->data['admin_wirecard_customer_id'])?$this->data['admin_wirecard_customer_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wiredcard_shopid",
-	    isset($this->data['admin_wiredcard_shopid'])?$this->data['admin_wiredcard_shopid']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_secret",
-	    isset($this->data['admin_wirecard_secret'])?$this->data['admin_wirecard_secret']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_customer_id_live",
-	    isset($this->data['admin_wirecard_customer_id_live'])?$this->data['admin_wirecard_customer_id_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wiredcard_shopid_live",
-	    isset($this->data['admin_wiredcard_shopid_live'])?$this->data['admin_wiredcard_shopid_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_secret_live",
-	    isset($this->data['admin_wirecard_secret_live'])?$this->data['admin_wirecard_secret_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_display_text",
-	    isset($this->data['admin_wirecard_display_text'])?$this->data['admin_wirecard_display_text']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_lang",
-	    isset($this->data['admin_wirecard_lang'])?$this->data['admin_wirecard_lang']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_fee_1",
-	    isset($this->data['admin_wirecard_fee_1'])?$this->data['admin_wirecard_fee_1']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_fee_2",
-	    isset($this->data['admin_wirecard_fee_2'])?$this->data['admin_wirecard_fee_2']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function WireCardSettingsMerchant()
-	{
-		$mtid=Yii::app()->functions->getMerchantID();		
-		
-		Yii::app()->functions->updateOption("merchant_wirecard_enabled",
-    	isset($this->data['merchant_wirecard_enabled'])?$this->data['merchant_wirecard_enabled']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_mode",
-    	isset($this->data['merchant_wirecard_mode'])?$this->data['merchant_wirecard_mode']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_customer_id",
-    	isset($this->data['merchant_wirecard_customer_id'])?$this->data['merchant_wirecard_customer_id']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wiredcard_shopid",
-    	isset($this->data['merchant_wiredcard_shopid'])?$this->data['merchant_wiredcard_shopid']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_secret",
-    	isset($this->data['merchant_wirecard_secret'])?$this->data['merchant_wirecard_secret']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_customer_id_live",
-    	isset($this->data['merchant_wirecard_customer_id_live'])?$this->data['merchant_wirecard_customer_id_live']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wiredcard_shopid_live",
-    	isset($this->data['merchant_wiredcard_shopid_live'])?$this->data['merchant_wiredcard_shopid_live']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_secret_live",
-    	isset($this->data['merchant_wirecard_secret_live'])?$this->data['merchant_wirecard_secret_live']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_display_text",
-    	isset($this->data['merchant_wirecard_display_text'])?$this->data['merchant_wirecard_display_text']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_lang",
-    	isset($this->data['merchant_wirecard_lang'])?$this->data['merchant_wirecard_lang']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_fee_1",
-    	isset($this->data['merchant_wirecard_fee_1'])?$this->data['merchant_wirecard_fee_1']:'',$mtid);  
-    	
-    	Yii::app()->functions->updateOption("merchant_wirecard_fee_2",
-    	isset($this->data['merchant_wirecard_fee_2'])?$this->data['merchant_wirecard_fee_2']:'',$mtid);  
-    	
-		$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function payulatamSettings()
-	{
-		Yii::app()->functions->updateOptionAdmin("admin_payulatam_enabled",
-	    isset($this->data['admin_payulatam_enabled'])?$this->data['admin_payulatam_enabled']:'');
-	    
-		Yii::app()->functions->updateOptionAdmin("admin_payulatam_mode",
-	    isset($this->data['admin_payulatam_mode'])?$this->data['admin_payulatam_mode']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apikey",
-	    isset($this->data['admin_payulatam_apikey'])?$this->data['admin_payulatam_apikey']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apilogin",
-	    isset($this->data['admin_payulatam_apilogin'])?$this->data['admin_payulatam_apilogin']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_mtid",
-	    isset($this->data['admin_payulatam_mtid'])?$this->data['admin_payulatam_mtid']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apikey_live",
-	    isset($this->data['admin_payulatam_apikey_live'])?$this->data['admin_payulatam_apikey_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apilogin_live",
-	    isset($this->data['admin_payulatam_apilogin_live'])?$this->data['admin_payulatam_apilogin_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_mtid_live",
-	    isset($this->data['admin_payulatam_mtid_live'])?$this->data['admin_payulatam_mtid_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_account_id",
-	    isset($this->data['admin_payulatam_account_id'])?$this->data['admin_payulatam_account_id']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_account_id_live",
-	    isset($this->data['admin_payulatam_account_id_live'])?$this->data['admin_payulatam_account_id_live']:'');
-	    
-	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_lang",
-	    isset($this->data['admin_payulatam_lang'])?$this->data['admin_payulatam_lang']:'');
-	    	    
-	    $this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
-	
-	public function payulatamMerchantSettings()
-	{
-		
-		$mtid=Yii::app()->functions->getMerchantID();		
-		
-		Yii::app()->functions->updateOption("merchant_payulatam_enabled",
-    	isset($this->data['merchant_payulatam_enabled'])?$this->data['merchant_payulatam_enabled']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_mode",
-    	isset($this->data['merchant_payulatam_mode'])?$this->data['merchant_payulatam_mode']:'',$mtid);     	
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_apikey",
-    	isset($this->data['merchant_payulatam_apikey'])?$this->data['merchant_payulatam_apikey']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_apilogin",
-    	isset($this->data['merchant_payulatam_apilogin'])?$this->data['merchant_payulatam_apilogin']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_mtid",
-    	isset($this->data['merchant_payulatam_mtid'])?$this->data['merchant_payulatam_mtid']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_apikey_live",
-    	isset($this->data['merchant_payulatam_apikey_live'])?$this->data['merchant_payulatam_apikey_live']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_apilogin_live",
-    	isset($this->data['merchant_payulatam_apilogin_live'])?$this->data['merchant_payulatam_apilogin_live']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_mtid_live",
-    	isset($this->data['merchant_payulatam_mtid_live'])?$this->data['merchant_payulatam_mtid_live']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_account_id",
-    	isset($this->data['merchant_payulatam_account_id'])?$this->data['merchant_payulatam_account_id']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_account_id_live",
-    	isset($this->data['merchant_payulatam_account_id_live'])?$this->data['merchant_payulatam_account_id_live']:'',$mtid); 
-    	
-    	Yii::app()->functions->updateOption("merchant_payulatam_lang",
-    	isset($this->data['merchant_payulatam_lang'])?$this->data['merchant_payulatam_lang']:'',$mtid); 
-		
-    	$this->code=1;
-		$this->msg=Yii::t("default","Settings saved.");
-	}
 	
 } /*END CLASS*/

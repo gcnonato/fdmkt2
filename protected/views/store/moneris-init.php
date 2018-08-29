@@ -55,7 +55,7 @@ if (isset($_POST)){
 	    	//dump("cvv_response : $cvv_response");
 	    		    		    	
 		    if ( in_array($resp->getResponseCode(),Moneris::approvedResponsenCode() )){
-		    	//if ( $cvv_response=="M" || $cvv_response=="1M"){
+		    	if ( $cvv_response=="M" || $cvv_response=="1M"){
 		    		
 		    		$full_response=json_encode($resp->responseData);
 		    		
@@ -93,7 +93,7 @@ if (isset($_POST)){
 			        
 			        Yii::app()->end();
 			        
-		    	//} else $error= Moneris::CvvResult( $cvv_response );
+		    	} else $error= Moneris::CvvResult( $cvv_response );
 		    } else $error=$resp->getMessage();	    	
 	    	
 	   } else $error=t("Credentials not yet set");

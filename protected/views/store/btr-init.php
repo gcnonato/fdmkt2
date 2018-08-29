@@ -107,7 +107,7 @@ if ( $res=Yii::app()->functions->getMerchantByToken($my_token)){
 				  ),'merchant_id',$res['merchant_id']);
 	   	   		   
 		   if (isset($_GET['renew'])){
-               $redirect= Yii::app()->createUrl('store/renewsuccesful');
+               $redirect= Yii::app()->createUrl('store/renewSuccesful');
            } else {
            	   /*SEND EMAIL*/
            	   FunctionsV3::sendWelcomeEmailMerchant($res);
