@@ -40,12 +40,14 @@ class AdminController extends CController
 	    		$this->redirect(Yii::app()->createUrl('/admin/noaccess'));
 	    	}
 	    }	    
-	    
+	    	    	    
+	    //echo Yii::app()->language;
 	    return true;	    
     }
 	
     public function init()
-	{		
+	{				
+			
 		 $name=Yii::app()->functions->getOptionAdmin('website_title');
 		 if (!empty($name)){		 	
 		 	 Yii::app()->name = $name;
@@ -55,7 +57,46 @@ class AdminController extends CController
 		 $website_timezone=Yii::app()->functions->getOptionAdmin("website_timezone");		 
 		 if (!empty($website_timezone)){		 	
 		 	Yii::app()->timeZone=$website_timezone;
-		 }		 				 
+		 }		 		
+
+		 $ajax_admin=Yii::app()->createUrl('/ajaxadmin');
+		 
+		 $cs = Yii::app()->getClientScript();
+		 $cs->registerScript(
+		  'ajax_admin',
+		  "var ajax_admin='$ajax_admin';",
+		  CClientScript::POS_HEAD
+		);
+		
+		FunctionsV3::handleLanguage();
+		$lang=Yii::app()->language;		
+		$cs->registerScript(
+		  'lang',
+		  "var lang='$lang';",
+		  CClientScript::POS_HEAD
+		);
+		
+		$order_notification=getOptionA('admin_disabled_order_notification');
+		$cs->registerScript(
+		  'order_notification',
+		  "var order_notification='$order_notification';",
+		  CClientScript::POS_HEAD
+		);
+		
+		$order_notification_sounds=getOptionA('admin_disabled_order_notification_sounds');
+		$cs->registerScript(
+		  'order_notification_sounds',
+		  "var order_notification_sounds='$order_notification_sounds';",
+		  CClientScript::POS_HEAD
+		);
+		
+		$yii_session_token=session_id();		
+		$cs->registerScript(
+		  'yii_session_token',
+		 "var yii_session_token='$yii_session_token';",
+		  CClientScript::POS_HEAD
+		);
+		
 	}
 	
 	public function actionDashboard()
@@ -64,6 +105,7 @@ class AdminController extends CController
 			$this->layout='login_tpl';
 			$this->render('login');
 		} else {						
+			
 			$this->crumbsTitle=Yii::t("default","Dashboard");		
 			$this->render('dashboard');			
 		}		
@@ -77,6 +119,7 @@ class AdminController extends CController
 		} else {						
 			$aa_access=Yii::app()->functions->AAccess();
 			if (in_array('dashboard',(array)$aa_access)){
+								
 				$this->crumbsTitle=Yii::t("default","Dashboard");		
 				$this->render('dashboard');			
 			} else $this->render('error',array('msg'=>t("Sorry but you don't have access to dashboard")));			
@@ -119,14 +162,16 @@ class AdminController extends CController
 		/**add ons */     
 		
 		$class=new AjaxAdmin;
-	    $class->data=$data;
+	    $class->data=$data;	 	    
 	    if (method_exists($class,$data['action'])){
-	    	$class->$data['action']();	    
+	    	 $action_name=$data['action'];	    	 
+	    	 $class->$action_name();
 	         echo $class->output();
 	    } else {
 	    	 $class=new Ajax;
-	    	 $class->data=$data;
-	    	 $class->$data['action']();	    
+	    	 $class->data=$data;	    	 
+	    	 $action_name=$data['action'];	    	 
+	    	 $class->$action_name();
 	         echo $class->output();
 	    }
 	    yii::app()->end();
@@ -267,6 +312,7 @@ class AdminController extends CController
 	
 	public function actionUserList()
 	{
+		
 		if (isset($_GET['Do'])){
 			$this->crumbsTitle=Yii::t("default","User Add");
 		    $this->render('user-add');
@@ -297,18 +343,17 @@ class AdminController extends CController
 	
 	public function actionManageLanguage()
 	{
-		if (isset($_GET['Do'])){
-			if ($_GET['Do']=="Add"){
-			   $this->crumbsTitle=Yii::t("default","Manage Language Add");
-		       $this->render('manage-language-add');
-			} else {
-				$this->crumbsTitle=Yii::t("default","Manage Language Settings");
-		        $this->render('manage-language-settings');
-			}
-		} else {
-		   $this->crumbsTitle=Yii::t("default","Manage Language");
-		   $this->render('manage-language-list');
+		
+		$set_lang_id=getOptionA("set_lang_id");
+		if ( !empty($set_lang_id)){
+			$set_lang_id=json_decode($set_lang_id);
 		}
+		
+		$this->crumbsTitle=t("Manage Language Settings");
+		$this->render('manage-language-new',array(
+		  'langauge_list'=>FunctionsV3::getLanguageList(false),
+		  'set_lang_id'=>$set_lang_id
+		));
 	}
 	
 	public function actionSeo()
@@ -326,7 +371,9 @@ class AdminController extends CController
 	public function actionSmsSettings()
 	{
 		$this->crumbsTitle=Yii::t("default","SMS Settings");
-		$this->render('sms-settings');
+		$this->render('sms-settings',array(
+		 'provider_selected'=>Yii::app()->functions->getOptionAdmin('sms_provider')
+		));
 	}	
 	
 	public function actionSmsPackage()
@@ -346,21 +393,22 @@ class AdminController extends CController
 	}	
 
 	public function actionSetlanguage()
-	{		
-		if (isset($_GET['Id'])){			
-			Yii::app()->request->cookies['kr_admin_lang_id'] = new CHttpCookie('kr_admin_lang_id', $_GET['Id']);						
-			$id=Yii::app()->functions->getAdminId();
-			Yii::app()->functions->updateAdminLanguage($id,$_GET['Id']);
-			
-			if (!empty($_SERVER['HTTP_REFERER'])){
-					header('Location: '.$_SERVER['HTTP_REFERER']);
-					die();
-		    } else {
-		    	header('Location: '.Yii::app()->request->baseUrl);
-		    	die();
-		    }
+	{				
+		$redirect='';
+		$referrer = isset($_SERVER['HTTP_REFERER'])?$_SERVER['HTTP_REFERER']:'';
+		if(isset($_GET['lang'])){
+			if (!empty($referrer)){
+				$redirect=$referrer;
+			} else $redirect=Yii::app()->createUrl('admin/dashboard',array(
+			  'lang'=>$_GET['lang']
+			));
+		} else {
+			if (!empty($referrer)){
+				$redirect=$referrer;
+			} else $redirect=Yii::app()->createUrl('admin/dashboard');
 		}
-		header('Location: '.Yii::app()->request->baseUrl);
+		
+		$this->redirect($redirect);
 	}	
 	
 	public function actionViewFile()
@@ -391,7 +439,7 @@ class AdminController extends CController
 	
 	public function actionSMStransaction()
 	{
-		if (isset($_GET['Do'])){	
+		if (isset($_GET['do'])){	
 			$this->crumbsTitle=Yii::t("default","SMS Transaction Update");
 		    $this->render('sms-transaction-add');
 		} else {	
@@ -420,13 +468,13 @@ class AdminController extends CController
 	
 	public function actionAnalytics()
 	{
-		$this->crumbsTitle=Yii::t("default","Google Analytics");		
+		$this->crumbsTitle=Yii::t("default","Custom Code & Google Analytics");		
 		$this->render('analytics-settings');
 	}
 	
 	public function actionCustomerlist()
 	{
-		if (isset($_GET['Do'])){	
+		if (isset($_GET['do'])){	
 			$this->crumbsTitle=Yii::t("default","Customer List");		
 		    $this->render('customer-add');
 		} else {	
@@ -468,7 +516,172 @@ class AdminController extends CController
 	public function actionEmailTPL()
 	{
 		$this->crumbsTitle=Yii::t("default","Email Template");		
-		$this->render('email-tpl');
+		
+		$order_stats = FunctionsV3::orderStatusTPL();
+		
+		$data=array(
+		  'general_template'=>array(
+		     'contact_us'=>array(
+		        'email'=>true,
+		        'sms'=>false,		        
+		        'email_tag'=>'name,email,country,phone,message,sitename,siteurl',
+		        'sms_tag'=>''
+		      ),
+		     'customer_welcome_email'=>array(
+		         'email'=>true,
+		         'sms'=>false,		         
+		         'email_tag'=>'firstname,lastname,sitename,siteurl',
+		         'sms_tag'=>''
+		      ),		       		     
+		     'customer_verification_code_email'=>array(
+		        'email'=>true,
+		        'sms'=>false,
+		        'email_tag'=>'firstname,lastname,code,sitename,siteurl',		        
+		      ),
+		      'customer_verification_code_sms'=>array(
+		        'email'=>false,
+		        'sms'=>true,		        
+		        //'email_tag'=>'firstname,lastname,code,sitename,siteurl',
+		        'sms_tag'=>'code,sitename,siteurl',
+		      ),
+		      'customer_forgot_password'=>
+		       array(
+		         'email'=>true,
+		         'sms'=>false,		        
+		         'email_tag'=>'firstname,lastname,change_pass_link,sitename,siteurl',
+		      ),
+		      'merchant_welcome_signup'=>array(
+		        'email'=>true,
+		        'sms'=>false,		  
+		        'email_tag'=>'restaurant_name,login_url,sitename,siteurl',      
+		      ),
+		     'merchant_verification_code'=>array(
+		        'email'=>true,
+		        'sms'=>false,		  
+		        'email_tag'=>'restaurant_name,code,login_url,sitename,siteurl',      
+		      ),
+		     'merchant_forgot_password'=>array(
+		        'email'=>true,
+		        'sms'=>false,		     
+		        'email_tag'=>'restaurant_name,code,sitename,siteurl',         
+		      ),		      
+		     'merchant_new_signup'=>array(
+		        'email'=>true,
+		        'sms'=>true,		     
+		        'email_tag'=>'restaurant_name,package_name,merchant_type,sitename,siteurl',         
+		        'sms_tag'=>'restaurant_name,package_name,merchant_type,sitename,siteurl',         
+		      ),
+		     'admin_forgot_password'=>array(
+		        'email'=>true,
+		        'sms'=>false,		        
+		        'email_tag'=>'newpassword,login_url,sitename,siteurl',      
+		      ),
+		      'merchant_near_expiration'=>array(
+		        'email'=>true,
+		        'sms'=>true,		        
+		        'email_tag'=>'restaurant_name,expiration_date,sitename,siteurl',      
+		        'sms_tag'=>'restaurant_name,expiration_date,sitename,siteurl',      
+		      ),
+		      'merchant_change_status'=>array(
+		        'email'=>true,
+		        'sms'=>true,		        
+		        'email_tag'=>'restaurant_name,status,sitename,siteurl', 
+		        'sms_tag'=>'restaurant_name,status,sitename,siteurl', 
+		      ),
+		      'merchant_invoice'=>array(
+		        'email'=>true,
+		        'sms'=>false,
+		        'email_tag'=>'restaurant_name,invoice_number,period,terms,invoice_link,sitename,siteurl', 
+		        'sms_tag'=>'', 
+		      ),
+		  ),
+		  
+		  'order_template'=>array(
+		     'receipt_template'=>array(
+		       'email'=>true,
+		       'sms'=>true,		        
+		       'push'=>false,
+		       'email_tag'=>'order_id,customer_name,restaurant_name,total_amount,receipt,sitename,siteurl', 
+		       'sms_tag'=>'order_id,customer_name,restaurant_name,total_amount,order_details,sitename,siteurl',
+		     ),
+		     'receipt_send_to_merchant'=>array(
+		       'email'=>true,
+		       'sms'=>true,		        
+		       'push'=>true,
+		       'email_tag'=>'order_id,customer_name,restaurant_name,total_amount,receipt,accept_link,decline_link,sitename,siteurl', 
+		       'sms_tag'=>'order_id,customer_name,restaurant_name,total_amount,order_details,sitename,siteurl', 
+		       'push_tag'=>'order_id,customer_name,restaurant_name,total_amount,sitename,siteurl', 
+		     ),
+		     'receipt_send_to_admin'=>array(
+		       'email'=>true,
+		       'sms'=>true,		     
+		       'push'=>false,   
+		       'email_tag'=>'order_id,customer_name,restaurant_name,total_amount,receipt,sitename,siteurl', 
+		       'sms_tag'=>'order_id,customer_name,restaurant_name,total_amount,order_details,sitename,siteurl', 
+		     ),
+		     /*'order_idle_to_merchant'=>array(
+		       'email'=>true,
+		       'sms'=>false,		        
+		       'email_tag'=>'order_id,restaurant_name,idle_time,sitename,siteurl', 
+		       'sms_tag'=>'order_id,restaurant_name,idle_time,sitename,siteurl', 
+		     ),*/
+		     'order_idle_to_admin'=>array(
+		       'email'=>true,
+		       'sms'=>true,		       
+		       'push'=>false, 
+		       'email_tag'=>'order_id,restaurant_name,idle_time,sitename,siteurl', 
+		       'sms_tag'=>'order_id,restaurant_name,idle_time,sitename,siteurl', 
+		     )
+		  ),
+		  		  
+		  'booking_template'=>array(
+		     'customer_booked'=>array(
+		       'email'=>true,
+		       'sms'=>false,		
+		       'push'=>false,              
+		       'email_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,sitename,siteurl',	       
+		     ),
+		     'booked_notify_admin'=>array(
+		       'email'=>true,
+		       'sms'=>false,		
+		       'push'=>false,                      
+		       'email_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,sitename,siteurl',	       
+		     ),
+		     'booked_notify_merchant'=>array(
+		       'email'=>true,
+		       'sms'=>false,		   
+		       'push'=>true,                   
+		       'email_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,sitename,siteurl',	       
+		       'push_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,sitename,siteurl',	       
+		     ),
+		     'booking_update_status'=>array(
+		       'email'=>true,
+		       'sms'=>false,		       
+		       'push'=>true,               
+		       'email_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,merchant_remarks,sitename,siteurl',	       
+		       'push_tag'=>'booking_id,restaurant_name,number_guest,date_booking,time,customer_name,email,mobile,instruction,status,merchant_remarks,sitename,siteurl', 
+		     )
+		  ),
+		  
+		  'payment_template'=>array(
+		     'offline_bank_deposit_signup_merchant'=>array(
+		       'email'=>true,
+		       'sms'=>false,		        
+		       'email_tag'=>'restaurant_name,amount,verify_payment_link,sitename,siteurl',	       
+		     ),
+		     'offline_bank_deposit_purchase'=>array(
+		       'email'=>true,
+		       'sms'=>false,		        
+		       'email_tag'=>'customer_name,amount,verify_payment_link,sitename,siteurl',	       
+		     )
+		  ),
+		  
+		  
+		  'order_status_template'=>$order_stats
+		);
+			
+		//dump($data); die();
+		$this->render('email-template',$data);
 	}
 	
 	public function actionPaymentGatewaySettings()
@@ -648,7 +861,7 @@ class AdminController extends CController
 	
 	public function actionZipCode()
 	{
-		if (getOptionA('home_search_mode')=="postcode"){
+		//if (getOptionA('home_search_mode')=="postcode"){
 			$this->crumbsTitle=t("Zip Code");
 			if (isset($_GET['Do'])){
 				$data=FunctionsK::getZipCode($_GET['id']);
@@ -656,7 +869,7 @@ class AdminController extends CController
 				  'data'=>$data
 				));			
 			} else $this->render('zipcode');		
-		} else $this->render('error',array('msg'=>t("Zip code only be use if you enabled the searching to post code on settings")));
+		//} else $this->render('error',array('msg'=>t("Zip code only be use if you enabled the searching to post code on settings")));
 	}
 	
 	public function actionThemeSettings()
@@ -668,5 +881,123 @@ class AdminController extends CController
 	{
 		$this->render('braint-tree-settings');
 	}
+	
+	public function actionRazor()
+	{
+		$this->render('razor');
+	}
+	
+	public function actionCategory()
+	{
+		if(isset($_GET['do'])){
+			$this->render('category-add');
+		} else $this->render('category');		
+	}
+	
+	public function actionCategorySettings()
+	{
+		$this->render('category-settings');
+	}
+	
+	public function actionMollie()
+	{
+		$this->render('mollie');
+	}
+	
+	public function actionipay88()
+	{
+		$this->render('ipay88');
+	}
+	
+	public function actionmoneris()
+	{
+		$this->render('moneris-settings');
+	}
+	
+	public function actionPrint()
+	{		
+		$this->layout="printing_layout";
+		
+		$size=getOptionA('admin_printing_receipt_size');
+		$width=getOptionA('admin_printing_receipt_width');
+		
+		FunctionsV3::setPrintSize($size, $width);
+						
+		$baseUrl = Yii::app()->baseUrl; 
+		$cs = Yii::app()->getClientScript();				
+		$cs->registerCssFile($baseUrl.'/assets/css/admin.css?ver=1.0');
+				
+		$this->render('print_receipt');
+	}
+	
+	public function actionEmaiLogs()
+	{
+		$this->render('email-logs');
+	}
+	
+	public function actionViewEmail()
+	{
+		if (isset($_GET['id'])){
+			$id=$_GET['id'];			
+			if($res=FunctionsV3::getEmailogsByID($id)){
+				echo nl2br($res['content']);
+			} else $this->render('error',array(
+		      'message'=>t("Sorry but we cannot find what you are looking for.")
+		   ));
+		} else $this->render('error',array(
+		  'message'=>t("Sorry but we cannot find what you are looking for.")
+		));
+	}
+	
+	public function actionnotisettings()
+	{
+		$this->crumbsTitle=t("Notification Settings");
+		$this->render('noti-settings');
+	}
+	
+	public function actionManageLocation()
+	{
+		$this->crumbsTitle=t("Manage location");
+		$this->render('manage-location');
+	}
+	
+	public function actionDefinelocation()
+	{
+		$this->crumbsTitle=t("Define location");
+		$id=isset($_GET['countryid'])?$_GET['countryid']:'';
+		if ( $res=FunctionsV3::locationCountry($id)){
+			$this->render('manage-define-location',array(
+			  'data'=>$res,
+			  'id'=>$id
+			));
+		} else  $this->render('error',array(
+		      'message'=>t("Sorry but we cannot find what you are looking for.")
+		   ));
+	}
+	
+	public function actionInvoice()
+	{
+		$this->crumbsTitle=t("Invoice");
+		$this->render('invoice-list');
+	}
+	
+	public function actionIncomingOrders()
+	{
+		$this->crumbsTitle=t("Incoming Orders");
+		$this->render('incoming-orders');
+	}
+	
+	public function actionCronJobs()
+	{
+		$this->crumbsTitle=t("Cron jobs");
+		$this->render('cron-jobs');
+	}
+	
+	public function actionvoguepay()
+	{
+		$this->crumbsTitle=t("voguepay");
+		$this->render('voguepay');
+	}
+		
 } 
 /*END CONTROLLER*/

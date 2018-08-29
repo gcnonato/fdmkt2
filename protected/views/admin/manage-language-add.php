@@ -85,7 +85,7 @@ if (isset($_GET['id'])){
 <?php echo CHtml::hiddenField('language_file',$data['source_text'])?>
 <div class="image_preview">
   <p class="uk-text-muted">
-  <a target="_blank" href="<?php echo Yii::app()->request->baseUrl."/admin/ViewFile/fileName/".$data['source_text']?>">
+  <a target="_blank" href="<?php echo Yii::app()->request->baseUrl."/admin/ViewFile/?fileName=".$data['source_text']?>">
   <?php echo $data['source_text']?>
   </a></p>
   <p><a href="javascript:rm_preview();"><?php echo Yii::t("default","Remove Files")?></a></p>
