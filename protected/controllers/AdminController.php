@@ -404,17 +404,8 @@ class AdminController extends CController
 		   $this->render('manage-language-list');
 		}
 		
-		$set_lang_id=getOptionA("set_lang_id");
-		if ( !empty($set_lang_id)){
-			$set_lang_id=json_decode($set_lang_id);
-		}
 		
-		$this->crumbsTitle=t("Manage Language Settings");
-		$this->render('manage-language-new',array(
-		  'langauge_list'=>FunctionsV3::getLanguageList(true),
-		  'set_lang_id'=>$set_lang_id
-		));
-	}
+		}
 	
 	public function actionSeo()
 	{
