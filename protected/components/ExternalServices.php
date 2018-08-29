@@ -118,19 +118,19 @@ class ExternalServices extends DbExt
        <?php echo CHtml::dropDownList('delivery_type',$now,(array)Yii::app()->functions->DeliveryOptions($merchant_id))?>
        <?php echo CHtml::textField('delivery_date',$now,array('class'=>"j_date"))?>
        <?php echo CHtml::textField('delivery_time',$now_time,
-       array('class'=>"timepick",'placeholder'=>Yii::t("default","Delivery Time")))?>
+       array('class'=>"timepick",'placeholder'=>Yii::t("default","Hora de delivery")))?>
        <span class="uk-text-small uk-text-muted"><?php echo Yii::t("default","Delivery ASAP?")?></span>
        <?php echo CHtml::checkBox('delivery_asap',false,array('class'=>"icheck"))?>
       </div>      
             
       <?php if (yii::app()->functions->validateSellLimit($merchant_id) ):?>
          <?php if ( $is_merchant_open1):?>         
-         <a href="javascript:;" class="uk-button checkout"><?php echo Yii::t("default","Checkout")?></a>
+         <a href="javascript:;" class="uk-button checkout"><?php echo Yii::t("default","Chequear")?></a>
          <?php else :?>
             <?php if ($merchant_preorder==1):?>
-            <a href="javascript:;" class="uk-button checkout"><?php echo Yii::t("default","Pre-Order")?></a>
+            <a href="javascript:;" class="uk-button checkout"><?php echo Yii::t("default","Pre-Orden")?></a>
             <?php else :?>
-            <p class="uk-alert uk-alert-warning"><?php echo Yii::t("default","Sorry merchant is closed.")?></p>
+            <p class="uk-alert uk-alert-warning"><?php echo Yii::t("default","Disculpe, Restaurante cerrado.")?></p>
             <p><?php echo prettyDate(date('c'),true);?></p>
             <?php endif;?>
          <?php endif;?>
@@ -336,7 +336,7 @@ $.validate({
         <p class="uk-text-bold"><?php echo $merchant_address;?></p>
         <?php else :?>
         
-        <h3><?php echo Yii::t("default","Delivery information")?></h3>
+        <h3><?php echo Yii::t("default","Informacion de Envío")?></h3>
         
         <p>
         <?php echo ucwords($merchant_info['restaurant_name'])?> <?php echo Yii::t("default","Restaurant")?> 
@@ -403,7 +403,7 @@ $.validate({
         </div> <!--uk-panel--> 
         <?php endif;?>
         
-        <h3><?php echo Yii::t("default","Payment Information")?></h3>
+        <h3><?php echo Yii::t("default","Información de pago")?></h3>
         
         <?php 
         $enabled_paypal=Yii::app()->functions->getOption('enabled_paypal',$merchant_id);

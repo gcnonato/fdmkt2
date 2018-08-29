@@ -26,7 +26,6 @@ echo CHtml::hiddenField('hide_foodprice',$hide_foodprice);
 <?php 
 $data=$data[0];
 
-//dump($data);
 $mtid=$data['merchant_id'];
 $apply_tax=getOption($mtid,'merchant_apply_tax');
 $tax=FunctionsV3::getMerchantTax($mtid);
@@ -58,14 +57,15 @@ if ($data['two_flavors']==2){
 	);	
 	echo CHtml::hiddenField('two_flavors',$data['two_flavors']);
 }
-//dump($data);
+dump($data['dish']);
 ?>
-
+     <a href="javascript:close_fb();"><i class="far fa-times-circle" style="font-size:26px;margin-left: 10px;"></i></a>
 <div class="container  view-food-item-wrap">
-   
+
+
   <!--ITEM NAME & DESCRIPTION-->
   <div class="row">
-    <div class="col-md-3 ">              
+    <div class="col-md-3 ">
        <img src="<?php echo FunctionsV3::getFoodDefaultImage($data['photo']);?>" alt="<?php echo $data['item_name']?>" title="<?php echo $data['item_name']?>" class="logo-small">
     </div> <!--col-->
     <div class="col-md-9 ">
@@ -75,6 +75,7 @@ if ($data['two_flavors']==2){
     </div> <!--col-->
   </div> <!--row-->
   <!--ITEM NAME & DESCRIPTION--
+
      
   <!--FOOD ITEM GALLERY-->
   <?php if (getOption($data['merchant_id'],'disabled_food_gallery')!=2):?>  
@@ -83,7 +84,7 @@ if ($data['two_flavors']==2){
       <div class="section-label">
         <a class="section-label-a">
           <span class="bold">
-          <?php echo t("Gallery")?></span>
+          <?php echo t("Galería")?></span>
           <b></b>
         </a>     
         <div class="food-gallery-wrap row ">
@@ -106,28 +107,34 @@ if ($data['two_flavors']==2){
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Price")?></span>
+      <?php echo t("Precio")?></span>
       <b></b>
     </a>     
     <div class="row">
+    <?php //dump($data['prices']);?>
     <?php if (is_array($data['prices']) && count($data['prices'])>=1):?>  
       <?php foreach ($data['prices'] as $price):?>
           <?php $price['price']=Yii::app()->functions->unPrettyPrice($price['price'])?>
           <div class="col-md-5 ">
-             <?php if ( !empty($price['size'])):?>
+             <?php if ( !empty($price['size'])):?>                 
+                 <?php 
+                 echo CHtml::hiddenField('with_size',2);
+                 $size_id=isset($price['size_id'])?$price['size_id']:'';
+                 ?>
                  <?php echo CHtml::radioButton('price',
 		          $size_select==$price['size']?true:false
 		          ,array(
-		            'value'=>$price['price']."|".$price['size'],
+		            'value'=>$price['price']."|".$price['size']."|".$size_id,
 		            'class'=>"price_cls item_price"
 		          ))?>
 		          <?php echo qTranslate($price['size'],'size',$price)?>
               <?php else :?>
+                  <?php echo CHtml::hiddenField('with_size',1)?>              
                   <?php echo CHtml::radioButton('price',
 		            count($price['price'])==1?true:false
 		            ,array(
 		            'value'=>$price['price'],
-		            'class'=>"item_price"
+		            'class'=>"price_cls item_price"
 		          ))?>
              <?php endif;?>
              
@@ -158,7 +165,7 @@ if ($data['two_flavors']==2){
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Quantity")?></span>
+      <?php echo t("Cantidad")?></span>
       <b></b>
     </a>     
     <div class="row">
@@ -175,9 +182,8 @@ if ($data['two_flavors']==2){
        </div>
        <div class="col-md-1 col-xs-1 border into-row">
          <a href="javascript:;" class="qty-plus green-button inline"><i class="ion-plus"></i></a>
-       </div>
-       <div class="col-md-6 col-xs-6 border into-row">
-         <a href="javascript:;" class="special-instruction orange-button inline"><?php echo t("Special Instructions")?></a>
+        <br>
+         <a href="javascript:;" class="special-instruction orange-button inline" style=""><?php echo t("Instrucciones")?></a>
        </div>
     </div> <!--row-->
   </div> <!-- section-label--> 
@@ -187,7 +193,7 @@ if ($data['two_flavors']==2){
   isset($item_data['notes'])?$item_data['notes']:""
   ,array(
    'class'=>'uk-width-1-1',
-   'placeholder'=>Yii::t("default","Special Instructions")
+   'placeholder'=>Yii::t("default","Tus instruciones especiales")
   ))?>
   </div> <!--notes-wrap-->
   
@@ -202,11 +208,14 @@ if ($data['two_flavors']==2){
   <?php if (isset($data['cooking_ref'])):?>
   <?php if (is_array($data['cooking_ref']) && count($data['cooking_ref'])>=1):?>
   <div class="section-label">
-    <a class="section-label-a">
+  
+    <div class="section-label-a">
       <span class="bold">
-      <?php echo t("Cooking Preference")?></span>
+      <?php echo t("Preferencias")?></span>
       <b></b>
-    </a>        
+       <!--<a href="javascript:;"><i class="ion-ios-plus-outline"></i></a>-->
+    </div>        
+    
     <div class="row">    
       <?php foreach ($data['cooking_ref'] as $cooking_ref_id=>$val):?>
       
@@ -240,7 +249,7 @@ if ($data['two_flavors']==2){
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Ingredients")?></span>
+      <?php echo t("Ingredientes")?></span>
       <b></b>
     </a>             
      <div class="row">     
@@ -406,7 +415,9 @@ if ($data['two_flavors']==2){
 	           	 $item_data['addon_qty']='';
 	          }
 	          if (array_key_exists($subcat_id,(array)$item_data['addon_qty'])){            	            
-	              $qty_selected=$item_data['addon_qty'][$subcat_id][$x];
+	          	  if(isset($item_data['addon_qty'][$subcat_id][$x])){
+	                $qty_selected=$item_data['addon_qty'][$subcat_id][$x];
+	          	  }
 	          }            
 	          ?>
 	          
@@ -462,11 +473,10 @@ if ($data['two_flavors']==2){
 <div class="row food-item-actions">
   <div class="col-md-4 col-xs-4 border into-row "></div>
   <div class="col-md-4 col-xs-4 border into-row">
-     <input type="submit" value="<?php echo empty($row)?Yii::t("default","add to cart"):Yii::t("default","update cart");?>" 
+     <input type="submit" value="<?php echo empty($row)?Yii::t("default","añadir"):Yii::t("default","actualizar");?>" 
      class="add_to_cart orange-button upper-text">
   </div>
   <div class="col-md-4 col-xs-4 border into-row">
-  <a href="javascript:close_fb();" class="center upper-text green-button inline"><?php echo t("Close")?></a>
   </div>
 </div>
 <?php endif;?>
@@ -474,7 +484,7 @@ if ($data['two_flavors']==2){
 </div> <!--view-item-wrap-->
 </form>
 <?php else :?>
-<p class="text-danger"><?php echo Yii::t("default","Sorry but we cannot find what you are looking for.")?></p>
+<p class="text-danger"><?php echo Yii::t("default","Disculpa pero no podemos encontrar lo que estas buscando.")?></p>
 <?php endif;?>
 <script type="text/javascript">
 jQuery(document).ready(function() {	

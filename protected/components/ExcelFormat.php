@@ -19,7 +19,7 @@ class ExcelFormat
 				
         @header("Content-type: application/vnd.ms-excel");
         @header('Expires: ' . gmdate('D, d M Y H:i:s') . ' GMT');
-
+                
 		if (strstr($_SERVER['HTTP_USER_AGENT'],"IE")) {
 			@header('Content-Disposition: inline; filename="'.$this->_filename.'"');
 			@header('Cache-Control: must-revalidate, post-check=0, pre-check=0');

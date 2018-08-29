@@ -62,7 +62,7 @@ class FunctionsK extends DbExt
     	$stmt="SELECT * FROM
     	{{fax_package}}
     	WHERE
-    	fax_package_id='$package_id'
+    	fax_package_id=".FunctionsV3::q($package_id)."
     	LIMIT 0,1
     	";
     	if ( $res=$this->rst($stmt)){
@@ -158,7 +158,7 @@ class FunctionsK extends DbExt
     	 FROM
     	{{fax_package_trans}} a
     	WHERE
-    	id='$package_id'
+    	id= ".FunctionsV3::q($package_id)."
     	AND
     	merchant_id=".Yii::app()->db->quoteValue($merchant_id)."
     	LIMIT 0,1    	
@@ -388,7 +388,8 @@ class FunctionsK extends DbExt
 			$sWhere = "WHERE (";
 			for ( $i=0 ; $i<count($aColumns) ; $i++ )
 			{
-				$sWhere .= $aColumns[$i]." LIKE '%".( $_GET['sSearch'] )."%' OR ";
+				//$sWhere .= $aColumns[$i]." LIKE '%".( $_GET['sSearch'] )."%' OR ";
+				$sWhere .= $aColumns[$i]." LIKE ". FunctionsV3::q("%".$_GET['sSearch']."%")  ." OR ";
 			}
 			$sWhere = substr_replace( $sWhere, "", -3 );
 			$sWhere .= ')';
@@ -410,7 +411,8 @@ class FunctionsK extends DbExt
 				{
 					$sWhere .= " AND ";
 				}
-				$sWhere .= $aColumns[$i]." LIKE '%".($_GET['sSearch_'.$i])."%' ";
+				//$sWhere .= $aColumns[$i]." LIKE '%".($_GET['sSearch_'.$i])."%' ";
+				$sWhere .= $aColumns[$i]." LIKE ".FunctionsV3::q("%".$_GET['sSearch']."%")." ";
 			}
 		}
 
@@ -868,8 +870,8 @@ class FunctionsK extends DbExt
     	SELECT contact_phone
     	FROM
     	{{client}}
-    	WHERE
-    	contact_phone LIKE '%".$mobile_no."%'
+    	WHERE    	
+    	contact_phone LIKE ".FunctionsV3::q("%$mobile_no")."
     	$and
     	";    	
     	if ( $res=$this->rst($stmt)){      		

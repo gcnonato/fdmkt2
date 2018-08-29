@@ -2,9 +2,11 @@
 <div class="container enter-address-wrap">
 
 <div class="section-label">
+    <a href="javascript:$.fancybox.close();"><i class="fa fa-close" style="font-size:24px;color: grey;"></i>
+  </a>
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Enter your address below")?></span>
+      <?php echo t("Por favor danos tu dirección")?></span>
       <b></b>
     </a>     
 </div>  
@@ -29,12 +31,11 @@ isset($this->data['web_session_id'])?$this->data['web_session_id']:''
 <div class="row food-item-actions top10">
   <div class="col-md-5 "></div>
   <div class="col-md-3 ">
-  <a href="javascript:$.fancybox.close();" class="orange-button inline center">
-  <?php echo t("Close")?>
-  </a>
+
+       <input type="submit" class="orange-button inline center" value="<?php echo t("Enviar")?>">
+
   </div>
   <div class="col-md-3 ">
-     <input type="submit" class="green-button inline" value="<?php echo t("Submit")?>">
   </div>
 </div>
 

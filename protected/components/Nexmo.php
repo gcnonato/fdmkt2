@@ -36,10 +36,15 @@ class Nexmo
 		if ( $this->unicode==true){
 			$params.="&type=unicode";
 		}
-				
-		if (!preg_match("/+/i", $this->to)) {
+		
+		/*$_first = substr($this->to,0,1);		
+		if($_first==0){
+			$this->to = substr($this->to,1,strlen($this->to));
+		}*/		
+			
+		if (!@preg_match("/+/i", $this->to)) {
 			$this->to="+".$this->to;
-		}
+		}		
 		
 		$params=$this->smarty('api_key',$this->key,$params);
 		$params=$this->smarty('api_secret',$this->secret,$params);

@@ -66,19 +66,23 @@ class Ajax extends AjaxAdmin
 	}
 	
 	public function merchantCommission()
-	{
-		 		    
-		  
+	{		 		    
+		    $where_params='';
+		    $and_params='';
+		    
 	    	$and='';  
 	    	$and_date='';	    	
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		$and=" AND a.date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-	    		        '".$this->data['end_date']." 23:59:00'
-	    		 ";	    		
-	    		$and_date=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-	    		        '".$this->data['end_date']." 23:59:00'
-	    		 ";
+		    		$and=" AND a.date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+		    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+		    		 ";	    		    		
+		    		$and_date=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+		    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+		    		 ";
+		    		
+		    		$and_params.="a.date_created|".FunctionsV3::q($this->data['start_date']." 00:00:00");
+		    		$and_params.=",".FunctionsV3::q($this->data['end_date']." 23:59:00");
 	    		}
 	    	}
 	    	
@@ -86,12 +90,16 @@ class Ajax extends AjaxAdmin
 		    	$start_date=date("Y-m-d", strtotime ('-15 days'));
 				$end_date=date("Y-m-d");
 				
-				$and =" AND a.date_created BETWEEN  '".$start_date." 00:00:00' AND 
-		    		        '".$end_date." 23:59:00'
+				$and =" AND a.date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
+		    		        ".FunctionsV3::q($end_date." 23:59:00")."
 		    		 ";	    		
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
+				
+				$and_params.="a.date_created|".$start_date." 00:00:00";
+				$and_params.=",".$end_date." 23:59:00";
+				
 	    	} elseif ( $this->data['query']=="last30"){
 	    		
 	    		$start_date=date("Y-m-d", strtotime ('-30 days'));
@@ -103,6 +111,10 @@ class Ajax extends AjaxAdmin
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
+				
+				$and_params.="a.date_created|".$start_date." 00:00:00";
+				$and_params.=",".$end_date." 23:59:00";
+				
 	    	} elseif ( $this->data['query']=="month"){
 	    		
 	    		$query_date = $this->data['query_date'];			
@@ -115,14 +127,19 @@ class Ajax extends AjaxAdmin
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
+				
+				$and_params.="a.date_created|".$start_date." 00:00:00";
+				$and_params.=",".$end_date." 23:59:00";
 	    	}
 	    	
 	    	$order_status_id='';
 	    	$or='';
+	    	$order_status_raw='';
 	    	if (isset($this->data['stats_id'])){
 		    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
 		    		foreach ($this->data['stats_id'] as $stats_id) {		    			
-		    			$order_status_id.="'$stats_id',";
+		    			$order_status_id.= FunctionsV3::q($stats_id)."," ;
+		    			$order_status_raw.="$stats_id,";
 		    		}
 		    		if ( !empty($order_status_id)){
 		    			$order_status_id=substr($order_status_id,0,-1);
@@ -131,26 +148,36 @@ class Ajax extends AjaxAdmin
 	    	}
 	    	
 	    	if ( !empty($order_status_id)){	    		
-	    		$where= " WHERE a.status IN ($order_status_id)";
+	    		$where= " WHERE a.status IN ($order_status_id)";	    		
 	    		$and_date.=" AND status IN ($order_status_id)";
+	    		
+	    		$where_params.="a.status_in|$order_status_raw";
 	    	} else {
 	    		$where= " WHERE a.status NOT IN ('".initialStatus()."')";
 	    		$and_date.="AND status NOT IN ('".initialStatus()."')";
+	    		
+	    		$where_params.="a.status_not_in|$order_status_raw";
 	    	}
 	    		    	
 	    	 	    	
 	    	
 	    	if ( $this->data['merchant_id']>=1){
-	    		$and.=" AND a.merchant_id='".$this->data['merchant_id']."' ";
+	    		$and.=" AND a.merchant_id=".FunctionsV3::q($this->data['merchant_id'])." ";
 	    	}
 	    	
 	    	if (isset($this->data['payment_type'])){
 	    		if ( $this->data['payment_type']==2){ // cash
 	    			$and_date.=" AND payment_type IN ('cod','pyr','ccr','ocr') ";
 	    			$and.=" AND payment_type IN ('cod','pyr','ccr','ocr') ";
+	    			
+	    			
+	    			$and_params.="&payment_type_in=payment_type|cod,pyr,ccr,ocr";
+	    			
 	    		} else if ($this->data['payment_type']==3) { // card
 	    			$and_date.=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
 	    			$and.=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
+	    			
+	    			$and_params.="&payment_type_not_in=cod,pyr,ccr,ocr";
 	    		}	    	
 	    	}	
 	    	
@@ -209,18 +236,16 @@ class Ajax extends AjaxAdmin
 	    		$total_commission=0;
 	    		foreach ($res as $val) {	    		
 	    			$link=websiteUrl()."/admin/merchantcommissiondetails";	    			
-	    			/*$link.="/mtid/".$val['merchant_id'];	 
-	    			$link.="/where/".$where;	 
-	    			$link.="/and/".$and;*/
 	    			
-	    			$link.="?mtid=".$val['merchant_id'];	 
+	    			/*$link.="?mtid=".$val['merchant_id'];	 
 	    			$link.="&where=".$where;	 
-	    			$link.="&and=".$and;
+	    			$link.="&and=".$and;	    			
+	    			dump($link);*/
+	    			
+	    			$link.="?mtid=".$val['merchant_id'];
+	    			$link.="&where=$where_params";
+	    			$link.="&and=$and_params";
 	    				    			
-/*$action="<a class=\"view-details\" data-id=\"$val[merchant_id]\" href=\"javascript:;\" data-where=\"$where\" data-and=\"$and\">".
-Yii::t("default","Details").
-"</a>";*/	    			
-
                     $total_commission+=$val['total_commission'];
 $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	    			$date=prettyDate($val['date_created'],true);
@@ -244,15 +269,92 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	public function merchantCommissionDetails()
 	{
 		$DbExt=new DbExt;		
-		$where=$this->data['where'];
-		$and=" AND merchant_id='".$this->data['mtid']."'";
-		$and.=$this->data['and'];
+		$where='';		
+		$and=" AND merchant_id=".FunctionsV3::q($this->data['mtid'])." ";
+
+		if(isset($this->data['where'])){
+		   if(!empty($this->data['where'])){
+		   	   $data_where = explode("|",$this->data['where']);		   	   
+		   	   if(is_array($data_where) && count($data_where)>=1){
+		   	   	
+		   	   	  switch ($data_where[0]) {
+		   	   	  	case "a.status_in":
+		   	   	  		$data_where_query = explode(",",$data_where[1]);
+		   	   	  		if(is_array($data_where_query) && count($data_where_query)>=1){
+		   	   	  		   $status_in='';
+		   	   	  		   foreach ($data_where_query as $val) {
+		   	   	  		   		if(!empty($val)){
+		   	   	  		   			$status_in.= FunctionsV3::q($val).",";
+		   	   	  		   		}		   	   	  		   
+		   	   	  		   	}	
+		   	   	  		   	$status_in = substr($status_in,0,-1);
+		   	   	  		   	$and.=" AND a.status IN ($status_in)";
+		   	   	  		}		   	   	  
+		   	   	  		break;
+		   	   	  
+		   	   	  	default:
+		   	   	  		break;
+		   	   	  }
+		   	   	  
+		   	   }		   
+		   }		
+		}
+		
+		if(isset($this->data['and'])){
+			$data_and = explode("|",$this->data['and']);
+			if(is_array($data_and) && count($data_and)>=1){				
+				$data_and_date = explode(",",$data_and[1]);
+				if(is_array($data_and_date) && count($data_and_date)>=1){					
+					$data_and_between = FunctionsV3::q($data_and_date[0])." AND ".FunctionsV3::q($data_and_date[1]);
+				}
+				switch ($data_and[0]) {
+					case "a.date_created":
+						$and.=" AND a.date_created BETWEEN $data_and_between";
+						break;
+				
+					default:
+						break;
+				}
+			}		
+		}
+		
+		if (isset($this->data['payment_type_in'])){
+			if(!empty($this->data['payment_type_in'])){
+			    $payment_type_in = explode("|",$this->data['payment_type_in']);
+			    if(is_array($payment_type_in) && count($payment_type_in)>=1){
+			    	$payment_type_list='';		    	
+			    	$payment_type_in_list = explode(",", isset($payment_type_in[1])?$payment_type_in[1]:'' );
+			    	if(is_array($payment_type_in_list) && count($payment_type_in_list)>=1){
+			    		foreach ($payment_type_in_list as $payment_type_in_list_val) {		    			
+			    			$payment_type_list.=FunctionsV3::q($payment_type_in_list_val).",";
+			    		}		    		
+			    		$payment_type_list = substr($payment_type_list,0,-1);		    		
+			    		$and.=" AND payment_type IN ($payment_type_list)";
+			    	}		    
+			    }
+			}
+		}	
+		
+		if (isset($this->data['payment_type_not_in'])){
+			if(!empty($this->data['payment_type_not_in'])){
+				$payment_type_list='';
+				$payment_type_not_in = explode(",",$this->data['payment_type_not_in']);
+				if(is_array($payment_type_not_in) && count($payment_type_not_in)>=1){
+					foreach ($payment_type_not_in as $val_in) {
+						$payment_type_list.=FunctionsV3::q($val_in).",";					
+					}
+					
+					$payment_type_list = substr($payment_type_list,0,-1);
+					$and.=" AND payment_type NOT IN ($payment_type_list)";
+				}		
+			}
+		}
 		
 				
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		$and.=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-    		        '".$this->data['end_date']." 23:59:00'
+    		$and.=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
     		 ";
     		}
     	}
@@ -265,8 +367,9 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
     	{{merchant}}
     	where merchant_id = a.merchant_id 
     	) as merchant_name    	
-		FROM
+		FROM		
 		{{order}} a
+		WHERE 1
 		$where
 		$and
 		ORDER BY order_id DESC
@@ -356,17 +459,7 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	
 	public function merchantSignUp2()
 	{		
-					
-		/*csrf validation*/
-		if(!isset($_POST[Yii::app()->request->csrfTokenName])){
-			$this->msg=t("The CSRF token is missing");
-			return ;
-		}	    
-		if ( $_POST[Yii::app()->request->csrfTokenName] != Yii::app()->getRequest()->getCsrfToken()){
-			$this->msg=t("The CSRF token could not be verified");
-			return ;
-		}  	
-		
+									
         /** check if admin has enabled the google captcha*/    	    	
     	if ( getOptionA('captcha_merchant_signup')==2){
     		if ( GoogleCaptcha::checkCredentials()){
@@ -485,32 +578,32 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 			$query_date = $this->data['query_date'];			
 			$start_date=date('Y-m-01', strtotime($query_date));
 			$end_date=date('Y-m-t', strtotime($query_date));
-			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
-	    		        '".$end_date." 23:59:00'
+			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($end_date." 23:59:00")."
 	    		 ";	    		
 		} elseif ( $this->data['query']=="period"){
 			
 			$start_date=$this->data['start_date'];
 			$end_date=$this->data['end_date'];
 			
-			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
-	    		        '".$end_date." 23:59:00'
+			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($end_date." 23:59:00")."
 	    		 ";	    		
 		} elseif ( $this->data['query']=="last15"){
 			
 			$start_date=date("Y-m-d", strtotime ('-15 days'));
 			$end_date=date("Y-m-d");
 			
-			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
-	    		        '".$end_date." 23:59:00'
+			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($end_date." 23:59:00")."
 	    		 ";	    		
 		} elseif ( $this->data['query']=="last30"){
 			
 			$start_date=date("Y-m-d", strtotime ('-30 days'));
 			$end_date=date("Y-m-d");
 			
-			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
-	    		        '".$end_date." 23:59:00'
+			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($end_date." 23:59:00")."
 	    		 ";	    		
 		}	
 		
@@ -520,11 +613,7 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 			} elseif ( $this->data['payment_type']==3){ //card			
 				$trans_type="AND payment_type NOT IN ('cod','pyr','ccr','ocr')";	
 			}		
-		}
-		/*$trans_type="AND payment_type NOT IN ('cod','pyr','ccr')";
-		if (isset($this->data['cash_statement'])){
-			$trans_type="AND payment_type IN ('cod','pyr','ccr')";
-		}*/
+		}		
 		
 	    $stmt="SELECT * FROM
 	    {{order}}
@@ -598,7 +687,7 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		SELECT * FROM
 		{{ingredients}}
 		WHERE			
-		merchant_id='".Yii::app()->functions->getMerchantID()."'
+		merchant_id=". FunctionsV3::q(Yii::app()->functions->getMerchantID()) ."
 		ORDER BY ingredients_id  DESC
 		";
 		$connection=Yii::app()->db;
@@ -915,12 +1004,12 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		if (isset($this->data['start_date']) && isset($this->data['end_date'])){
 			if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
 				if (!empty($and)){				
-					$and.=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-	    		        '".$this->data['end_date']." 23:59:00'
+					$and.=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
 	    		    ";
 				} else {
-					$and.=" WHERE date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-	    		        '".$this->data['end_date']." 23:59:00'
+					$and.=" WHERE date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
 	    		    ";
 				}
 			}
@@ -929,9 +1018,9 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		if (isset($this->data['merchant_id'])){
 			if (!empty($this->data['merchant_id'])){
 				if (!empty($and)){
-					$and.=" AND merchant_id='".$this->data['merchant_id']."'";
+					$and.=" AND merchant_id= ".FunctionsV3::q($this->data['merchant_id'])." ";
 				} else {
-					$and=" WHERE merchant_id='".$this->data['merchant_id']."'";
+					$and=" WHERE merchant_id=".FunctionsV3::q($this->data['merchant_id'])." ";
 				}
 			}
 		}	
@@ -1087,8 +1176,8 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		   $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-    		        '".$this->data['end_date']." 23:59:00'
+    		   $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
     		   ";
     		   $_SESSION['rpt_date_range']=array(
     		     'start_date'=>$this->data['start_date'],
@@ -1101,8 +1190,8 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	    $or='';
     	if (isset($this->data['stats_id'])){
 	    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
-	    		foreach ($this->data['stats_id'] as $stats_id) {		    			
-	    			$order_status_id.="'$stats_id',";
+	    		foreach ($this->data['stats_id'] as $stats_id) {	    			
+	    			$order_status_id.= FunctionsV3::q($stats_id).",";
 	    		}
 	    		if ( !empty($order_status_id)){
 	    			$order_status_id=substr($order_status_id,0,-1);
@@ -1821,8 +1910,8 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		  $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-    		        '".$this->data['end_date']." 23:59:00'
+    		  $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
     		  ";
     		    		  
               $_SESSION['rpt_date_range']=array(
@@ -1884,8 +1973,8 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		   $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
-    		        '".$this->data['end_date']." 23:59:00'
+    		   $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
+    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
     		   ";    		   
                $_SESSION['rpt_date_range']=array(
     		     'start_date'=>$this->data['start_date'],
@@ -2589,6 +2678,9 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	
 	public function addDish()
 	{		
+		
+	   $p = new CHtmlPurifier();
+		
 	   $Validator=new Validator;
 		$req=array(
 		  'dish_name'=>Yii::t("default","Dish name is required"),
@@ -2597,9 +2689,9 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$Validator->required($req,$this->data);
 		if ($Validator->validate()){
 			$params=array(
-			  'dish_name'=>$this->data['dish_name'],
+			  'dish_name'=> $p->purify($this->data['dish_name']) ,
 			  'photo'=>$this->data['spicydish'],
-			  'status'=>$this->data['status'],
+			  'status'=>$p->purify($this->data['status']),
 			  'date_created'=>FunctionsV3::dateNow(),
 			  'ip_address'=>$_SERVER['REMOTE_ADDR']
 			);			
@@ -2779,14 +2871,13 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      }
      
      public function addressBook()
-     {     	
- 	    //$slug=createUrl("store/profile/?tab=2");
+     {     	 	    
 		$stmt="SELECT id,location_name,country_code,as_default,
 		concat(street,' ',city,' ',state,' ',zipcode) as address		
 		FROM
 		{{address_book}}		
 		WHERE
-		client_id ='".Yii::app()->functions->getClientId()."'	
+		client_id = ".FunctionsV3::q(Yii::app()->functions->getClientId())."
 		ORDER BY id DESC
 		";						
 		if ($res=$this->rst($stmt)){
@@ -2813,17 +2904,19 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      
      public function addAddressBook()
      {     	
+     	$p = new CHtmlPurifier();
+     	
      	$params=array(
      	  'client_id'=>Yii::app()->functions->getClientId(),
-     	  'street'=>$this->data['street'],
-     	  'city'=>$this->data['city'],
-     	  'state'=>$this->data['state'],
-     	  'zipcode'=>$this->data['zipcode'],
-     	  'location_name'=>isset($this->data['location_name'])?$this->data['location_name']:'',
+     	  'street'=> $p->purify($this->data['street']) ,
+     	  'city'=>$p->purify($this->data['city']),
+     	  'state'=>$p->purify($this->data['state']),
+     	  'zipcode'=>$p->purify($this->data['zipcode']),
+     	  'location_name'=>isset($this->data['location_name'])?$p->purify($this->data['location_name']):'',
      	  'as_default'=>isset($this->data['as_default'])?$this->data['as_default']:1,
      	  'date_created'=>FunctionsV3::dateNow(),
      	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-     	  'country_code'=>$this->data['country_code']
+     	  'country_code'=>$p->purify($this->data['country_code'])
      	);     	
      	
      	if (!isset($this->data['as_default'])){
@@ -2834,7 +2927,7 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      		$sql_up="UPDATE {{address_book}}
      		SET as_default='1' 	     		
      		WHERE
-     		client_id='".Yii::app()->functions->getClientId()."'
+     		client_id= ".FunctionsV3::q(Yii::app()->functions->getClientId())."
      		";
      		$this->qry($sql_up);
      	}     
@@ -3025,13 +3118,22 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
                    </tr>
                  </thead>
                  <tbody>
-                   <?php foreach ($resh as $valh):?>
+                   <?php foreach ($resh as $valh):?>                   
+                   <?php 
+		           $remarks = $valh['remarks'];
+		           if(!empty($valh['remarks2']) && !empty($valh['remarks_args']) ){
+		           	   $remarks_args = json_decode($valh['remarks_args'],true);
+		           	   if(is_array($remarks_args) && count($remarks_args)>=1){
+		           	      $remarks = Yii::t("driver",$valh['remarks2'],$remarks_args);            	   
+		           	   }
+		           }
+		           ?>                                      
                    <tr style="font-size:12px;">
                      <td><?php                       
                       echo FormatDateTime($valh['date_created'],true);
                       ?></td>
                      <td><?php echo t($valh['status'])?></td>
-                     <td><?php echo $valh['remarks']?></td>
+                     <td><?php echo $remarks?></td>
                    </tr>
                    <?php endforeach;?>
                  </tbody>
@@ -3133,6 +3235,8 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 			        	  'gateway'=>$resp['sms_provider']
 			        	);	  		        	  
 			        	$this->insertData("{{sms_broadcast_details}}",$params);	   
+			        	
+			        	FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("cron/processsms"));
 				    	
 				    } else $this->msg=t("Sorry but we cannot sms code this time")." ".$resp['msg'];
 				} else $this->msg=t("Sorry but we cannot sms code this time");
@@ -3486,7 +3590,13 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	
 	public function getCartCount()
 	{
-		$count=count($_SESSION['kr_item']);
+		//$count=count($_SESSION['kr_item']);
+		$count = 0;		
+		if(isset($_SESSION['kr_item'])  && count($_SESSION['kr_item']>=1)){
+		   foreach ($_SESSION['kr_item'] as $val) {		   	 
+		   	 $count+= $val['qty'];
+		   }
+		}
 		if($count>0){
 			$this->code=1;
 			$this->msg="OK";
@@ -3559,6 +3669,11 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 					  'application.modules.driver.components.*',
 				    ));
 				    Driver::addToTask($order_id);
+				}
+				
+				/*UPDATE POINTS BASED ON ORDER STATUS*/
+				if (FunctionsV3::hasModuleAddon("pointsprogram")){
+					PointsProgram::updateOrderBasedOnStatus($this->data['status'],$order_id);
 				}
 	    		
 	    	} else $this->msg=Yii::t("default","ERROR: cannot update order.");	    	
@@ -3649,6 +3764,28 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 			    
 	    if ( $this->data['delivery_type']=="delivery"){
 	    	if (FunctionsV3::isSearchByLocation()){	    		
+	    			    		
+	    		/*IF USE ADDRESS BOOK */	    		
+	    		if(isset($this->data['address_book_id_location'])){
+	    			
+	    			$address_book_id_location = $this->data['address_book_id_location'];	    			
+	    			if($res_book = FunctionsV3::getAddressByLocationFullDetails($address_book_id_location)){	    				
+	    					    				
+	    				$this->data['state_id']=$res_book['state_id'];
+	    				$this->data['city_id']=$res_book['city_id'];
+	    				$this->data['area_id']=$res_book['area_id'];
+	    				
+	    				$this->data['street'] = $res_book['street'];    				
+	    				$this->data['city'] = $res_book['city_name'];
+	    				$this->data['state'] = $res_book['state_name'];
+	    				$this->data['area_name'] = $res_book['area_name'];
+	    				$this->data['location_name'] = $res_book['location_name'];
+	    				$this->data['zipcode'] = $res_book['postal_code'];
+	    			}	    		
+	    		} 
+	    		
+	    		//dump($this->data);
+	    		
 	    		$params_check=array(
 	    		   'state_id'=>$this->data['state_id'],
 	    		   'city_id'=>$this->data['city_id'],
@@ -3667,16 +3804,36 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	    			return ;
 	    		} 
 	    		  	
-	    	} else {
-		    	if (!FunctionsV3::reCheckDelivery($mtid,$this->data)){
-		    		$mt_delivery_miles=getOption($mtid,'merchant_delivery_miles'); 
+	    	} else {	    		
+	    		$resp_recheck = FunctionsV3::reCheckDeliveryNew($mtid,$this->data);	    		
+	    		if($resp_recheck['code']==1){
+	    			/*CHECK MINIMUM ORDER TABLE*/
+	    			//dump($resp_recheck);
+	    			$min_fees=FunctionsV3::getMinOrderByTableRates($mtid,
+					   isset($resp_recheck['distance'])?$resp_recheck['distance']:'',
+					   isset($resp_recheck['distance_type_raw'])?$resp_recheck['distance_type_raw']:'',
+					   getOption($mtid,'merchant_minimum_order')
+					);					
+					$kmrs_subtotal = isset($_SESSION['kmrs_subtotal'])?$_SESSION['kmrs_subtotal']:0;					
+					if($min_fees>0 && $kmrs_subtotal>0){
+					   	if($min_fees>$kmrs_subtotal){
+					   	   $this->msg = Yii::t("default","Sorry but Minimum order is [min_order]",array(
+					   	     '[min_order]'=>FunctionsV3::prettyPrice($min_fees)
+					   	   ));
+					   	   return false;	
+					   	}					
+					}	    		
+	    		} elseif ( $resp_recheck['code']==3 ) {
+	    			// do nothing
+	    		} else {
+	    			$mt_delivery_miles=getOption($mtid,'merchant_delivery_miles'); 
 		    		$distance_type=FunctionsV3::getMerchantDistanceType($mtid); 
 		    		$unit=$distance_type=="M"?t("miles"):t("kilometers");
 		    		$this->msg=t("Sorry but this merchant delivers only with in ").$mt_delivery_miles." $unit";
 		    		return ;
-		    	}
+	    		}    	
 	    	}
-	    }
+	    }	    	    
 	    	    
 	    $params='';
 	    if (is_array($this->data) && count($this->data)>=1){
@@ -3700,9 +3857,52 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	    		}	    
 	    		break;
 	    
+	    	case "paymill":	    		
+	    		if ( $credentials=KPaymill::getCredentials($mtid)){ 	    			
+	    			if($credentials['card_fee1']>0.001){
+	    			  $credentials['card_fee2']=is_numeric($credentials['card_fee2'])?$credentials['card_fee2']:0;
+	    			  $fee = $this->data['x_subtotal']*($credentials['card_fee1']/100)+$credentials['card_fee2'];
+	    			  $params['card_fee']=$fee;
+	    			}	    			    			
+	    		}	    		
+	    		break;
+	    		
+	    	case "strip_ideal":	
+	    	   if ( $credentials=StripeIdeal::getCredentials($mtid)){	    	   	   
+	    	   	   if(is_numeric($credentials['ideal_fee'])){
+		    	   	   if($credentials['ideal_fee']>=0.0001){
+		    	   	   	  $params['card_fee']=$credentials['ideal_fee'];
+		    	   	   }	    	   
+	    	   	   }
+	    	   }
+	    	   break;
+	    		
+	    	case "mol":
+	    		if ($credentials=MollieClass::getCredentials($mtid)){
+	    			if(is_numeric($credentials['card_fee'])){
+	    				if($credentials['card_fee']>=0.0001){
+	    					$params['card_fee']=$credentials['card_fee'];
+	    				}
+	    			}
+	    		}
+	    	   break;
+	    		   
+	    	case "wirecard":   
+	    	   if ($credentials = WireCard::getCredentials($mtid)){	    	   	  
+	    	   	  if(is_numeric($credentials['fee1'])){
+	    	   	  	 if($credentials['fee1']>0.0001){	    	   	  	 	
+	    	   	  	 	$credentials['fee2']=is_numeric($credentials['fee2'])?$credentials['fee2']:0;
+	    			    $fee = $this->data['x_subtotal']*($credentials['fee1']/100)+$credentials['fee2'];
+	    			    $params['card_fee']=$fee; 
+	    	   	  	 }	    	   	  
+	    	   	  }
+	    	   }	    
+	    	   break;
+	    	   
 	    	default:
 	    		break;
 	    }	    
+	    	    	   	    	    
 	    $_SESSION['confirm_order_data']=$params;	    
 	    $this->code=1; $this->msg=t("Please wait while we redirect you");
 	    	    
@@ -3946,7 +4146,7 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	{
 				
 		$aColumns = array(
-		  'order_id','a.merchant_id','a.client_id',
+		  'order_id','a.merchant_id','c.first_name',
 		  'json_details','trans_type','payment_type',
 		  'sub_total','taxable_total','total_w_tax','a.status','request_from','a.date_created'
 		);
@@ -4208,6 +4408,935 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		 } else echo t("No recods found");
 	     Yii::app()->end();	
 	}
-
 	
+	public function AdminIpaySettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_ipay_enabled",
+	    isset($this->data['admin_ipay_enabled'])?$this->data['admin_ipay_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_ipay_merchant_key",
+	    isset($this->data['admin_ipay_merchant_key'])?$this->data['admin_ipay_merchant_key']:'');
+	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+		
+	
+	public function MerchantIpaySettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_ipay_enabled",
+    	isset($this->data['merchant_ipay_enabled'])?$this->data['merchant_ipay_enabled']:'',$mtid);
+    	            
+    	Yii::app()->functions->updateOption("merchant_ipay_merchant_key",
+    	isset($this->data['merchant_ipay_merchant_key'])?$this->data['merchant_ipay_merchant_key']:'',$mtid); 
+		
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+
+	public function AdminPiPaySettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_pipay_enabled",
+	    isset($this->data['admin_pipay_enabled'])?$this->data['admin_pipay_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_pipay_merchant_id",
+	    isset($this->data['admin_pipay_merchant_id'])?$this->data['admin_pipay_merchant_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_pipay_device_id",
+	    isset($this->data['admin_pipay_device_id'])?$this->data['admin_pipay_device_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_pipay_store_id",
+	    isset($this->data['admin_pipay_store_id'])?$this->data['admin_pipay_store_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_pipay_mode",
+	    isset($this->data['admin_pipay_mode'])?$this->data['admin_pipay_mode']:'');
+	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function MerchantPiPaySettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_pipay_enabled",
+    	isset($this->data['merchant_pipay_enabled'])?$this->data['merchant_pipay_enabled']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_pipay_merchant_id",
+    	isset($this->data['merchant_pipay_merchant_id'])?$this->data['merchant_pipay_merchant_id']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_pipay_device_id",
+    	isset($this->data['merchant_pipay_device_id'])?$this->data['merchant_pipay_device_id']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_pipay_store_id",
+    	isset($this->data['merchant_pipay_store_id'])?$this->data['merchant_pipay_store_id']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_pipay_mode",
+    	isset($this->data['merchant_pipay_mode'])?$this->data['merchant_pipay_mode']:'',$mtid); 
+		
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");		
+	}
+	
+	public function AdminHubtelPaymentSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_hubtel_enabled",
+	    isset($this->data['admin_hubtel_enabled'])?$this->data['admin_hubtel_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_client_id",
+	    isset($this->data['admin_hubtel_client_id'])?$this->data['admin_hubtel_client_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_client_secret",
+	    isset($this->data['admin_hubtel_client_secret'])?$this->data['admin_hubtel_client_secret']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_accountno",
+	    isset($this->data['admin_hubtel_accountno'])?$this->data['admin_hubtel_accountno']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_hubtel_channel",
+	    isset($this->data['admin_hubtel_channel'])?$this->data['admin_hubtel_channel']:'');
+	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+
+	public function MerchantHubtelPaymentSettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_hubtel_enabled",
+    	isset($this->data['merchant_hubtel_enabled'])?$this->data['merchant_hubtel_enabled']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_hubtel_client_id",
+    	isset($this->data['merchant_hubtel_client_id'])?$this->data['merchant_hubtel_client_id']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_hubtel_client_secret",
+    	isset($this->data['merchant_hubtel_client_secret'])?$this->data['merchant_hubtel_client_secret']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_hubtel_accountno",
+    	isset($this->data['merchant_hubtel_accountno'])?$this->data['merchant_hubtel_accountno']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_hubtel_channel",
+    	isset($this->data['merchant_hubtel_channel'])?$this->data['merchant_hubtel_channel']:'',$mtid); 
+		
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");		
+	}
+	
+	public function SofortAdminSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_sofort_enabled",
+	    isset($this->data['admin_sofort_enabled'])?$this->data['admin_sofort_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_sofort_config_key",
+	    isset($this->data['admin_sofort_config_key'])?$this->data['admin_sofort_config_key']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_sofort_lang",
+	    isset($this->data['admin_sofort_lang'])?$this->data['admin_sofort_lang']:'');
+	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function SofortMerchantSettings()
+	{
+
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_sofort_enabled",
+    	isset($this->data['merchant_sofort_enabled'])?$this->data['merchant_sofort_enabled']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_sofort_config_key",
+    	isset($this->data['merchant_sofort_config_key'])?$this->data['merchant_sofort_config_key']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_sofort_lang",
+    	isset($this->data['merchant_sofort_lang'])?$this->data['merchant_sofort_lang']:'',$mtid); 
+		
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");		
+		
+	}
+	
+	public function JampieSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_jampie_enabled",
+	    isset($this->data['admin_jampie_enabled'])?$this->data['admin_jampie_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_jampie_email",
+	    isset($this->data['admin_jampie_email'])?$this->data['admin_jampie_email']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function MerchantJampieSettings()
+	{
+
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_jampie_enabled",
+    	isset($this->data['merchant_jampie_enabled'])?$this->data['merchant_jampie_enabled']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_jampie_email",
+    	isset($this->data['merchant_jampie_email'])?$this->data['merchant_jampie_email']:'',$mtid); 
+    	    	
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");		
+		
+	}
+	
+	public function MerchantPointsSettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("mt_disabled_pts",
+    	isset($this->data['mt_disabled_pts'])?$this->data['mt_disabled_pts']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_earn_points_status",
+    	isset($this->data['mt_pts_earn_points_status'])?json_encode($this->data['mt_pts_earn_points_status']):'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_earning_points",
+    	isset($this->data['mt_pts_earning_points'])?$this->data['mt_pts_earning_points']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_earning_points_value",
+    	isset($this->data['mt_pts_earning_points_value'])?$this->data['mt_pts_earning_points_value']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_disabled_redeem",
+    	isset($this->data['mt_pts_disabled_redeem'])?$this->data['mt_pts_disabled_redeem']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_redeeming_point",
+    	isset($this->data['mt_pts_redeeming_point'])?$this->data['mt_pts_redeeming_point']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_redeeming_point_value",
+    	isset($this->data['mt_pts_redeeming_point_value'])?$this->data['mt_pts_redeeming_point_value']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_points_apply_order_amt",
+    	isset($this->data['mt_points_apply_order_amt'])?$this->data['mt_points_apply_order_amt']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_points_minimum",
+    	isset($this->data['mt_points_minimum'])?$this->data['mt_points_minimum']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_points_max",
+    	isset($this->data['mt_points_max'])?$this->data['mt_points_max']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_points_based_earn",
+    	isset($this->data['mt_points_based_earn'])?$this->data['mt_points_based_earn']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_earn_above_amount",
+    	isset($this->data['mt_pts_earn_above_amount'])?$this->data['mt_pts_earn_above_amount']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_enabled_add_voucher",
+    	isset($this->data['mt_pts_enabled_add_voucher'])?$this->data['mt_pts_enabled_add_voucher']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("mt_pts_enabled_offers_discount",
+    	isset($this->data['mt_pts_enabled_offers_discount'])?$this->data['mt_pts_enabled_offers_discount']:'',$mtid); 
+    	    	
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");		
+	}
+	
+	public function WingSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_wing_enabled",
+	    isset($this->data['admin_wing_enabled'])?$this->data['admin_wing_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_loginid",
+	    isset($this->data['admin_wing_loginid'])?$this->data['admin_wing_loginid']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_mode",
+	    isset($this->data['admin_wing_mode'])?$this->data['admin_wing_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_password",
+	    isset($this->data['admin_wing_password'])?$this->data['admin_wing_password']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_biller",
+	    isset($this->data['admin_wing_biller'])?$this->data['admin_wing_biller']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_web_sandbox_url",
+	    isset($this->data['admin_wing_web_sandbox_url'])?$this->data['admin_wing_web_sandbox_url']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_web_live_url",
+	    isset($this->data['admin_wing_web_live_url'])?$this->data['admin_wing_web_live_url']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_mobile_sandbox_url",
+	    isset($this->data['admin_wing_mobile_sandbox_url'])?$this->data['admin_wing_mobile_sandbox_url']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wing_mobile_live_url",
+	    isset($this->data['admin_wing_mobile_live_url'])?$this->data['admin_wing_mobile_live_url']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function MerchantWingSettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_wing_enabled",
+    	isset($this->data['merchant_wing_enabled'])?$this->data['merchant_wing_enabled']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_wing_mode",
+    	isset($this->data['merchant_wing_mode'])?$this->data['merchant_wing_mode']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_wing_loginid",
+    	isset($this->data['merchant_wing_loginid'])?$this->data['merchant_wing_loginid']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_wing_password",
+    	isset($this->data['merchant_wing_password'])?$this->data['merchant_wing_password']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_wing_biller",
+    	isset($this->data['merchant_wing_biller'])?$this->data['merchant_wing_biller']:'',$mtid); 
+    	
+		$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function PaymillSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_paymill_enabled",
+	    isset($this->data['admin_paymill_enabled'])?$this->data['admin_paymill_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_mode",
+	    isset($this->data['admin_paymill_mode'])?$this->data['admin_paymill_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_test_private_key",
+	    isset($this->data['admin_paymill_test_private_key'])?$this->data['admin_paymill_test_private_key']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_test_public_key",
+	    isset($this->data['admin_paymill_test_public_key'])?$this->data['admin_paymill_test_public_key']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_live_private_key",
+	    isset($this->data['admin_paymill_live_private_key'])?$this->data['admin_paymill_live_private_key']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_live_public_key",
+	    isset($this->data['admin_paymill_live_public_key'])?$this->data['admin_paymill_live_public_key']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_card_fee1",
+	    isset($this->data['admin_paymill_card_fee1'])?$this->data['admin_paymill_card_fee1']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_paymill_card_fee2",
+	    isset($this->data['admin_paymill_card_fee2'])?$this->data['admin_paymill_card_fee2']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function PaymillMerchantSettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_paymill_enabled",
+    	isset($this->data['merchant_paymill_enabled'])?$this->data['merchant_paymill_enabled']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_mode",
+    	isset($this->data['merchant_paymill_mode'])?$this->data['merchant_paymill_mode']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_test_private_key",
+    	isset($this->data['merchant_paymill_test_private_key'])?$this->data['merchant_paymill_test_private_key']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_test_public_key",
+    	isset($this->data['merchant_paymill_test_public_key'])?$this->data['merchant_paymill_test_public_key']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_live_private_key",
+    	isset($this->data['merchant_paymill_live_private_key'])?$this->data['merchant_paymill_live_private_key']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_live_public_key",
+    	isset($this->data['merchant_paymill_live_public_key'])?$this->data['merchant_paymill_live_public_key']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_card_fee1",
+    	isset($this->data['merchant_paymill_card_fee1'])?$this->data['merchant_paymill_card_fee1']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_paymill_card_fee2",
+    	isset($this->data['merchant_paymill_card_fee2'])?$this->data['merchant_paymill_card_fee2']:'',$mtid);     	
+    	
+		$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function IpayAfricaSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_enabled",
+	    isset($this->data['admin_ipay_africa_enabled'])?$this->data['admin_ipay_africa_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_mode",
+	    isset($this->data['admin_ipay_africa_mode'])?$this->data['admin_ipay_africa_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_vendor_id",
+	    isset($this->data['admin_ipay_africa_vendor_id'])?$this->data['admin_ipay_africa_vendor_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_ipay_africa_hashkey",
+	    isset($this->data['admin_ipay_africa_hashkey'])?$this->data['admin_ipay_africa_hashkey']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("mpesa_content",
+	    isset($this->data['mpesa_content'])?$this->data['mpesa_content']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("airtel_content",
+	    isset($this->data['airtel_content'])?$this->data['airtel_content']:'');
+
+	    Yii::app()->functions->updateOptionAdmin("ipay_africa_enabled_payment",
+	    isset($this->data['ipay_africa_enabled_payment'])?json_encode($this->data['ipay_africa_enabled_payment']):'');	    
+	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function MerchantIpayAfricaSettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();
+		
+		Yii::app()->functions->updateOption("merchant_ipay_africa_enabled",
+    	isset($this->data['merchant_ipay_africa_enabled'])?$this->data['merchant_ipay_africa_enabled']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_ipay_africa_mode",
+    	isset($this->data['merchant_ipay_africa_mode'])?$this->data['merchant_ipay_africa_mode']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_ipay_africa_vendor_id",
+    	isset($this->data['merchant_ipay_africa_vendor_id'])?$this->data['merchant_ipay_africa_vendor_id']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_ipay_africa_hashkey",
+    	isset($this->data['merchant_ipay_africa_hashkey'])?$this->data['merchant_ipay_africa_hashkey']:'',$mtid);  
+    	
+		$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function adminDixiPaySettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_dixipay_enabled",
+	    isset($this->data['admin_dixipay_enabled'])?$this->data['admin_dixipay_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_mode",
+	    isset($this->data['admin_dixipay_mode'])?$this->data['admin_dixipay_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_username",
+	    isset($this->data['admin_dixipay_username'])?$this->data['admin_dixipay_username']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_password",
+	    isset($this->data['admin_dixipay_password'])?$this->data['admin_dixipay_password']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_account_code",
+	    isset($this->data['admin_dixipay_account_code'])?$this->data['admin_dixipay_account_code']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_sandbox_url",
+	    isset($this->data['admin_dixipay_sandbox_url'])?$this->data['admin_dixipay_sandbox_url']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_dixipay_production_url",
+	    isset($this->data['admin_dixipay_production_url'])?$this->data['admin_dixipay_production_url']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function merchantDixiPaySettings()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();		
+		
+		Yii::app()->functions->updateOption("merchant_dixipay_mode",
+    	isset($this->data['merchant_dixipay_mode'])?$this->data['merchant_dixipay_mode']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_dixipay_enabled",
+    	isset($this->data['merchant_dixipay_enabled'])?$this->data['merchant_dixipay_enabled']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_dixipay_username",
+    	isset($this->data['merchant_dixipay_username'])?$this->data['merchant_dixipay_username']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_dixipay_password",
+    	isset($this->data['merchant_dixipay_password'])?$this->data['merchant_dixipay_password']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_dixipay_account_code",
+    	isset($this->data['merchant_dixipay_account_code'])?$this->data['merchant_dixipay_account_code']:'',$mtid);  
+    	
+		$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function WireCardSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_wirecard_enabled",
+	    isset($this->data['admin_wirecard_enabled'])?$this->data['admin_wirecard_enabled']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_mode",
+	    isset($this->data['admin_wirecard_mode'])?$this->data['admin_wirecard_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_customer_id",
+	    isset($this->data['admin_wirecard_customer_id'])?$this->data['admin_wirecard_customer_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wiredcard_shopid",
+	    isset($this->data['admin_wiredcard_shopid'])?$this->data['admin_wiredcard_shopid']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_secret",
+	    isset($this->data['admin_wirecard_secret'])?$this->data['admin_wirecard_secret']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_customer_id_live",
+	    isset($this->data['admin_wirecard_customer_id_live'])?$this->data['admin_wirecard_customer_id_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wiredcard_shopid_live",
+	    isset($this->data['admin_wiredcard_shopid_live'])?$this->data['admin_wiredcard_shopid_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_secret_live",
+	    isset($this->data['admin_wirecard_secret_live'])?$this->data['admin_wirecard_secret_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_display_text",
+	    isset($this->data['admin_wirecard_display_text'])?$this->data['admin_wirecard_display_text']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_lang",
+	    isset($this->data['admin_wirecard_lang'])?$this->data['admin_wirecard_lang']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_fee_1",
+	    isset($this->data['admin_wirecard_fee_1'])?$this->data['admin_wirecard_fee_1']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_wirecard_fee_2",
+	    isset($this->data['admin_wirecard_fee_2'])?$this->data['admin_wirecard_fee_2']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function WireCardSettingsMerchant()
+	{
+		$mtid=Yii::app()->functions->getMerchantID();		
+		
+		Yii::app()->functions->updateOption("merchant_wirecard_enabled",
+    	isset($this->data['merchant_wirecard_enabled'])?$this->data['merchant_wirecard_enabled']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_mode",
+    	isset($this->data['merchant_wirecard_mode'])?$this->data['merchant_wirecard_mode']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_customer_id",
+    	isset($this->data['merchant_wirecard_customer_id'])?$this->data['merchant_wirecard_customer_id']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wiredcard_shopid",
+    	isset($this->data['merchant_wiredcard_shopid'])?$this->data['merchant_wiredcard_shopid']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_secret",
+    	isset($this->data['merchant_wirecard_secret'])?$this->data['merchant_wirecard_secret']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_customer_id_live",
+    	isset($this->data['merchant_wirecard_customer_id_live'])?$this->data['merchant_wirecard_customer_id_live']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wiredcard_shopid_live",
+    	isset($this->data['merchant_wiredcard_shopid_live'])?$this->data['merchant_wiredcard_shopid_live']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_secret_live",
+    	isset($this->data['merchant_wirecard_secret_live'])?$this->data['merchant_wirecard_secret_live']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_display_text",
+    	isset($this->data['merchant_wirecard_display_text'])?$this->data['merchant_wirecard_display_text']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_lang",
+    	isset($this->data['merchant_wirecard_lang'])?$this->data['merchant_wirecard_lang']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_fee_1",
+    	isset($this->data['merchant_wirecard_fee_1'])?$this->data['merchant_wirecard_fee_1']:'',$mtid);  
+    	
+    	Yii::app()->functions->updateOption("merchant_wirecard_fee_2",
+    	isset($this->data['merchant_wirecard_fee_2'])?$this->data['merchant_wirecard_fee_2']:'',$mtid);  
+    	
+		$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function payulatamSettings()
+	{
+		Yii::app()->functions->updateOptionAdmin("admin_payulatam_enabled",
+	    isset($this->data['admin_payulatam_enabled'])?$this->data['admin_payulatam_enabled']:'');
+	    
+		Yii::app()->functions->updateOptionAdmin("admin_payulatam_mode",
+	    isset($this->data['admin_payulatam_mode'])?$this->data['admin_payulatam_mode']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apikey",
+	    isset($this->data['admin_payulatam_apikey'])?$this->data['admin_payulatam_apikey']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apilogin",
+	    isset($this->data['admin_payulatam_apilogin'])?$this->data['admin_payulatam_apilogin']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_mtid",
+	    isset($this->data['admin_payulatam_mtid'])?$this->data['admin_payulatam_mtid']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apikey_live",
+	    isset($this->data['admin_payulatam_apikey_live'])?$this->data['admin_payulatam_apikey_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_apilogin_live",
+	    isset($this->data['admin_payulatam_apilogin_live'])?$this->data['admin_payulatam_apilogin_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_mtid_live",
+	    isset($this->data['admin_payulatam_mtid_live'])?$this->data['admin_payulatam_mtid_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_account_id",
+	    isset($this->data['admin_payulatam_account_id'])?$this->data['admin_payulatam_account_id']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_account_id_live",
+	    isset($this->data['admin_payulatam_account_id_live'])?$this->data['admin_payulatam_account_id_live']:'');
+	    
+	    Yii::app()->functions->updateOptionAdmin("admin_payulatam_lang",
+	    isset($this->data['admin_payulatam_lang'])?$this->data['admin_payulatam_lang']:'');
+	    	    
+	    $this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function payulatamMerchantSettings()
+	{
+		
+		$mtid=Yii::app()->functions->getMerchantID();		
+		
+		Yii::app()->functions->updateOption("merchant_payulatam_enabled",
+    	isset($this->data['merchant_payulatam_enabled'])?$this->data['merchant_payulatam_enabled']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_mode",
+    	isset($this->data['merchant_payulatam_mode'])?$this->data['merchant_payulatam_mode']:'',$mtid);     	
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_apikey",
+    	isset($this->data['merchant_payulatam_apikey'])?$this->data['merchant_payulatam_apikey']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_apilogin",
+    	isset($this->data['merchant_payulatam_apilogin'])?$this->data['merchant_payulatam_apilogin']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_mtid",
+    	isset($this->data['merchant_payulatam_mtid'])?$this->data['merchant_payulatam_mtid']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_apikey_live",
+    	isset($this->data['merchant_payulatam_apikey_live'])?$this->data['merchant_payulatam_apikey_live']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_apilogin_live",
+    	isset($this->data['merchant_payulatam_apilogin_live'])?$this->data['merchant_payulatam_apilogin_live']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_mtid_live",
+    	isset($this->data['merchant_payulatam_mtid_live'])?$this->data['merchant_payulatam_mtid_live']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_account_id",
+    	isset($this->data['merchant_payulatam_account_id'])?$this->data['merchant_payulatam_account_id']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_account_id_live",
+    	isset($this->data['merchant_payulatam_account_id_live'])?$this->data['merchant_payulatam_account_id_live']:'',$mtid); 
+    	
+    	Yii::app()->functions->updateOption("merchant_payulatam_lang",
+    	isset($this->data['merchant_payulatam_lang'])?$this->data['merchant_payulatam_lang']:'',$mtid); 
+		
+    	$this->code=1;
+		$this->msg=Yii::t("default","Settings saved.");
+	}
+	
+	public function requestCancelOrderList()
+	{
+		$DbExt=new DbExt;
+    	$merchant_id=Yii::app()->functions->getMerchantID();	    
+    	$stmt="SELECT a.*,
+    	(
+    	select concat(first_name,' ',last_name)
+    	from
+    	{{client}}
+    	where
+    	client_id=a.client_id
+    	) as client_name,
+    	
+    	(
+    	select concat(contact_phone)
+    	from
+    	{{client}}
+    	where
+    	client_id=a.client_id
+    	) as contact_phone,
+    	
+    	(
+    	select group_concat(item_name)
+    	from
+    	{{order_details}}
+    	where
+    	order_id=a.order_id
+    	) as item
+    	
+    	FROM
+    	{{order}} a
+    	WHERE
+    	merchant_id=".FunctionsV3::q($merchant_id)." 
+    	AND status NOT in ('".initialStatus()."')
+    	AND request_cancel = '1'
+    	ORDER BY date_created DESC	    	
+    	";    	
+    	if ( $res=$DbExt->rst($stmt)){    		
+    		foreach ($res as $val) {	    			
+    			$new='';
+    			$action="<a data-id=\"".$val['order_id_token']."\" class=\"order_cancel_review\" href=\"javascript:\">".t("Review Order")."</a>";
+    			
+    			if ($val['request_cancel_viewed']==2){
+    				$new=" <div class=\"uk-badge\">".Yii::t("default","NEW")."</div>";
+    			}
+    			    			
+    			$date=FormatDateTime($val['date_created']);
+    			
+    			$item=FunctionsV3::translateFoodItemByOrderId(
+    			  $val['order_id'],
+    			  'kr_merchant_lang_id'
+    			);
+    			
+    			$feed_data['aaData'][]=array(
+    			  $val['order_id'],
+    			  ucwords($val['client_name']).$new,
+    			  $val['contact_phone'],
+    			  $item,
+    			  t($val['trans_type']),	    			  
+    			  FunctionsV3::prettyPaymentType('payment_order',$val['payment_type'],$val['order_id'],$val['trans_type']),
+    			  prettyFormat($val['sub_total'],$merchant_id),
+    			  prettyFormat($val['taxable_total'],$merchant_id),
+    			  prettyFormat($val['total_w_tax'],$merchant_id),	    			  
+    			  "<span class=\"tag ".$val['status']."\">".t($val['status'])."</span>",
+    			  t($val['request_from']),
+    			  $date,
+    			  $action
+    		    );
+    		}
+    		$this->otableOutput($feed_data);
+    	}	   
+    	$this->otableNodata();		
+	}
+	
+	public function reviewCancelOrder()
+	{
+		$order_id = isset($this->data['order_id'])?$this->data['order_id']:'';		
+		if(!empty($order_id)){
+			if ($res = FunctionsV3::getOrderByToken($order_id)){
+				$id = $res['order_id'];
+				$params = array(
+				  'request_cancel_viewed'=>1,
+				  'date_modified'=>FunctionsV3::dateNow(),
+				  'ip_address'=>$_SERVER['REMOTE_ADDR']
+				);
+				$db = new DbExt();
+				$db->updateData("{{order}}",$params,'order_id',$id);
+				Yii::app()->controller->renderPartial('/merchant/review_cancel_order',array(
+			        'order_id'=>$this->data['order_id']  
+			    ),false);
+			    
+				Yii::app()->end();
+			} else $error = t("Order id not found");
+		} else $error = t("Order id not found");
+
+		Yii::app()->controller->renderPartial('/merchant/error',array(
+	        'message'=>$error
+	    ),false);
+		Yii::app()->end();
+				
+	}
+	
+	public function addAddressBookLocation()
+	{
+		$client_id=Yii::app()->functions->getClientId();
+		
+		if($client_id<=0){
+			$this->msg =  t("Session has expired");
+			return ;
+		}	
+		
+		$params = array(
+		 'client_id'=>$client_id,
+		 'street'=>$this->data['street'],
+		 'state_id'=>$this->data['state_id'],
+		 'city_id'=>$this->data['city_id'],
+		 'area_id'=>$this->data['area_id'],
+		 'location_name'=>isset($this->data['location_name'])?$this->data['location_name']:'',
+		 'country_id'=>$this->data['country_id'],
+		 'as_default'=>isset($this->data['as_default'])?$this->data['as_default']:0,
+		 'date_created'=>FunctionsV3::dateNow(),
+		 'ip_address'=>$_SERVER['REMOTE_ADDR']
+		);		
+		$db = new DbExt();
+		if(isset($this->data['id'])){
+			unset($params['date_created']);
+			unset($params['client_id']);
+			$params['date_modified']=FunctionsV3::dateNow();			
+			if ($db->updateData("{{address_book_location}}",$params,'id',$this->data['id'])){
+			    $this->code=1;
+     			$this->msg=Yii::t("default","Successful");		 
+     			
+     			
+     			if($params['as_default']==1){
+     			   $db->qry("
+     			    UPDATE {{address_book_location}}
+     			    SET as_default=''
+     			    WHERE
+     			    client_id = ".FunctionsV3::q($client_id)."
+     			    AND 
+     			    id <> ".FunctionsV3::q($this->data['id'])."
+     			   ");
+     			}			
+     			
+     		} else $this->msg=t("ERROR: Something went wrong");	
+		} else {						
+			if ( $db->insertData('{{address_book_location}}',$params)){
+	        	$id=Yii::app()->db->getLastInsertID();
+	        	$this->details=Yii::app()->createUrl('store/profile',array(
+	        	  'tab'=>2,
+	        	  'do'=>'add',
+	        	  'id'=>$id
+	        	));
+	    		$this->code=1;
+	    		$this->msg=Yii::t("default","Successful");	
+	    		
+	    		if($params['as_default']==1){
+     			   $db->qry("
+     			    UPDATE {{address_book_location}}
+     			    SET as_default=''
+     			    WHERE
+     			    client_id = ".FunctionsV3::q($client_id)."
+     			    AND 
+     			    id <> ".FunctionsV3::q($id)."
+     			   ");
+     			}			
+	    		 
+	        } else $this->msg=t("ERROR: Something went wrong");		
+		}	
+		unset($db);
+	}
+	
+	public function addressBookLocation()
+	{		
+		$client_id = Yii::app()->functions->getClientId();
+		$feed_data = array();
+		if($client_id>0){
+			$stmt="
+			SELECT 
+			a.*,
+			b.name as state_name,
+			c.name as city_name,
+			c.postal_code ,
+			d.name as area_name
+			
+		    FROM
+			{{address_book_location}} a
+			
+			left join {{location_states}} b
+			On
+			a.state_id = b.state_id
+			
+			left join {{location_cities}} c
+			On
+			a.city_id = c.city_id
+			
+			left join {{location_area}} d
+			On
+			a.area_id = d.area_id
+			
+			WHERE
+			client_id = ".FunctionsV3::q($client_id)."
+			";							
+			if ($res=$this->rst($stmt)){				
+				foreach ($res as $val) {
+					$slug=Yii::app()->createUrl("store/profile/",array(
+			   	     'tab'=>2,
+			   	     'do'=>"add",
+			   	     'id'=>$val['id']
+			   	    ));
+			   	    
+			   	    $address='';
+			   	    $address.= $val['street']." ".$val['state_name']." ".$val['city_name']." ".$val['area_name'];			   	    
+			   	    $address.=" ".$val['postal_code'];
+			   	    
+			   	    $action="<div class=\"options\">
+		    		<a href=\"$slug\" ><i class=\"ion-ios-compose-outline\"></i></a>
+		    		<a href=\"javascript:;\" class=\"del_addresslocation\" data-id=\"$val[id]\" ><i class=\"ion-ios-trash\"></i></a>
+		    		</div>";		   	   
+			   	   $feed_data['aaData'][]=array(
+			   	      $address.$action,
+			   	      $val['location_name'],
+			   	      $val['as_default']==1?'<i class="fa fa-check"></i>':'<i class="fa fa-times"></i>'
+			   	   );
+				}
+				$this->otableOutput($feed_data);
+			} else $this->otableNodata();
+		} else $this->otableNodata();		
+	}
+	
+	public function addReviewToOrder()
+	{
+		$order_info= array();
+		$client_id = Yii::app()->functions->getClientId();
+		if($client_id<=0){
+			$this->msg =  t("Session has expired");
+			return ;
+		}	
+		
+		if($this->data['initial_review_rating']<0 || empty($this->data['initial_review_rating'])){
+		   $this->msg = t("Rating is required");
+		   return ;	
+		}	
+				
+		$order_token = isset($this->data['order_id_token'])?$this->data['order_id_token']:'';		
+		if(!empty($order_token)){
+			$order_info = FunctionsV3::getOrderInfoByToken($order_token);
+		}		
+		if(is_array($order_info) && count($order_info)>=1){
+			$order_id = $order_info['order_id'];			
+			$params = array(
+			  'merchant_id'=>$order_info['merchant_id'],
+			  'client_id'=>$client_id,
+			  'review'=>$this->data['review_content'],
+			  'rating'=>$this->data['initial_review_rating'],
+			  'date_created'=>FunctionsV3::dateNow(),
+			  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+			  'order_id'=>$order_id,			  
+			);
+			$db = new DbExt();			
+			if(!FunctionsV3::getReviewByOrder($client_id,$order_id)){
+				if ( $db->insertData("{{review}}",$params)){
+					$this->code = 1;
+					$this->msg = t("Your review has been published.");
+				} else $this->msg = t("ERROR. cannot insert data.");
+			} else $this->msg = t("You have already have add review to this order");
+		} else $this->msg  = t("Order id not found");
+	}
+	
+	public function saveCategorySked()
+	{
+		$db = new DbExt();
+		
+		$mtid = Yii::app()->functions->getMerchantID();
+		if($mtid<=0){
+		   $this->msg = t("ERROR: Your session has expired.");
+		   return ;	
+		}
+		
+		Yii::app()->functions->updateOption("enabled_category_sked",
+    	isset($this->data['enabled_category_sked'])?$this->data['enabled_category_sked']:'',$mtid);     	
+		
+		$stmt="
+		UPDATE {{category}}
+		SET 
+		monday='0',
+		tuesday='0',
+		wednesday='0',
+		thursday='0',
+		friday='0',
+		saturday='0',
+		sunday='0'
+		
+		WHERE
+		merchant_id = ". FunctionsV3::q($mtid)."
+		";
+		$db->qry($stmt);
+				
+		if(isset($this->data['category'])){
+		   foreach ($this->data['category'] as $days=>$val) {		   	    	
+		   		if(is_array($val) && count($val)>=1){
+		   			foreach ($val as $sub_key=>$sub_val) {		   				
+		   				$stmt="
+		   				UPDATE {{category}}
+		   				SET $days='1'
+		   				WHERE
+		   				cat_id=".FunctionsV3::q($sub_key)."
+		   				AND
+		   				merchant_id = ". FunctionsV3::q($mtid)."
+		   				";
+		   				//dump($stmt);
+		   				$db->qry($stmt);
+		   			}
+		   		}		   
+		   	}	
+		}		
+		
+		$this->code = 1;
+		$this->msg = t("Setting saved");
+	}
+		
 } /*END CLASS*/

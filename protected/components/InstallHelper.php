@@ -91,7 +91,7 @@ class InstallHelper
 	
 	public static function UserAccessString()
 	{
-		return '["autologin","dashboard","merchant","sponsoredMerchantList","packages","Cuisine","dishes","OrderStatus","incomingorders","settings","themesettings","managelocation","commisionsettings","voucher","invoice","merchantcommission","withdrawal","incomingwithdrawal","withdrawalsettings","emailsettings","emailtpl","notisettings","emailogs","cronjobs","customPage","Ratings","ContactSettings","SocialSettings","ManageCurrency","ManageLanguage","Seo","addons","addonexport","mobileapp","pointsprogram","merchantapp","analytics","customerlist","subscriberlist","reviews","bankdeposit","paymentgatewaysettings","paymentgateway","paypalSettings","cardpaymentsettings","stripeSettings","mercadopagoSettings","sisowsettings","payumonenysettings","obdsettings","payserasettings","payondelivery","barclay","epaybg","authorize","braintree","razor","mollie","ipay88","moneris","sms","smsSettings","smsPackage","smstransaction","smslogs","fax","faxtransaction","faxpackage","faxlogs","faxsettings","reports","rptMerchantReg","rptMerchantPayment","rptMerchanteSales","rptmerchantsalesummary","rptbookingsummary","userList"]';
+		return '["autologin","dashboard","merchant","sponsoredMerchantList","packages","Cuisine","dishes","OrderStatus","incomingorders","settings","themesettings","managelocation","commisionsettings","voucher","invoice","merchantcommission","withdrawal","incomingwithdrawal","withdrawalsettings","emailsettings","emailtpl","notisettings","emailogs","cronjobs","customPage","Ratings","ContactSettings","SocialSettings","ManageCurrency","ManageLanguage","Seo","addons","addonexport","mobileapp","pointsprogram","merchantapp","analytics","customerlist","subscriberlist","reviews","bankdeposit","paymentgatewaysettings","paymentgateway","paypalSettings","cardpaymentsettings","stripeSettings","mercadopagoSettings","sisowsettings","payumonenysettings","obdsettings","payserasettings","payondelivery","barclay","epaybg","authorize","braintree","razor","mollie","ipay88","moneris","sms","smsSettings","smsPackage","smstransaction","smslogs","fax","faxtransaction","faxpackage","faxlogs","faxsettings","reports","rptMerchantReg","rptMerchantPayment","rptMerchanteSales","rptmerchantsalesummary","rptbookingsummary","userList","voguepay","printermodule"]';
 	}
 	
 	public static function CurrencyList()
@@ -233,15 +233,18 @@ class InstallHelper
 	public static function OrderStatusList()
 	{
 		$order_stats[]=array(
-		  'description'=>"pending",		  
+		  'description'=>"pending",
+		  
 		  'ip_address'=>$_SERVER['REMOTE_ADDR']
 		);
 		$order_stats[]=array(
-		  'description'=>"cancelled",		  
+		  'description'=>"cancelled",
+		  
 		  'ip_address'=>$_SERVER['REMOTE_ADDR']
 		);
 		$order_stats[]=array(
-		  'description'=>"delivered",		  
+		  'description'=>"delivered",
+		  
 		  'ip_address'=>$_SERVER['REMOTE_ADDR']
 		);
 		$order_stats[]=array(

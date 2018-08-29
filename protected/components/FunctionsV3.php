@@ -260,6 +260,9 @@ class FunctionsV3
     	if (empty($address)){
     		return false;
     	}
+    	
+    	$p = new CHtmlPurifier();
+    	$address = $p->purify($address);
     	    	    	
     	if ($page>0){
     	    $page=($page-1)*$per_page;
@@ -345,9 +348,14 @@ class FunctionsV3
 				$x=1;
 				foreach ($filter_cuisines as $val) {				
 					if (!empty($val)){
-						if ( $x==1){
+						/*if ( $x==1){
 							$filter_cuisine.=" LIKE '%\"$val\"%'";
-						} else $filter_cuisine.=" OR cuisine LIKE '%\"$val\"%'";
+						} else $filter_cuisine.=" OR cuisine LIKE '%\"$val\"%'";*/
+						
+						if ( $x==1){
+							$filter_cuisine.=" LIKE ".FunctionsV3::q("%$val%")." ";
+						} else $filter_cuisine.=" OR cuisine LIKE ".FunctionsV3::q("%$val%")." ";
+						
 						$x++;
 					}
 				}				
@@ -360,13 +368,15 @@ class FunctionsV3
 		$filter_minimum='';
 		if (isset($_GET['filter_minimum'])){
 			if (is_numeric($_GET['filter_minimum'])){
-				$and.=" AND CAST(minimum_order as SIGNED) <='".$_GET['filter_minimum']."' ";
+				//$and.=" AND CAST(minimum_order as SIGNED) <='".$_GET['filter_minimum']."' ";
+				$and.=" AND CAST(minimum_order as SIGNED) <=".FunctionsV3::q($_GET['filter_minimum'])." ";
 			}		
 		}		
 		
 		if (isset($_GET['restaurant_name'])){
 			if (!empty($_GET['restaurant_name'])){
-			    $and.=" AND restaurant_name LIKE '%".$_GET['restaurant_name']."%'";
+			    //$and.=" AND restaurant_name LIKE '%".$_GET['restaurant_name']."%'";
+			    $and.=" AND restaurant_name LIKE ".FunctionsV3::q("%".$_GET['restaurant_name']."%")."  ";
 			}
 		}
 		
@@ -485,7 +495,7 @@ class FunctionsV3
 		
 		if (isset($getdata['restaurant_name'])){
 			if (!empty($getdata['restaurant_name'])){
-			    $and.=" AND restaurant_name LIKE '".$getdata['restaurant_name']."%'";
+			    $and.=" AND restaurant_name LIKE '%".$getdata['restaurant_name']."%'";
 			}
 		}
 		
@@ -496,6 +506,9 @@ class FunctionsV3
     
     public static function searchByMerchant($stype='',$address='',$page=0,$per_page=5,$getdata='')
     {        
+    	
+    	$p = new CHtmlPurifier();
+    	$address  = $p->purify($address);
     	
         if ($page>0){
     	    $page=($page-1)*$per_page;
@@ -559,7 +572,7 @@ class FunctionsV3
 			   $foodname_str='';
 			   if (isset($getdata['foodname'])){
 				  if (!empty($getdata['foodname'])){
-					  $foodname_str="%".$getdata['foodname']."%";
+					  $foodname_str="%".$getdata['foodname']."%";					  			 
 				  } else $foodname_str='-1';			
 			   } else $foodname_str='-1';		   			   
 			   $stmt="SELECT SQL_CALC_FOUND_ROWS a.*,
@@ -590,7 +603,8 @@ class FunctionsV3
 			   	  $zipcode=explode(" ",$zipcode);
 			   	  $post_code=$zipcode[0];
 			   }
-			   $query=" post_code LIKE '%$post_code%' ";
+			   //$query=" post_code LIKE '%$post_code%' ";
+			   $query=" post_code LIKE ".FunctionsV3::q("%$post_code%")." ";
 			   break;
 			   
 			case "kr_search_location":   
@@ -750,17 +764,33 @@ class FunctionsV3
     public static function getOffersByMerchant($merchant_id='',$display_type=1)
     {
     	$offer='';
-    	if ( $res=Yii::app()->functions->getMerchantOffersActive($merchant_id)){    		
+    	if ( $res=Yii::app()->functions->getMerchantOffersActive($merchant_id)){    		    		
     		if ($display_type==1){
     			$offer=number_format($res['offer_percentage'],0)."% ".t("Off");
     		} else {
-    			$offer=number_format($res['offer_percentage'],0)."% ".t("off today on orders over");
-    			$offer.=" ".self::prettyPrice($res['offer_price']);
+    			$applicable_to_list = '';
+    			if(isset($res['applicable_to'])){
+    			   $applicable_to=json_decode($res['applicable_to'],true);	
+    			   if(is_array($applicable_to) && count($applicable_to)>=1){
+    			   	  foreach ($applicable_to as $applicable_to_val) {    			   	  	 
+    			   	  	 $applicable_to_list.=t($applicable_to_val).",";
+    			   	  }
+    			   	  $applicable_to_list = substr($applicable_to_list,0,-1);
+    			   }    			
+    			}    		    	
+    			if (!empty($applicable_to_list)){
+    				$offer=number_format($res['offer_percentage'],0)."% ".t("off today on orders over");
+	    			$offer.=" ".self::prettyPrice($res['offer_price']);
+	    			$offer.=" ".t("when you checkout via")." ".$applicable_to_list;
+    			} else {
+	    			$offer=number_format($res['offer_percentage'],0)."% ".t("off today on orders over");
+	    			$offer.=" ".self::prettyPrice($res['offer_price']);
+    			}
     		}
     		return $offer;
     	}
     	return false;
-    }
+    }   
     
     public static function getDistanceBetweenPlot($lat1, $lon1, $lat2, $lon2, $unit)
     {
@@ -817,7 +847,11 @@ class FunctionsV3
     	  	 	$data = Yii::app()->functions->Curl($url);
     	  	 } else $data = @file_get_contents($url);	
     	  	 $data = json_decode($data);  
-    	  	 //dump($data);
+    	  	 
+    	  	 /*$data = (object) array(
+    	  	   'status'=>"OVER_QUERY_LIMIT"
+    	  	 );*/
+    	  	     	  	 
     	  	 if (is_object($data)){
     	  	 	if ($data->status=="OK"){ 
     	  	 		if($data->rows[0]->elements[0]->status=="ZERO_RESULTS"){
@@ -848,7 +882,10 @@ class FunctionsV3
     	  	 		    }
     	  	 		}
     	  	 		return $distance_raw;
-    	  	 	}	
+    	  	 		
+    	  	 	} elseif ( $data->status=="OVER_QUERY_LIMIT" ) {
+    	  	 		return 0;
+    	  	 	}    	  	 
     	  	 }
     	  	 return false;
     	  }
@@ -938,6 +975,10 @@ class FunctionsV3
     
 	public static function getMerchantBySlug($slug_id='')
 	{
+		
+		/*$p = new CHtmlPurifier();
+		$slug_id = $p->purify($slug_id);*/
+		
 		$DbExt=new DbExt;
 		$DbExt->qry("SET SQL_BIG_SELECTS=1");
 		$stmt="SELECT *,
@@ -1042,6 +1083,7 @@ class FunctionsV3
 	
 	public static function getItemFirstPrice($prices='',$discount='')
 	{		
+		//dump($prices); die();
 		$size='';
 		if (is_array($prices) && count($prices)>=1){
 			$regular_price=$prices[0]['price'];			
@@ -1054,8 +1096,17 @@ class FunctionsV3
 				$regular_price=$regular_price-$discount;
 			}
 			if(!empty($size)){
-				return $size." ".self::prettyPrice($regular_price);
-			} else return self::prettyPrice($regular_price);			
+				//return $size." ".self::prettyPrice($regular_price);
+				if($discount>=1){
+					$original_price = unPrettyPrice($regular_price) + unPrettyPrice($discount);
+					return qTranslate($size,'size',$prices[0]) . "&nbsp;<span class=\"normal-price\">".self::prettyPrice($original_price)."</span>" ." <span class=\"sale-price\">".self::prettyPrice($regular_price)."</span>";
+				} else return qTranslate($size,'size',$prices[0]) ." ".self::prettyPrice($regular_price);							
+			} else {
+				if($discount>=1){
+					$original_price = unPrettyPrice($regular_price) + unPrettyPrice($discount);
+					return "<span class=\"normal-price\">".self::prettyPrice($original_price)."</span>" ." <span class=\"sale-price\">".self::prettyPrice($regular_price)."</span>";
+				} else return self::prettyPrice($regular_price);							
+			}		
 		}
 		return '-';
 	}
@@ -1179,7 +1230,7 @@ class FunctionsV3
 			status in ('publish','published')
 			AND
 			now() <= expiration
-			AND ( merchant_id =".self::q($merchant_id)." OR joining_merchant LIKE '%$mtid%' )
+			AND ( merchant_id =".self::q($merchant_id)." OR joining_merchant LIKE ".FunctionsV3::q($mtid)." )
 			LIMIT 0,10			
 		";	 	 
 	    //dump($stmt);   
@@ -1225,10 +1276,7 @@ class FunctionsV3
     	  'obd'=>t("Offline Bank Deposit"),
     	  'btr' =>t("Braintree"),
     	  'rzr'=>t("Razorpay"),
-    	  'vog'=>t("voguepay"),
-    	  /*'mol'=>t("Mollie"),
-    	  'ip8'=>t("Ipay88"),
-    	  'mri'=>t("moneris"),*/
+    	  'vog'=>t("voguepay"),    	   	 
     	);
     }
     
@@ -1249,7 +1297,7 @@ class FunctionsV3
     
     public static function getAdminPaymentList()
     {
-    	$payment_list=self::PaymentOptionList();
+    	$payment_list=self::PaymentOptionList();    	
     	
     	$payment_available='';
     	if (getOptionA('admin_stripe_enabled')=="yes"){
@@ -1301,6 +1349,37 @@ class FunctionsV3
     	if (getOptionA('admin_vog_enabled')==2){
     		$payment_available[]='vog';
     	}
+    	if (getOptionA('admin_ipay_enabled')==2){
+    		$payment_available[]='ipay';
+    	}
+    	if (getOptionA('admin_pipay_enabled')==2){
+    		$payment_available[]='pipay';
+    	}    	
+    	if (getOptionA('admin_jampie_enabled')==2){
+    		$payment_available[]='jampie';
+    	}
+    	if (getOptionA('admin_wing_enabled')==2){
+    		$payment_available[]='wing';
+    	}
+    	if (getOptionA('admin_paymill_enabled')==2){
+    		$payment_available[]='paymill';
+    	}
+    	
+    	if (getOptionA('admin_stripe_ideal_enabled')==1){
+    		$payment_available[]='strip_ideal';
+    	}
+    	if (getOptionA('admin_ipay_africa_enabled')==1){
+    		$payment_available[]='ipay_africa';
+    	}
+    	if (getOptionA('admin_dixipay_enabled')==1){
+    		$payment_available[]='dixipay';
+    	}
+    	if (getOptionA('admin_wirecard_enabled')==1){
+    		$payment_available[]='wirecard';
+    	}
+    	if (getOptionA('admin_payulatam_enabled')==1){
+    		$payment_available[]='payulatam';
+    	}
     	    	
     	$new_payment_list='';
 		if (is_array($payment_list) && count($payment_list)>=1){
@@ -1309,7 +1388,7 @@ class FunctionsV3
 				   $new_payment_list[$key]=$val;
 				}
 			}
-		}
+		}		
 		return $new_payment_list;
     }
     
@@ -1375,6 +1454,18 @@ class FunctionsV3
 	    	}
 	    	if (getOption($merchant_id,'merchant_moneris_enabled')==2){
 	    		$payment_available[]=Moneris::getPaymentCode();
+	    	}
+	    	if (getOption($merchant_id,'admin_stripe_ideal_enabled')==1){
+	    		$payment_available[]='strip_ideal';
+	    	}
+	    	if (getOption($merchant_id,'admin_ipay_africa_enabled')==1){
+	    		$payment_available[]='ipay_africa';
+	    	}
+	    	if (getOption($merchant_id,'admin_dixipay_enabled')==1){
+	    		$payment_available[]='dixipay';
+	    	}	    	
+	    	if (getOption($merchant_id,'admin_wirecard_enabled')==1){
+	    		$payment_available[]='wirecard';
 	    	}
 			
 			$admin_available_payment=Yii::app()->functions->getMerchantListOfPaymentGateway();
@@ -1761,14 +1852,14 @@ class FunctionsV3
     	    
     	if($merchant_info=FunctionsV3::getMerchantById($merchant_id)){
     		$distance_type=FunctionsV3::getMerchantDistanceType($merchant_id); 
-    		
-    		/*$lat=isset($_SESSION['client_location']['lat'])?$_SESSION['client_location']['lat']:'';
-    		$lng=isset($_SESSION['client_location']['long'])?$_SESSION['client_location']['long']:'';*/
-    		
+    		    		
     		$complete_address=$data['street']." ".$data['city']." ".$data['state']." ".$data['zipcode'];
+    		if(isset($data['country'])){
+    			$complete_address.=" ".$data['country'];
+    		}    
+    		    		
     		$lat=0;
-			$lng=0;
-			
+			$lng=0;			
     		/*if address book was used*/
     		if ( isset($data['address_book_id'])){
 	    		if ($address_book=Yii::app()->functions->getAddressBookByID($data['address_book_id'])){
@@ -1778,12 +1869,7 @@ class FunctionsV3
 	    	        $complete_address.=" ".$address_book['zipcode'];
 	        	}	    		        
 	    	}
-	    		    	
-	    	/*if ($lat_res=Yii::app()->functions->geodecodeAddress($complete_address)){
-		        $lat=$lat_res['lat'];
-				$lng=$lat_res['long'];
-	    	}*/
-	    	
+	    		    		    		    	
 	    	/*if map address was used*/
     		if (isset($data['map_address_toogle'])){    			
     			if ($data['map_address_toogle']==2){
@@ -1827,8 +1913,7 @@ class FunctionsV3
 								              $merchant_id,
 								              $merchant_info['delivery_charges'],
 								              $distance,
-								              $distance_type_raw);
-                    //dump($delivery_fee);
+								              $distance_type_raw);                    
                     $_SESSION['shipping_fee']=$delivery_fee;
                     return true;								              
                 }
@@ -1877,17 +1962,16 @@ class FunctionsV3
 		";
 		$data='';
     	if ( $res=$DbExt->rst($stmt)){
-			foreach ($res as $val) {
-				$id='"'.$val['cuisine_id'].'"';
+			foreach ($res as $val) {								
 				$stmt2="
 				SELECT count(*) AS total
 				FROM
 				{{merchant}}
 				WHERE
-				cuisine LIKE '%$id%'
+				cuisine LIKE ".FunctionsV3::q('%"'.$val['cuisine_id'].'"%')."
 				AND status='active'
 				AND is_ready ='2'
-				";
+				";				
 				$count=$DbExt->rst($stmt2);
 				$val['total']=$count[0]['total'];
 				$data[]=$val;
@@ -1941,6 +2025,29 @@ class FunctionsV3
 		if (Yii::app()->hasModule($modulename)){
 		   $path_to_upload=Yii::getPathOfAlias('webroot')."/protected/modules/$modulename";	
 		   if(file_exists($path_to_upload)){
+		   	
+		   	   /*check if tables exist for modules*/		   	   
+		   	   $check_table='';
+		   	   if($modulename=="driver"){
+		   	   	  $check_table = 'driver_task';
+		   	   	  
+		   	   } elseif ($modulename=="pointsprogram"){
+		   	   	  $check_table = 'points_earn'; 
+		   	   	  
+		   	   } elseif ($modulename=="printer"){
+		   	   	  $check_table = 'printer_print'; 
+		   	   	  
+		   	   } elseif ($modulename=="mobileapp"){
+		   	   	  $check_table = 'mobile_registered';  
+		   	   	  
+		   	   } elseif ($modulename=="singlemerchant"){
+		   	   	  $check_table = 'singleapp_cart'; 
+		   	   }
+		   	   if(!empty($check_table)){
+		   	   	  if(!self::checkIfTableExist($check_table)){
+		   	   	  	 return false;
+		   	   	  }		   	  
+		   	   }	   
 		   	   return true;
 		   }
 		}
@@ -1992,7 +2099,7 @@ class FunctionsV3
 	
 	public static function addCsrfToken($refresh=true)
 	{
-		$refresh=false;
+		/*$refresh=false;
 		$protected_path = Yii::getPathOfAlias('webroot')."/protected/runtime";
 		if(!file_exists($protected_path)){
 			mkdir($protected_path,0777);
@@ -2002,7 +2109,7 @@ class FunctionsV3
 		if($refresh){
            $request->getCookies()->remove($request->csrfTokenName);
 		}
-        echo CHtml::hiddenField($request->csrfTokenName, $request->getCsrfToken());
+        echo CHtml::hiddenField($request->csrfTokenName, $request->getCsrfToken());*/
 	}
 	
 	public static function saveFbAvatarPicture($id='')
@@ -2267,7 +2374,7 @@ class FunctionsV3
 	    $stmt="SELECT * FROM
 			{{size}}
 			WHERE
-			merchant_id='".$merchant_id."'
+			merchant_id=".self::q($merchant_id)."
 			AND
 			size_name=".self::q($size_name)."
 			ORDER BY sequence ASC			
@@ -2571,7 +2678,7 @@ class FunctionsV3
 		 FROM
 		{{merchant}} a
 		WHERE
-		merchant_id='".$merchant_id."'
+		merchant_id=".self::q($merchant_id)."
 		LIMIT 0,1
 		";
 		if ( $res=$DbExt->rst($stmt)){
@@ -3125,7 +3232,7 @@ class FunctionsV3
     			    $tpl=self::smarty($key,
     				isset($data[$val])? date("M d,Y",strtotime($data[$val]))  :'',$tpl);
     			   break; 
-    			default:
+    			default:    				
     				$tpl=self::smarty($key,
     				isset($data[$val])?clearString($data[$val]):'',$tpl);
     				break;
@@ -3198,6 +3305,10 @@ class FunctionsV3
     	$enabled=getOptionA("receipt_send_to_merchant_sms");
     	$mobiles = getOption($data['merchant_id'],"sms_notify_number");
     	if ($enabled==1 && !empty($mobiles)){
+    		    		
+    		$data['taxable_total'] = FunctionsV3::prettyPrice($data['taxable_total']);
+    		$data['cart_tip_value'] = FunctionsV3::prettyPrice($data['cart_tip_value']);    		
+    		 
     		$pattern=array(
 	    	   'customer_name'=>'full_name',
 	    	   'order_id'=>'order_id',
@@ -3205,10 +3316,19 @@ class FunctionsV3
 	    	   'total_amount'=>'total_w_tax',
 	    	   'order_details'=>$sms_data,
 	    	   'sitename'=>getOptionA('website_title'),
-	    	   'siteurl'=>websiteUrl(),	    	   
+	    	   'siteurl'=>websiteUrl(),
+	    	   'customer_mobile'=>'contact_phone',
+	    	   'customer_address'=>'client_delivery_address',
+	    	   'payment_type'=>'payment_type',
+	    	   'transaction_type'=>'trans_type',
+	    	   'delivery_time'=>'delivery_time',
+	    	   'delivery_instruction'=>'delivery_instruction',
+	    	   'taxable_total'=>'taxable_total',
+	    	   'cart_tip_value'=>'cart_tip_value'
 	    	);
 	    	$tpl=getOptionA("receipt_send_to_merchant_sms_content_$lang");
 	    	$tpl=self::replaceTemplateTags($tpl,$pattern,$data);
+	    	
 	    	$balance=Yii::app()->functions->getMerchantSMSCredit($data['merchant_id']);	    		    	
 	    	if (is_numeric($balance) && $balance>=1){	    		
 	    		$mobiles=explode(",",$mobiles);
@@ -3246,8 +3366,9 @@ class FunctionsV3
     	/*SEND PUSH TO MERCHANT*/    
     	if (FunctionsV3::hasModuleAddon("merchantapp")){    		
     		self::MerchantpushNewOrder($data['order_id']);
+    		FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("merchantapp/cron/processpush"));
     	}
-    	
+    	    	
     	unset($DbExt);
     }
     
@@ -3432,38 +3553,83 @@ class FunctionsV3
 		    	$client_id=isset($data['client_id'])?$data['client_id']:'';
 		    	$client_info=self::getDeviceClientId($client_id);				    		    
 		    	if($enabled==1 && !empty($tpl) && is_array($client_info) && count($client_info)>=1){
-		    		if ($client_info['enabled_push']!=1){
-		    			return ;
+		    		if ($client_info['enabled_push']==1){
+			    		$pattern=array(
+				    	   'customer_name'=>'full_name',
+				    	   'order_id'=>'order_id',
+				    	   'restaurant_name'=>'merchant_name',
+				    	   'total_amount'=>'total_w_tax',
+				    	   'order_status'=>'status',
+				    	   'sitename'=>getOptionA('website_title'),
+				    	   'siteurl'=>websiteUrl(),	    
+				    	   'remarks'=>$remarks	   
+				    	);
+				    	$tpl=self::replaceTemplateTags($tpl,$pattern,$data); 
+				    	
+				    	$push_title=getOptionA("order_status_".$status."_push_title_$lang");
+				    	$push_title=self::replaceTemplateTags($push_title,$pattern,$data); 
+				    	
+				    	$params=array(
+				    	  'client_id'=>$client_info['client_id'],
+				    	  'client_name'=>isset($client_info['client_name'])?$client_info['client_name']:'',
+				    	  'device_platform'=>$client_info['device_platform'],
+				    	  'device_id'=>$client_info['device_id'],
+				    	  'push_title'=>$push_title,
+				    	  'push_message'=>$tpl,
+				    	  'push_type'=>"order",
+				    	  'date_created'=>self::dateNow(),
+				    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+				    	);			    	
+				    	$DbExt->insertData("{{mobile_push_logs}}",$params); 
+				    	FunctionsV3::fastRequest(
+				    	FunctionsV3::getHostURL().Yii::app()->createUrl("mobileapp/cron/processpush"));
 		    		}
-		    		$pattern=array(
-			    	   'customer_name'=>'full_name',
-			    	   'order_id'=>'order_id',
-			    	   'restaurant_name'=>'merchant_name',
-			    	   'total_amount'=>'total_w_tax',
-			    	   'order_status'=>'status',
-			    	   'sitename'=>getOptionA('website_title'),
-			    	   'siteurl'=>websiteUrl(),	    
-			    	   'remarks'=>$remarks	   
-			    	);
-			    	$tpl=self::replaceTemplateTags($tpl,$pattern,$data); 
-			    	
-			    	$push_title=getOptionA("order_status_".$status."_push_title_$lang");
-			    	$push_title=self::replaceTemplateTags($push_title,$pattern,$data); 
-			    	
-			    	$params=array(
-			    	  'client_id'=>$client_info['client_id'],
-			    	  'client_name'=>isset($client_info['client_name'])?$client_info['client_name']:'',
-			    	  'device_platform'=>$client_info['device_platform'],
-			    	  'device_id'=>$client_info['device_id'],
-			    	  'push_title'=>$push_title,
-			    	  'push_message'=>$tpl,
-			    	  'push_type'=>"order",
-			    	  'date_created'=>self::dateNow(),
-			    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-			    	);			    	
-			    	$DbExt->insertData("{{mobile_push_logs}}",$params); 
-			    	FunctionsV3::fastRequest(
-			    	FunctionsV3::getHostURL().Yii::app()->createUrl("mobileapp/cron/processpush"));
+		    	}
+	    	}
+	    	
+	    	/*SINGLEMERCHANT PUSH*/
+	    	if (FunctionsV3::hasModuleAddon("singlemerchant")){
+	    		$enabled = getOptionA("order_status_".$status."_push");	  
+		    	$tpl=getOptionA("order_status_".$status."_push_content_$lang"); 
+		    	$client_id=isset($data['client_id'])?$data['client_id']:'';
+		    	$client_info= Yii::app()->functions->getClientInfo($client_id);				    		    
+		    	if($enabled==1 && !empty($tpl) && is_array($client_info) && count($client_info)>=1){
+		    		if ($client_info['enabled_push']==1){
+			    		$pattern=array(				    	   
+				    	   'order_id'=>'order_id',
+				    	   'restaurant_name'=>'merchant_name',
+				    	   'total_amount'=>'total_w_tax',
+				    	   'order_status'=>'status',
+				    	   'sitename'=>getOptionA('website_title'),
+				    	   'siteurl'=>websiteUrl(),	    
+				    	   'remarks'=>$remarks	   
+				    	);
+				    	
+				    	$customer_name = $client_info['first_name']." ".$client_info['last_name'];
+				    	
+				    	$tpl=self::replaceTemplateTags($tpl,$pattern,$data); 
+				    	$tpl = self::smarty('customer_name',$customer_name,$tpl);
+				    	
+				    	$push_title=getOptionA("order_status_".$status."_push_title_$lang");
+				    	$push_title=self::replaceTemplateTags($push_title,$pattern,$data); 
+				    	
+				    	$params=array(
+				    	  'client_id'=>$client_info['client_id'],
+				    	  'client_name'=>$customer_name,
+				    	  'device_platform'=>$client_info['device_platform'],
+				    	  'device_id'=>$client_info['device_id'],
+				    	  'push_title'=>$push_title,
+				    	  'push_message'=>$tpl,
+				    	  'push_type'=>"order",
+				    	  'date_created'=>self::dateNow(),
+				    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+				    	  'registration_type'=>$client_info['registration_type'],
+				    	  'merchant_id'=>$data['merchant_id']
+				    	);			    	
+				    	$DbExt->insertData("{{singleapp_mobile_push_logs}}",$params); 
+				    	FunctionsV3::fastRequest(
+				    	FunctionsV3::getHostURL().Yii::app()->createUrl("singlemerchant/cron/processpush"));
+		    		}
 		    	}
 	    	}
 	    	
@@ -3986,49 +4152,112 @@ class FunctionsV3
    	   	   	   if($client_id>0 && $enabled==1){
    	   	   	   	  if($client_info=self::getDeviceClientId($client_id)){
    	   	   	   	  	
-   	   	   	   	  	  if ($client_info['enabled_push']!=1){
-		    			  return ;
-		    		  }
-		    		  		    		    	   	  	
-   	   	   	   	  	  $pattern=array(		    
-			   	   	   'customer_name'=>"booking_name",
-			    	   'restaurant_name'=>'restaurant_name',	
-			    	   'number_guest'=>'number_guest',
-			    	   'date_booking'=>'date_booking',
-			    	   'time'=>"booking_time",
-			    	   'email'=>"email",
-			    	   'mobile'=>"mobile",
-			    	   'instruction'=>"booking_notes",
-			    	   'booking_id'=>"booking_id",
-			    	   'status'=>'status',
-			    	   'merchant_remarks'=>'remarks',
-			    	   'sitename'=>getOptionA('website_title'),
-			    	   'siteurl'=>websiteUrl(),	 		    	   
-			    	  );
-			    	  $tpl=FunctionsV3::replaceTemplateTags($tpl,$pattern,$data);
-			    	  $push_tpl=FunctionsV3::replaceTemplateTags($push_tpl,$pattern,$data);
-   	   	   	   	  	
-   	   	   	   	  	 //dump($push_tpl); dump($tpl);   
-   	   	   	   	  	 
-   	   	   	   	  	 $params=array(
-			    	  'client_id'=>$client_info['client_id'],
-			    	  'client_name'=>isset($client_info['client_name'])?$client_info['client_name']:'',
-			    	  'device_platform'=>$client_info['device_platform'],
-			    	  'device_id'=>$client_info['device_id'],
-			    	  'push_title'=>$push_tpl,
-			    	  'push_message'=>$tpl,
-			    	  'push_type'=>"book",
-			    	  'date_created'=>self::dateNow(),
-			    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-			    	);					    	
-			    	$DbExt->insertData("{{mobile_push_logs}}",$params); 
-			    	FunctionsV3::fastRequest(
-			    	FunctionsV3::getHostURL().Yii::app()->createUrl("mobileapp/cron/processpush")); 
+   	   	   	   	  	  if ($client_info['enabled_push']!=1){		    			  
+		    		  	    		    	   	  	
+	   	   	   	   	  	  $pattern=array(		    
+				   	   	   'customer_name'=>"booking_name",
+				    	   'restaurant_name'=>'restaurant_name',	
+				    	   'number_guest'=>'number_guest',
+				    	   'date_booking'=>'date_booking',
+				    	   'time'=>"booking_time",
+				    	   'email'=>"email",
+				    	   'mobile'=>"mobile",
+				    	   'instruction'=>"booking_notes",
+				    	   'booking_id'=>"booking_id",
+				    	   'status'=>'status',
+				    	   'merchant_remarks'=>'remarks',
+				    	   'sitename'=>getOptionA('website_title'),
+				    	   'siteurl'=>websiteUrl(),	 		    	   
+				    	  );
+				    	  $tpl=FunctionsV3::replaceTemplateTags($tpl,$pattern,$data);
+				    	  $push_tpl=FunctionsV3::replaceTemplateTags($push_tpl,$pattern,$data);
+	   	   	   	   	  	
+	   	   	   	   	  	 //dump($push_tpl); dump($tpl);   
+	   	   	   	   	  	 
+	   	   	   	   	  	 $params=array(
+				    	  'client_id'=>$client_info['client_id'],
+				    	  'client_name'=>isset($client_info['client_name'])?$client_info['client_name']:'',
+				    	  'device_platform'=>$client_info['device_platform'],
+				    	  'device_id'=>$client_info['device_id'],
+				    	  'push_title'=>$push_tpl,
+				    	  'push_message'=>$tpl,
+				    	  'push_type'=>"book",
+				    	  'date_created'=>self::dateNow(),
+				    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+				    	);					    	
+				    	$DbExt->insertData("{{mobile_push_logs}}",$params); 
+				    	FunctionsV3::fastRequest(
+				    	FunctionsV3::getHostURL().Yii::app()->createUrl("mobileapp/cron/processpush")); 
+			    	
+   	   	   	   	  	  }
    	   	   	   	  }
    	   	   	   }
    	   	   }
    	   }
    	   
+   	   
+   	   /*SINGLEAPP MERCHANT*/   	   
+   	   if (FunctionsV3::hasModuleAddon("singlemerchant")){
+   	   	   $client_id='';
+   	   	   if ($booking_details=self::getBookingByID($data['booking_id'])){   	   	   	   
+   	   	   	   if ($booking_details['client_id']>0){
+   	   	   	   	   $client_id=$booking_details['client_id'];   	   	   	   	   
+   	   	   	   } 
+   	   	   	   
+   	   	   	   $enabled=getOptionA('booking_update_status_push');   	   	   	   
+   	   	   	   $push_tpl=getOptionA("booking_update_status_push_title_$lang"); 
+   	   	   	   $tpl=getOptionA("booking_update_status_push_content_$lang"); 
+   	   	   	      	   	   	   
+   	   	   	   if($client_id>0 && $enabled==1){
+   	   	   	   	  if($client_info =  Yii::app()->functions->getClientInfo($client_id) ){
+   	   	   	   	  	
+   	   	   	   	  	  if ($client_info['enabled_push']==1){		    			  
+
+   	   	   	   	  	  	  $client_name = $client_info['first_name'].' '.$client_info['last_name'];
+   	   	   	   	  	  	
+	   	   	   	   	  	  $pattern=array(		    
+				   	   	   'customer_name'=>"booking_name",
+				    	   'restaurant_name'=>'restaurant_name',	
+				    	   'number_guest'=>'number_guest',
+				    	   'date_booking'=>'date_booking',
+				    	   'time'=>"booking_time",
+				    	   'email'=>"email",
+				    	   'mobile'=>"mobile",
+				    	   'instruction'=>"booking_notes",
+				    	   'booking_id'=>"booking_id",
+				    	   'status'=>'status',
+				    	   'merchant_remarks'=>'remarks',
+				    	   'sitename'=>getOptionA('website_title'),
+				    	   'siteurl'=>websiteUrl(),	 		    	   
+				    	  );
+				    	  $tpl=FunctionsV3::replaceTemplateTags($tpl,$pattern,$data);				    	  
+				    	  $tpl = smarty('customer_name',$client_name,$tpl);
+				    	  
+				    	  $push_tpl=FunctionsV3::replaceTemplateTags($push_tpl,$pattern,$data);
+	   	   	   	   	  	
+	   	   	   	   	  	 //dump($push_tpl); dump($tpl);   
+	   	   	   	   	  	 
+	   	   	   	   	  	 $params=array(
+				    	  'client_id'=>$client_info['client_id'],
+				    	  'client_name'=>$client_name,
+				    	  'device_platform'=>$client_info['device_platform'],
+				    	  'device_id'=>$client_info['device_id'],
+				    	  'push_title'=>$push_tpl,
+				    	  'push_message'=>$tpl,
+				    	  'push_type'=>"book",
+				    	  'date_created'=>self::dateNow(),
+				    	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+				    	  'registration_type'=>$client_info['registration_type'],
+				    	  'merchant_id'=>$data['merchant_id']
+				    	);					    	
+				    	$DbExt->insertData("{{singleapp_mobile_push_logs}}",$params); 
+				    	FunctionsV3::fastRequest(
+				    	FunctionsV3::getHostURL().Yii::app()->createUrl("singlemerchant/cron/processpush")); 			    	
+   	   	   	   	  	  }
+   	   	   	   	  }
+   	   	   	   }
+   	   	   }
+   	   }
    	   
    	   unset($DbExt);
    	   FunctionsV3::runCronEmail();
@@ -4595,7 +4824,9 @@ class FunctionsV3
    	   	   		break;
    	   	   		
    	   	   	case 3:
-   	   	   	    $and.=" AND postal_code=".self::q($data['postal_code'])." ";   	   	   		   	   	   	    
+   	   	   		if(isset($data['postal_code'])){
+   	   	   	      $and.=" AND postal_code=".self::q($data['postal_code'])." ";   	   	   		   	   	   	    
+   	   	   		}
    	   	   		if(isset($data['city_id'])){
    	   	   		   $and.=" AND city_id=".self::q($data['city_id'])." ";
    	   	   		}
@@ -4606,7 +4837,7 @@ class FunctionsV3
    	   	   	 	
    	   	   	default:
    	   	   		$and.=" AND city_id=".self::q($data['city_id'])." ";
-   	   	   		$and.=" AND area_id=".self::q($data['area_id'])." ";
+   	   	   		$and.=" AND area_id=".self::q(isset($data['area_id'])?$data['area_id']:'')." ";
    	   	   		break;
    	   	   }
    	   	   
@@ -4967,11 +5198,12 @@ class FunctionsV3
 		$payment_available=''; $payment_available_final='';
 		$payment_list = self::PaymentOptionList();
 		$merchant_type=self::getMerchantMembershipType($merchant_id);		
-		//dump($merchant_type);
+	    //dump($merchant_type);
 		switch ($merchant_type) {			
 			case 2:						
 			    /*COMMISSION*/	
 				$payment_available=Yii::app()->functions->getMerchantListOfPaymentGateway();					
+				//dump($payment_available);
 				if(is_array($payment_available) && count($payment_available)>=1){
 				   foreach ($payment_available as $payment_key) {				   	   
 				   	   $master_key="merchant_switch_master_$payment_key";
@@ -4999,8 +5231,7 @@ class FunctionsV3
 				break;
 		
 			default:
-				/*MEMBERSHIP IS DEFAULT*/
-				
+				/*MEMBERSHIP IS DEFAULT*/			
 				if ( getOption($merchant_id,'merchant_disabled_cod')==""){
 					$payment_available[]='cod';
 				}
@@ -5052,12 +5283,51 @@ class FunctionsV3
 		    	if (getOption($merchant_id,'merchant_vog_enabled')==2){
 		    		$payment_available[]='vog';
 		    	}
+		    	if (getOption($merchant_id,'merchant_ipay_enabled')==2){
+		    		$payment_available[]='ipay';
+		    	}
+		    	if (getOption($merchant_id,'merchant_pipay_enabled')==2){
+		    		$payment_available[]='pipay';
+		    	}
+		    	if (getOption($merchant_id,'merchant_hubtel_enabled')==2){
+		    		$payment_available[]='hubtel';
+		    	}
+		    	if (getOption($merchant_id,'merchant_sofort_enabled')==2){		    		
+		    		$payment_available[]='sofort';
+		    	}		    	
+		    	if (getOption($merchant_id,'merchant_jampie_enabled')==2){		    		
+		    		$payment_available[]='jampie';
+		    	}
+		    	if (getOption($merchant_id,'merchant_wing_enabled')==2){		    		
+		    		$payment_available[]='wing';
+		    	}
+		    	if (getOption($merchant_id,'merchant_paymill_enabled')==2){		    		
+		    		$payment_available[]='paymill';
+		    	}
+		    	if (getOption($merchant_id,'merchant_stripe_ideal_enabled')==1){		    		
+		    		$payment_available[]='strip_ideal';
+		    	}
+		    	if (getOption($merchant_id,'merchant_ipay_africa_enabled')==1){		    		
+		    		$payment_available[]='ipay_africa';
+		    	}
+		    	if (getOption($merchant_id,'merchant_dixipay_enabled')==1){		    		
+		    		$payment_available[]='dixipay';
+		    	}
+		    	if (getOption($merchant_id,'merchant_wirecard_enabled')==1){		    		
+		    		$payment_available[]='wirecard';
+		    	}
+		    	if (getOption($merchant_id,'merchant_payulatam_enabled')==1){		    		
+		    		$payment_available[]='payulatam';
+		    	}
 		    	
-		    	/*if (getOption($merchant_id,'merchant_moneris_enabled')==2){
+		    	//dump($payment_available);
+		    	
+		    	if (getOption($merchant_id,'merchant_moneris_enabled')==2){
 		    		$payment_available[]=Moneris::getPaymentCode();
-		    	}*/
+		    	}
 		    			    	
 		    	$enabled_payment=Yii::app()->functions->getMerchantListOfPaymentGateway();	    	
+		    	//dump($enabled_payment);
 		    	if(is_array($payment_available) && count($payment_available)>=1){
 			    	foreach ($payment_available as $pm_val) {
 			    		if(in_array($pm_val,(array)$enabled_payment)){
@@ -5107,7 +5377,7 @@ class FunctionsV3
 	    $stmt="SELECT * FROM
 			{{subcategory_item}}
 			WHERE
-			sub_item_id='".$sub_item_id."'			
+			sub_item_id=".self::q($sub_item_id)."
 			LIMIT 0,1
 		";			    
 		if ( $res=$DbExt->rst($stmt)){			
@@ -5286,7 +5556,1387 @@ class FunctionsV3
     		} //else echo 'no records';
     	}    	
     }           
-         
+    
+    public static function GetIpayCredentials($merchant_id='')
+    {
+    	$enabled=false; $mtid='';
+    	if (self::isMerchantPaymentToUseAdmin($merchant_id)){
+    		// USER ADMIN SETTINGS
+    		$enabled=getOptionA('admin_ipay_enabled');
+    		$mtid=getOptionA('admin_ipay_merchant_key');
+    	} else {
+    		// USE MERCHANT SETTINGS    		
+    		$enabled=getOption($merchant_id,'merchant_ipay_enabled');
+    		$mtid=getOption($merchant_id,'merchant_ipay_merchant_key');
+    	}    	
+    	if($enabled==2){
+    		return array(
+    		   'enabled'=>$enabled,
+    		   'merchant_key'=>$mtid
+    		);
+    	}
+    	return false;
+    }
+    
+    public static function GetIpayCredentialsAdmin()
+    {
+    	// USER ADMIN SETTINGS
+		$enabled=getOptionA('admin_ipay_enabled');
+		$mtid=getOptionA('admin_ipay_merchant_key');
+    		
+    	if($enabled==2){
+    		return array(
+    		   'enabled'=>$enabled,
+    		   'merchant_key'=>$mtid
+    		);
+    	}
+    	return false;
+    }
+    
+   public static function getOrderPaymentRef($payment_ref='')
+   {
+   	   	  
+   	   $DbExt=new DbExt;
+   	   $stmt="
+   	   SELECT * FROM
+   	   {{payment_order}}
+   	   WHERE
+   	   payment_reference =".self::q($payment_ref)."
+   	   LIMIT 0,1
+   	   ";   	   
+   	   if ($res=$DbExt->rst($stmt)){
+   	   	  return $res;
+   	   }
+   	   return false;
+   }      
+   
+   public static function enabledExtraCharges()
+   {
+   	  return false;
+   }
+   
+   public static function extraDeliveryFee($mtid='', $current_fee='', $delivery_time='' , $delivery_date='')
+   {
+   	   	   
+   	   $debug = false;
+   	   $fee =  $current_fee;
+   	   
+   	   if(empty($delivery_date)){
+   	   	  $delivery_date=date("Y-m-d");
+   	   }  
+   	   
+   	   if(empty($delivery_time)){
+   	   	  $delivery_time = date("Gi");
+   	   } else $delivery_time = date("Gi",strtotime($delivery_time));
+   	   
+   	   if ($debug){
+   	   	  dump("mtid=> $mtid");
+   	   	  dump("current_fee=> $current_fee");
+   	   	  dump("delivery_time=> $delivery_time");
+   	   	  dump("delivery_date=> $delivery_date");
+   	   }
+   	   
+   	   $extra_charge_start_time=getOption($mtid,'extra_charge_start_time');
+   	   $extra_charge_end_time='';
+   	   if(!empty($extra_charge_start_time)){
+   	   	  $extra_charge_start_time = json_decode($extra_charge_start_time,true);   	   	  
+   	   	  $extra_charge_end_time = json_decode( getOption($mtid,'extra_charge_end_time') ,true );
+   	   	  $extra_charge_fee = json_decode( getOption($mtid,'extra_charge_fee') ,true );
+   	   }   
+   	   
+   	   if(is_array($extra_charge_start_time) && count($extra_charge_start_time)>=1){   	   	 
+   	   	  foreach ($extra_charge_start_time as $key=>$start) {
+   	   	  	  $start = date("Gi",strtotime($start));
+   	   	  	  if(isset($extra_charge_end_time[$key])){
+   	   	  	      $end  = date("Gi",strtotime($extra_charge_end_time[$key]));
+   	   	  	  } else $end='';
+   	   	  	  
+   	   	  	  if(isset($extra_charge_fee[$key])){
+   	   	  	     $charge = $extra_charge_fee[$key];
+   	   	  	  } else $charge='';
+   	   	  	  
+   	   	  	  if (!empty($charge) && !empty($start) && !empty($end) ){  
+   	   	  	  	 if ( $start<=$delivery_time && $end>=$delivery_time){   	   	   	   
+	   	   	   	     $fee+=$charge;
+	   	   	   	     if ($debug){
+	   	   	   	        dump("TIME=> $start - $end = $charge");
+	   	   	   	     }
+	   	   	   	     break;
+	   	   	     }
+   	   	  	  }
+   	   	  }
+   	   }   
+   	   
+   	   if ($debug){
+   	   	  dump("final fee: $fee");
+   	   }
+   	      	      	   
+   	   return $fee;
+   }
+   
+   public static function validateVoucherByAddress($voucher_code='', $street='', $city='', $state='')
+   {
+   	   if(empty($street)){
+   	   	  return false;
+   	   }   
+   	   if(empty($city)){
+   	   	  return false;
+   	   }   
+   	   if(!empty($voucher_code)){
+	   	   $DbExt=new DbExt;
+	   	   $stmt="SELECT  a.order_id, a.voucher_code
+	   	   FROM
+	   	   {{order}} a   	   
+	   	   WHERE
+	   	   a.voucher_code = ".self::q(trim($voucher_code))."
+	   	   AND
+	   	   a.order_id IN (
+	   	     select order_id
+	   	     from
+	   	     {{order_delivery_address}}
+	   	     where
+	   	     street=".self::q(trim($street))."
+	   	     and
+	   	     city=".self::q(trim($city))."
+	   	     and
+	   	     state=".self::q(trim($state))." 
+	   	   )
+	   	   LIMIT 0,1
+	   	   ";	   	   
+	   	   if ($DbExt->rst($stmt)){
+	   	   	   return true;
+	   	   } 
+   	   }
+   	   return false;
+   	   
+   }
+   
+    public static function getOffersByMerchantNew($merchant_id='')
+    {
+    	$DbExt=new DbExt; 
+    	$offer_list = array(); 
+    	$offer = '';
+    	
+	    $stmt="SELECT * FROM
+			{{offers}}
+			WHERE
+			status in ('publish','published')
+			AND
+			now() >= valid_from and now() <= valid_to
+			AND merchant_id =".self::q($merchant_id)."
+			ORDER BY valid_from ASC
+		";	    
+		if ( $res=$DbExt->rst($stmt)){
+			foreach ($res as $val) {				
+				$applicable_to_list = '';
+				if(isset($val['applicable_to'])){
+    			   $applicable_to=json_decode($val['applicable_to'],true);	
+    			   if(is_array($applicable_to) && count($applicable_to)>=1){
+    			   	  foreach ($applicable_to as $applicable_to_val) {    			   	  	 
+    			   	  	 $applicable_to_list.=t($applicable_to_val).",";
+    			   	  }
+    			   	  $applicable_to_list = substr($applicable_to_list,0,-1);
+    			   }    			
+    			}    		 
+    			if (!empty($applicable_to_list)){
+    				$offer=number_format($val['offer_percentage'],0)."% ".t("Off over");
+	    			$offer.=" ".self::prettyPrice($val['offer_price']);
+	    			$offer.=" ".t("if")." ".$applicable_to_list;
+    			} else {
+	    			$offer=number_format($val['offer_percentage'],0)."% ".t("Off over");
+	    			$offer.=" ".self::prettyPrice($val['offer_price']);
+    			}
+    			$offer_list[] =$offer;
+			}
+			return $offer_list;
+		}
+		return false;
+    }   
+    
+    public static function getMerchantOffersActive($merchant_id='',$transaction_type='delivery')
+    {    	
+    	$trans_type='';
+    	$trans_type = "$transaction_type";
+    	
+    	$date_now=date('Y-m-d');
+    	$DbExt=new DbExt;
+	    $stmt="SELECT * FROM
+			{{offers}}
+			WHERE
+			status in ('publish','published')
+			AND
+			now() >= valid_from and now() <= valid_to
+			AND merchant_id =".FunctionsV3::q($merchant_id)."
+			AND applicable_to LIKE ".FunctionsV3::q("%$trans_type%")."
+			ORDER BY valid_from ASC			
+			LIMIT 0,1
+		";	    
+	    //dump($stmt);
+		if ( $res=$DbExt->rst($stmt)){			
+			return $res[0];
+		}
+		return false;
+    }
+    
+     public static function GetJampieCredentials($merchant_id='')
+    {
+    	$enabled=false; $mtid='';
+    	if (self::isMerchantPaymentToUseAdmin($merchant_id)){
+    		// USER ADMIN SETTINGS
+    		$enabled=getOptionA('admin_jampie_enabled');
+    		$email=getOptionA('admin_jampie_email');
+    	} else {
+    		// USE MERCHANT SETTINGS    		
+    		$enabled=getOption($merchant_id,'merchant_jampie_enabled');
+    		$email=getOption($merchant_id,'merchant_jampie_email');
+    	}    	
+    	if($enabled==2){
+    		return array(
+    		   'enabled'=>$enabled,
+    		   'business_email'=>$email
+    		);
+    	}
+    	return false;
+    }
+    
+    public static function isReceiptCalculationMethodTwo()
+    {
+    	$receipt_computation_method=getOptionA('receipt_computation_method');
+    	if($receipt_computation_method==2){
+    		return true;
+    	}    
+    	return false;
+    }
+    
+    public static function getReceiptCalculationMethod()
+    {
+    	$receipt_computation_method=getOptionA('receipt_computation_method');
+    	if(empty($receipt_computation_method)){
+    		$receipt_computation_method=1;
+    	}    
+    	return $receipt_computation_method;
+    }
+
+    public static function getClientName($full_name = false)
+    {    	
+    	if (isset($_SESSION['kr_client'])){
+    		if (array_key_exists('client_id',$_SESSION['kr_client'])){    			
+    			if (is_numeric($_SESSION['kr_client']['client_id'])){    
+    				if($full_name){
+    					return $_SESSION['kr_client']['first_name']." ".$_SESSION['kr_client']['last_name'];
+    				} else return $_SESSION['kr_client']['first_name'];    				
+    			}
+    		}    	
+    	}
+    	return false;
+    }
+    
+    public static function getClientEmail()
+    {    	
+    	if (isset($_SESSION['kr_client'])){
+    		if (array_key_exists('client_id',$_SESSION['kr_client'])){    			
+    			if (is_numeric($_SESSION['kr_client']['client_id'])){    
+    				if(isset($_SESSION['kr_client']['email_address'])){
+    				   return $_SESSION['kr_client']['email_address']; 
+    				}
+    			}
+    		}    	
+    	}
+    	return false;
+    }
+    
+    public static function getClientPhoneNumber()
+    {    	
+    	if (isset($_SESSION['kr_client'])){
+    		if (array_key_exists('client_id',$_SESSION['kr_client'])){    			
+    			if (is_numeric($_SESSION['kr_client']['client_id'])){    
+    				if(isset($_SESSION['kr_client']['contact_phone'])){
+    				   return $_SESSION['kr_client']['contact_phone']; 
+    				}
+    			}
+    		}    	
+    	}
+    	return false;
+    }
+    
+	public static function getOrderByToken($order_id_token='')
+	{
+		$stmt="
+		SELECT a.*,
+		(
+		select concat(first_name,' ',last_name) as full_name
+		from
+		{{client}}
+		where
+		client_id=a.client_id
+		) as full_name,
+		
+		(
+		select email_address
+		from
+		{{client}}
+		where
+		client_id=a.client_id
+		) as email_address,
+		
+		(
+		select restaurant_name 	
+		from
+		{{merchant}}
+		where
+		merchant_id=a.merchant_id 	
+		) as merchant_name,
+		
+		(
+		select restaurant_slug 	
+		from
+		{{merchant}}
+		where
+		merchant_id=a.merchant_id 	
+		) as restaurant_slug,
+		
+		(
+		select concat(street,' ',city,' ',state,' ',zipcode )
+		from
+		{{client}}
+		where
+		client_id=a.client_id
+		) as full_address,
+		
+		(
+		select location_name
+		from
+		{{client}}
+		where
+		client_id=a.client_id
+		) as location_name,
+		
+		(
+		select contact_phone
+		from
+		{{client}}
+		where
+		client_id=a.client_id
+		) as contact_phone,
+		
+		(
+		select credit_card_number
+		from
+		{{client_cc}}
+		where
+		cc_id=a.cc_id 
+		) as credit_card_number		
+		
+		 FROM
+		{{order}} a
+		WHERE
+		order_id_token=".self::q($order_id_token)."
+		LIMIT 0,1
+		";		
+		$connection=Yii::app()->db;
+		$rows=$connection->createCommand($stmt)->queryAll(); 		
+		if (is_array($rows) && count($rows)>=1){
+			return $rows[0];
+		}
+		return FALSE;
+	}	        	    
+	
+	public static function getCategoryInItem($category_id='')
+	{		
+		
+		//$category_id= "'". '%"'.$category_id.'"%' ."'";		
+		$category_id= FunctionsV3::q('%"'.$category_id.'"%');
+		$DbExt=new DbExt;
+		$stmt="
+		SELECT category 
+		FROM 
+		{{item}}
+		WHERE
+		category LIKE ".($category_id)."
+		LIMIT 0,1
+		";				
+		if ($res=$DbExt->rst($stmt)){		
+			return $res;
+		}		
+		return false;
+	}
+	
+	public static function getSizeInItem($size_id='',$mtid='')
+	{		
+		//$q= "'". '%"'.$size_id.'":%' ."'";
+		$q = FunctionsV3::q('%"'.$size_id.'"%');	
+		$DbExt=new DbExt;
+		$stmt="
+		SELECT item_id,price 
+		FROM 
+		{{item}}
+		WHERE
+		price LIKE ".($q)."
+		AND
+		merchant_id=".self::q($mtid)."
+		LIMIT 0,1
+		";				
+		if ($res=$DbExt->rst($stmt)){		
+			return $res;
+		}		
+		return false;
+	}	
+	
+	public static function getDishInItem($dish_id='')
+	{		
+		//$q = "'". '%"'.$dish_id.'"%' ."'";
+		$q= FunctionsV3::q('%"'.$dish_id.'"%');	
+		$DbExt=new DbExt;
+		$stmt="
+		SELECT category 
+		FROM 
+		{{item}}
+		WHERE
+		dish LIKE ".($q)."
+		LIMIT 0,1
+		";				
+		if ($res=$DbExt->rst($stmt)){				
+			return $res;
+		}		
+		return false;
+	}	
+	
+	public static function getMerchantByCuisine($cuisine_id='')
+	{
+		//$q = "'". '%"'.$cuisine_id.'"%' ."'";
+		$q= FunctionsV3::q('%"'.$cuisine_id.'"%');	
+		$DbExt=new DbExt;
+		$stmt="
+		SELECT cuisine 
+		FROM 
+		{{merchant}}
+		WHERE
+		cuisine LIKE ".($q)."
+		LIMIT 0,1
+		";		
+		//dump($stmt);		
+		if ($res=$DbExt->rst($stmt)){				
+			return $res;
+		}		
+		return false;
+	}
+	
+	public static function getDishIcon($dishs='')
+	{
+		$data = array();
+		$dish = json_decode($dishs,true);
+		if(is_array($dish) && count($dish)>=1){
+		   foreach ($dish as $id) {
+		   	  if($res=Yii::app()->functions->GetDish($id)){		   	  	 
+		   	  	 $data[]=websiteUrl()."/upload/".$res['photo'];
+		   	  }
+		   }
+		   return $data;
+		}
+		return false;		
+	}
+	
+	public static function checkIfTableExist($table_name='')
+	{
+		$DbExt=new DbExt;		
+		$prefix=Yii::app()->db->tablePrefix;
+		$table = $prefix.$table_name;
+		$stmt="SHOW TABLES LIKE ".self::q($table)." ";		
+    	if ($res=$DbExt->rst($stmt)){    		
+    		return $res;
+    	}
+    	return false;    
+	}
+    
+	public static function getMerchantPackageByID($package_id='')
+	{
+		$DbExt=new DbExt;
+		$stmt="
+		SELECT package_id
+		FROM
+		{{merchant}}
+		WHERE
+		package_id = ".self::q($package_id)."
+		LIMIT 0,1
+		";		
+		if ($res=$DbExt->rst($stmt)){    		
+    		return $res[0];
+    	}
+    	return false;    
+	}
+	
+	public static function getImage($image='', $show_default = false)
+	{	
+		$url='';			
+		$path_to_upload=Yii::getPathOfAlias('webroot')."/upload/";				
+		
+		if (!empty($image)){			
+			if (file_exists($path_to_upload."/$image")){														
+				$url = Yii::app()->getBaseUrl(true)."/upload/$image";
+			}
+		} 
+		
+		if($show_default==TRUE){
+		   if(empty($url)){
+		   	  $url = Yii::app()->getBaseUrl(true)."/assets/images/default-image-merchant.png";
+		   }
+		}
+				
+		return $url;
+	}	
+	
+	public static function cancelOrderCheckDays($date_created='')
+	{
+		$cancel_order_days_applied = getOptionA('cancel_order_days_applied');
+		if($cancel_order_days_applied>0){			
+			$date_now=date('Y-m-d g:i:s a');
+			$date_created = date('Y-m-d g:i:s a',strtotime($date_created));
+			$time_diff=Yii::app()->functions->dateDifference($date_created,$date_now);						
+			if(is_array($time_diff) && count($time_diff)>=1){
+				if($time_diff['days']>=$cancel_order_days_applied){
+					return false;
+				}
+			}
+		} else return false;
+			
+		return true;
+	}
+	
+	public static function cancelOrderCheckStatus($order_status='',$order_locked='')
+	{
+		if($order_locked==2){
+			return false;
+		}	
+		$status = getOptionA('cancel_order_status_accepted');
+		if(!empty($status)){					
+			$status = json_decode($status,true);			
+			if(in_array($order_status,(array)$status)){
+				return true;
+			}
+		}
+		return false;	
+	}
+	
+	public static function canCancelOrder($request_cancel='',$date_created='',
+	$order_status='',$order_locked='', $request_cancel_status='pending')
+	{
+				
+		if($request_cancel==1){
+		   return true;	
+		}
+		
+		if($request_cancel_status!='pending'){
+			return false;
+		}	
+		
+		$cancel_order_enabled = getOptionA('cancel_order_enabled');
+		if($cancel_order_enabled==1){
+			$check_0 = true;
+		} else $check_0 = false;
+		
+		$check_1 = FunctionsV3::cancelOrderCheckDays($date_created);		
+		$check_2 = FunctionsV3::cancelOrderCheckStatus($order_status);
+		if($check_0==TRUE && $check_1==TRUE && $check_2==TRUE){
+			return true;
+		}
+		return false;
+	}
+	
+	public static function getOrderInfoByToken($order_id_token='')
+	{
+		$db = new DbExt();
+		$stmt="SELECT * FROM
+		{{order}}
+		WHERE
+		order_id_token = ".FunctionsV3::q($order_id_token)."
+		LIMIT 0,1
+		";
+		if($res = $db->rst($stmt)){
+			return $res[0];
+		}
+		return false;
+	}
+	
+	public static function notifyCancelOrder($data=array())
+	{
+		if(!is_array($data) && count($data)<=0){
+			return false;
+		}
+		
+		$merchant_id = isset($data['merchant_id'])?$data['merchant_id']:'';
+	
+		$lang=Yii::app()->language;
+				
+		$tpl_email_enabled = getOptionA('order_request_cancel_to_merchant_email');
+		$tpl_sms_enabled = getOptionA('order_request_cancel_to_merchant_sms');
+						
+		/*EMAIL*/
+		if($tpl_email_enabled==1){
+			$email_subject = getOptionA("order_request_cancel_to_merchant_tpl_subject_$lang");
+			$email_content = getOptionA("order_request_cancel_to_merchant_tpl_content_$lang");
+												
+            $pattern=array(		    	   	   	   
+	    	   'restaurant_name'=>'merchant_name',
+	    	   'customer_name'=>'full_name',
+	    	   'order_id'=>'order_id',
+	    	   'login_url'=>'login_url',	    	   
+	    	   'sitename'=>getOptionA('website_title'),
+	    	   'siteurl'=>websiteUrl(),	 		    	   
+	    	);
+	    	$total_amount = FunctionsV3::prettyPrice($data['total_w_tax']);
+	    		    	
+	    	$email_content=FunctionsV3::replaceTemplateTags($email_content,$pattern,$data);
+	    	$email_content = self::smarty('total_order_amount',$total_amount,$email_content);
+	    	
+	    	$email_subject=FunctionsV3::replaceTemplateTags($email_subject,$pattern,$data);
+	    	$email_subject = self::smarty('total_order_amount',$total_amount,$email_subject);
+	    	
+	    	if(is_numeric($merchant_id)){
+	    		$email = getOption($merchant_id,'merchant_cancel_order_email');
+	    		$emails = explode(',',$email);
+	    		if(is_array($emails) && count($emails)>=1){
+	    			foreach ($emails as $email_val) {
+	    				sendEmail($email_val,'',$email_subject,$email_content);
+	    			}
+	    		}
+	    	}		
+	    		    		    	
+		}
+		
+		/*SMS*/
+		if($tpl_sms_enabled==1){
+			$sms_content = getOptionA("order_request_cancel_to_merchant_sms_content_$lang");
+			$sms_content=FunctionsV3::replaceTemplateTags($sms_content,$pattern,$data);
+	    	$sms_content = self::smarty('total_order_amount',$total_amount,$sms_content);		
+	    	
+	    	$phone = getOption($merchant_id,'merchant_cancel_order_phone');
+	    	$phones = explode(",",$phone);
+	    	if(is_array($phones) && count($phones)>=1){
+	    		foreach ($phones as $phone_val) {	    			
+	    			Yii::app()->functions->sendSMS($phone_val,$sms_content);
+	    		}
+	    	}
+		}		
+				
+		/*PUSH*/
+		if (FunctionsV3::hasModuleAddon('merchantapp')){
+			$push_enabled = getOptionA('order_request_cancel_to_merchant_push');
+			if($push_enabled==1){
+				$push_tpl_title = getOptionA("order_request_cancel_to_merchant_push_title_$lang");
+				$push_tpl = getOptionA("order_request_cancel_to_merchant_push_content_$lang");			
+				
+				$push_tpl_title=FunctionsV3::replaceTemplateTags($push_tpl_title,$pattern,$data);
+	    	    $push_tpl_title = self::smarty('total_order_amount',$total_amount,$push_tpl_title);
+	    	    
+	    	    $push_tpl=FunctionsV3::replaceTemplateTags($push_tpl,$pattern,$data);
+	    	    $push_tpl = self::smarty('total_order_amount',$total_amount,$push_tpl);
+				
+				$db=new DbExt();
+				$stmt="
+				SELECT * FROM
+				{{mobile_device_merchant}}
+				WHERE
+				merchant_id=".self::q($merchant_id)."
+				AND status='active'
+				LIMIT 0,20				
+				";	
+				if($res=$db->rst($stmt)){
+					foreach ($res as $val) {
+						$params=array(
+						  'merchant_id'=>$val['merchant_id'],
+						  'user_type'=>$val['user_type'],
+						  'merchant_user_id'=>$val['merchant_user_id'],
+						  'device_platform'=>$val['device_platform'],
+						  'device_id'=>$val['device_id'],
+						  'push_title'=>$push_tpl_title,
+						  'push_message'=>$push_tpl,
+						  'date_created'=>FunctionsV3::dateNow(),
+						  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+						  'order_id'=>isset($data['order_id'])?$data['order_id']:0
+						);
+						$db->insertData("{{mobile_merchant_pushlogs}}",$params);
+					}
+				}			
+				unset($db);
+				FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("merchantapp/cron/processpush"));
+			}
+		}	
+		
+	}
+	
+	public static function htaccessForUpload()
+	{
+		$content ='<Files *>'."\n";
+		$content .='SetHandler None'."\n";
+		$content .='</Files>'."\n";
+		
+		$content .='<Files *.php>'."\n";
+		$content .='deny from all'."\n";
+		$content .='</Files>'."\n";
+		
+		$content .='<Files *.html>'."\n";
+		$content .='deny from all'."\n";
+		$content .='</Files>'."\n";
+		
+		$content .='<Files *.js>'."\n";
+		$content .='deny from all'."\n";
+		$content .='</Files>'."\n";
+		
+		$content .='<Files *.cgi>'."\n";
+		$content .='deny from all'."\n";
+		$content .='</Files>'."\n";
+		return $content;
+	}
+	
+	public static function imageLimitSize()
+	{
+		return 10485760;
+	}
+	
+	public static function validImageExtension()
+	{
+		return array('jpeg', 'png' ,'jpg' , 'gif' ); 
+	}
+	
+	public static function notifyCustomerCancelOrder($data = array(), $cancel_status='' )
+	{
+		if(!is_array($data) && count($data)<=0){
+			return false;
+		}
+		$merchant_id = isset($data['merchant_id'])?$data['merchant_id']:'';	
+		$lang=Yii::app()->language;
+		
+		$tpl_email_enabled = getOptionA('order_request_cancel_to_customer_email');
+		$tpl_sms_enabled = getOptionA('order_request_cancel_to_customer_sms');
+		$enabled_push = getOptionA('order_request_cancel_to_customer_push');
+		
+		$customer_email = isset($data['email_address'])?$data['email_address']:'';
+		
+		$data['request_status']=$cancel_status;
+		$data['total_order_amount']=FunctionsV3::prettyPrice($data['total_w_tax']);
+		
+		$pattern=array(		    	   	   	   
+    	   'restaurant_name'=>'merchant_name',
+    	   'customer_name'=>'full_name',
+    	   'order_id'=>'order_id',
+    	   'login_url'=>'login_url',	    	   
+    	   'sitename'=>getOptionA('website_title'),
+    	   'siteurl'=>websiteUrl(),	 	
+    	   'request_status'=>'request_status',
+    	   'total_order_amount'=>'total_order_amount'
+    	);
+		
+    	/*EMAIL*/
+		if($tpl_email_enabled==1  && !empty($customer_email)){
+			$email_subject = getOptionA("order_request_cancel_to_customer_tpl_subject_$lang");
+			$email_content = getOptionA("order_request_cancel_to_customer_tpl_content_$lang");
+			
+	    	$email_subject=FunctionsV3::replaceTemplateTags($email_subject,$pattern,$data);
+	    	$email_content=FunctionsV3::replaceTemplateTags($email_content,$pattern,$data);
+	    		    	
+	    	sendEmail($customer_email,'',$email_subject,$email_content);			
+		}		
+		
+		/*SMS*/
+		$contact_phone = isset($data['contact_phone'])?$data['contact_phone']:'';		
+		if ($tpl_sms_enabled==1 && !empty($contact_phone)){
+			$sms_content = getOptionA("order_request_cancel_to_customer_sms_content_$lang");
+			$sms_content=FunctionsV3::replaceTemplateTags($sms_content,$pattern,$data);			
+			Yii::app()->functions->sendSMS($contact_phone,$sms_content);
+		}		
+		
+		/*PUSH*/
+		if (FunctionsV3::hasModuleAddon('mobileapp')){
+			//mobile_registered
+			if ($enabled_push==1){
+				$tpl_push = getOptionA("order_request_cancel_to_customer_push_content_$lang");
+				$tpl_push_title = getOptionA("order_request_cancel_to_customer_push_title_$lang");
+				$tpl_push_title=FunctionsV3::replaceTemplateTags($tpl_push_title,$pattern,$data);
+				$tpl_push=FunctionsV3::replaceTemplateTags($tpl_push,$pattern,$data);				
+				$client_id = isset($data['client_id'])?$data['client_id']:'';
+				if($client_id>0){					
+					if ($device_info = AddonMobileApp::getRegisteredDeviceByClientID($client_id)){						
+						$params_push = array(
+						  'client_id'=>$client_id,
+						  'client_name'=>$device_info['client_name'],
+						  'device_platform'=>$device_info['device_platform'],
+						  'device_id'=>$device_info['device_id'],
+						  'push_title'=>$tpl_push_title,
+						  'push_message'=>$tpl_push,
+						  'date_created'=>FunctionsV3::dateNow(),
+						  'ip_address'=>$_SERVER['REMOTE_ADDR']
+						);
+						$db=new DbExt();
+						$db->insertData("{{mobile_push_logs}}",$params_push);
+						unset($db);						
+						FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("mobileapp/cron/processpush"));	        
+					}
+				}
+			}
+		}
+	}
+	
+	public static function getNewCancelOrder($merchant_id='')
+	{
+		$db = new DbExt();
+		$stmt="
+		SELECT COUNT(*) as total
+		FROM {{order}}
+		WHERE
+		merchant_id = ".FunctionsV3::q($merchant_id)."
+		AND request_cancel='1'
+		AND request_cancel_viewed = '2'
+		AND request_cancel_status='pending'
+		";
+		if ($res = $db->rst($stmt)){
+			$res = $res[0];
+			if($res['total']>0){
+				return $res['total'];
+			}
+		}
+		return false;
+	}
+	
+	
+    public static function reCheckDeliveryNew($merchant_id='',$data='')
+    {
+    	    
+    	$response['code']=2;
+    	
+    	if($merchant_info=FunctionsV3::getMerchantById($merchant_id)){
+    		$distance_type=FunctionsV3::getMerchantDistanceType($merchant_id); 
+    		    		
+    		$complete_address=$data['street']." ".$data['city']." ".$data['state']." ".$data['zipcode'];
+    		if(isset($data['country'])){
+    			$complete_address.=" ".$data['country'];
+    		}    
+    		    		
+    		$lat=0;
+			$lng=0;			
+    		/*if address book was used*/
+    		if ( isset($data['address_book_id'])){
+	    		if ($address_book=Yii::app()->functions->getAddressBookByID($data['address_book_id'])){
+	        		$complete_address=$address_book['street'];	    	
+	    	        $complete_address.=" ".$address_book['city'];
+	    	        $complete_address.=" ".$address_book['state'];
+	    	        $complete_address.=" ".$address_book['zipcode'];
+	        	}	    		        
+	    	}
+	    		    		    		    	
+	    	/*if map address was used*/
+    		if (isset($data['map_address_toogle'])){    			
+    			if ($data['map_address_toogle']==2){
+    				$lat=$data['map_address_lat'];
+    				$lng=$data['map_address_lng'];
+    			} else {
+    				if ($lat_res=Yii::app()->functions->geodecodeAddress($complete_address)){
+			           $lat=$lat_res['lat'];
+					   $lng=$lat_res['long'];
+		    	    }
+    			}
+    		} else {    			
+    			if ($lat_res=Yii::app()->functions->geodecodeAddress($complete_address)){
+		           $lat=$lat_res['lat'];
+				   $lng=$lat_res['long'];
+	    	    }
+    		}
+    		    		
+    		$distance=FunctionsV3::getDistanceBetweenPlot(
+				$lat,
+				$lng,
+				$merchant_info['latitude'],$merchant_info['lontitude'],$distance_type
+			);  
+			//dump($distance);
+			$distance_type_raw = $distance_type=="M"?"miles":"kilometers";
+			$distance_type = $distance_type=="M"?t("miles"):t("kilometers");
+			$merchant_delivery_distance=getOption($merchant_id,'merchant_delivery_miles'); 
+			
+			if(!empty(FunctionsV3::$distance_type_result)){
+             	$distance_type_raw=FunctionsV3::$distance_type_result;
+            }
+            
+            $response['distance']=$distance;
+            $response['distance_type_raw']=$distance_type_raw;
+                                   
+			if (is_numeric($merchant_delivery_distance)){
+				if ( $distance>$merchant_delivery_distance){
+					 if($distance_type_raw=="ft" || $distance_type_raw=="meter" || $distance_type_raw=="mt"){
+					 	$response['code']=1;
+					 }		             
+                } else {
+                	$delivery_fee=self::getMerchantDeliveryFee(
+								              $merchant_id,
+								              $merchant_info['delivery_charges'],
+								              $distance,
+								              $distance_type_raw);                    
+                    $_SESSION['shipping_fee']=$delivery_fee;
+                    $response['code']=1;
+                }
+			}  else $response['code']=3;
+    	}
+    	return $response;
+    }
+	
+    public static function getAddressByLocation($id='')
+    {
+    	$db = new DbExt();    
+    	$stmt = "
+    	SELECT * FROM
+    	{{address_book_location}}
+    	WHERE
+    	id =".self::q($id)."
+    	LIMIT 0,1
+    	";
+    	if ($res = $db->rst($stmt)){    		
+    		return $res[0];
+    	}
+    	return false;
+    }
+    
+    public static function hasAddressBook($client_id='',$type="location")
+    {
+    	$db = new DbExt();
+    	$stmt="
+    	SELECT * FROM
+    	{{address_book_location}}
+    	WHERE
+    	client_id = ".FunctionsV3::q($client_id)."    	
+    	LIMIT 0,1
+    	";    	
+    	if($type=="address"){
+    		$stmt="
+	    	SELECT * FROM
+	    	{{address_book}}
+	    	WHERE
+	    	client_id = ".FunctionsV3::q($client_id)."	    	
+	    	LIMIT 0,1
+	    	";    	
+    	}   
+    	if($res=$db->rst($stmt)){
+    		return $res[0];
+    	}
+    	return false;
+    }
+    
+    public static function getCountryIDByState($state_id='')
+    {
+    	$db = new DbExt();
+    	$stmt="
+    	SELECT country_id FROM
+    	{{location_states}}
+    	WHERE
+    	state_id = ".FunctionsV3::q($state_id)."    	
+    	LIMIT 0,1
+    	";    	
+    	if($res=$db->rst($stmt)){
+    		return $res[0];
+    	}
+    	return false;
+    }
+
+    public static function getAddressBookList($client_id='')
+    {
+    	$db = new DbExt();
+    	$stmt="
+    	SELECT 
+		a.*,
+		b.name as state_name,
+		c.name as city_name,
+		c.postal_code ,
+		d.name as area_name,
+		concat(a.street,' ',b.name,' ', c.name,' ',d.name,' ',c.postal_code ) as complete_address
+		
+	    FROM
+		{{address_book_location}} a
+		
+		left join {{location_states}} b
+		On
+		a.state_id = b.state_id
+		
+		left join {{location_cities}} c
+		On
+		a.city_id = c.city_id
+		
+		left join {{location_area}} d
+		On
+		a.area_id = d.area_id
+		
+		WHERE
+		client_id = ".FunctionsV3::q($client_id)."
+		";		
+    	if($res = $db->rst($stmt)){
+    		$data = array();
+    		foreach ($res as $val) {
+    			$data[$val['id']]=$val['complete_address'];
+    		}
+    		return $data;
+    	}
+    	return false;
+    }
+	
+    public static function getAddressByLocationFullDetails($id='')
+    {
+    	$db = new DbExt();
+    	$stmt="
+    	SELECT 
+		a.*,
+		b.name as state_name,
+		c.name as city_name,
+		c.postal_code ,
+		d.name as area_name,
+		concat(a.street,' ',b.name,' ', c.name,' ',d.name,' ',c.postal_code ) as complete_address
+		
+	    FROM
+		{{address_book_location}} a
+		
+		left join {{location_states}} b
+		On
+		a.state_id = b.state_id
+		
+		left join {{location_cities}} c
+		On
+		a.city_id = c.city_id
+		
+		left join {{location_area}} d
+		On
+		a.area_id = d.area_id
+		
+		WHERE
+		id = ".FunctionsV3::q($id)."
+		LIMIT 0,1
+		";		
+    	if($res = $db->rst($stmt)){
+    		return $res[0];
+    	}
+    	return false;
+    }
+
+    public static function canReviewOrder($order_status='')
+    {   
+    	$website_review_type = getOptionA('website_review_type');
+    	if($website_review_type==2){
+    		$review_baseon_status = getOptionA('review_baseon_status');
+    		if(!empty($review_baseon_status)){
+    		   $review_baseon_status = json_decode($review_baseon_status,true);
+    		   if (is_array($review_baseon_status) && count($review_baseon_status)>=1){
+    		   	  if (in_array($order_status,$review_baseon_status)){
+    		   	  	  return true;
+    		   	  }
+    		   }
+    		} else return true;
+    	}
+    	return false;
+    }
+    
+    public static function getReviewByOrder($client_id='', $order_id='')
+    {
+    	$db = new DbExt();
+    	$stmt= "
+    	SELECT * FROM
+    	{{review}}
+    	WHERE
+    	client_id =".FunctionsV3::q($client_id)."
+    	AND
+    	order_id = ".FunctionsV3::q($order_id)."
+    	LIMIT 0,1
+    	";
+    	if($res = $db->rst($stmt)){
+    		return $res[0];
+    	}
+    	return false;
+    }
+    
+    public static function clientHistyOrder($client_id='')
+    {
+    	$DbExt=new DbExt;
+    	$stmt="
+    	SELECT a.*,
+    	(
+    	select restaurant_name
+    	from
+    	{{merchant}}
+    	where
+    	merchant_id=a.merchant_id
+    	limit 0,1
+    	) as merchant_name,
+    	
+    	(
+    	 select count(*) 
+    	 from {{review}}
+    	 where
+    	 order_id = a.order_id
+    	) as review_count
+    	
+    	 FROM
+    	{{order}} a
+    	WHERE 
+    	client_id= ".FunctionsV3::q($client_id)."
+    	AND status NOT IN ('".initialStatus()."')
+    	ORDER BY order_id DESC
+    	LIMIT 0,10
+    	";
+    	if ( $res=$DbExt->rst($stmt)){
+			return $res;
+		}
+		return false;
+    }    
+    
+    public static function getOpeningHours($merchant_id='')
+	{
+        $stores_open_day=Yii::app()->functions->getOption("stores_open_day",$merchant_id);
+		$stores_open_starts=Yii::app()->functions->getOption("stores_open_starts",$merchant_id);
+		$stores_open_ends=Yii::app()->functions->getOption("stores_open_ends",$merchant_id);
+		$stores_open_custom_text=Yii::app()->functions->getOption("stores_open_custom_text",$merchant_id);
+		
+		$stores_open_day=!empty($stores_open_day)?(array)json_decode($stores_open_day):false;
+		$stores_open_starts=!empty($stores_open_starts)?(array)json_decode($stores_open_starts):false;
+		$stores_open_ends=!empty($stores_open_ends)?(array)json_decode($stores_open_ends):false;
+		$stores_open_custom_text=!empty($stores_open_custom_text)?(array)json_decode($stores_open_custom_text):false;
+		
+		
+		$stores_open_pm_start=Yii::app()->functions->getOption("stores_open_pm_start",$merchant_id);
+		$stores_open_pm_start=!empty($stores_open_pm_start)?(array)json_decode($stores_open_pm_start):false;
+		
+		$stores_open_pm_ends=Yii::app()->functions->getOption("stores_open_pm_ends",$merchant_id);
+		$stores_open_pm_ends=!empty($stores_open_pm_ends)?(array)json_decode($stores_open_pm_ends):false;		
+												
+		$open_starts='';
+		$open_ends='';
+		$open_text='';
+		$data='';
+				
+		if (is_array($stores_open_day) && count($stores_open_day)>=1){
+			foreach ($stores_open_day as $val_open) {	
+				if (array_key_exists($val_open,(array)$stores_open_starts)){
+					$open_starts=timeFormat($stores_open_starts[$val_open],true);
+				}							
+				if (array_key_exists($val_open,(array)$stores_open_ends)){
+					$open_ends=timeFormat($stores_open_ends[$val_open],true);
+				}							
+				if (array_key_exists($val_open,(array)$stores_open_custom_text)){
+					$open_text=$stores_open_custom_text[$val_open];
+				}					
+				
+				$pm_starts=''; $pm_ends=''; $pm_opens='';
+				if (array_key_exists($val_open,(array)$stores_open_pm_start)){
+					$pm_starts=timeFormat($stores_open_pm_start[$val_open],true);
+				}											
+				if (array_key_exists($val_open,(array)$stores_open_pm_ends)){
+					$pm_ends=timeFormat($stores_open_pm_ends[$val_open],true);
+				}												
+				
+				$full_time='';
+				if (!empty($open_starts) && !empty($open_ends)){					
+					$full_time=$open_starts."-".$open_ends;
+				}			
+				if (!empty($pm_starts) && !empty($pm_ends)){
+					if ( !empty($full_time)){
+						$full_time.="x";
+					}				
+					$full_time.="$pm_starts-$pm_ends";
+				}												
+								
+				$data[$val_open]=array(
+				  'day'=>$val_open,
+				  'hours'=>$full_time				  
+				);
+				
+				$open_starts='';
+		        $open_ends='';
+		        $open_text='';
+			}
+			return $data;
+		}			
+		return false;		
+	}	
+
+	
+    public static function createTimeRange($start, $end, $interval = '30 mins', $format = '12') {
+	    $startTime = strtotime($start); 
+	    $endTime   = strtotime($end);
+	    $returnTimeFormat = ($format == '12')?'g:i:s A':'G:i:s';
+	
+	    $current   = time(); 
+	    $addTime   = strtotime('+'.$interval, $current); 
+	    $diff      = $addTime - $current;
+	
+	    $times = array(); 	    
+	    while ($startTime < $endTime) { 
+	        $times[] = date($returnTimeFormat, $startTime); 
+	        $startTime += $diff; 
+	    } 
+	    $times[] = date($returnTimeFormat, $startTime); 
+	    return $times; 
+	}    
+    
+    public static function getTimeList($merchant_id='', $delivery_date='')
+    {
+    	$times = array(); 
+		$date_now = date("Y-m-d");
+		$time_start = '7:30'; $time_end = '18:30'; $interval = '15 mins';		
+		
+		$mt_timezone=Yii::app()->functions->getOption("merchant_timezone",$merchant_id);
+		if(!empty($mt_timezone)){
+			Yii::app()->timeZone=$mt_timezone;
+		}
+    	
+    	$delivery_day = isset($delivery_date)?date("l",strtotime($delivery_date)): date("l") ;
+    	$delivery_day = strtolower($delivery_day);    	    	
+    	if ( $res = FunctionsV3::getOpeningHours($merchant_id) ){    	    		
+			if (array_key_exists($delivery_day,(array)$res)){					
+				$time_based = $res[$delivery_day]['hours'];				
+				if(!empty($time_based)){					
+											
+					$time_based_ex='';
+					if (preg_match("/x/i", $time_based)) {							
+						$time_based_sep = explode("x",$time_based);														
+						$time_based_sep_1 = explode("-",$time_based_sep[0]);
+						$time_based_sep_2 = explode("-",$time_based_sep[1]);
+						$time_based_start = $time_based_sep_1[0];
+						$time_based_end = $time_based_sep_2[1];
+						
+						$time_based_combined = "$time_based_start-$time_based_end";							
+						$time_based_ex = explode("-",$time_based_combined);
+					} else $time_based_ex = explode("-",$time_based);
+											
+					//dump($time_based_ex);
+											
+					if(is_array($time_based_ex) && count($time_based_ex)>=1){						
+						$time_start = $time_based_ex[0];
+						//$time_end = $time_based_ex[1];
+						$time_end = date("G:i",strtotime($time_based_ex[1]));
+
+						/*CHECK IF SAME DAY*/
+						if ($delivery_date==$date_now){
+							$hour_now = date("Gi");
+							$hour_now_l = date("G:i");
+							$time_start_1 = date("Gi",strtotime($time_start));								
+							if($hour_now>$time_start_1){
+								$time_start = $hour_now_l;
+							}
+						}
+													
+					}
+				}
+			} 
+    	}    	
+    	    	
+    	//dump("time=>$time_start $time_end");            	
+    	$time_interval = 15; 
+    	
+    	$website_time_picker_interval= getOptionA('website_time_picker_interval');
+    	if($website_time_picker_interval>0){
+    		$time_interval=$website_time_picker_interval;
+    	}    
+    	
+    	$time_format = 12;
+    	
+    	$website_time_picker_format = getOptionA('website_time_picker_format');    	
+    	if(!empty($website_time_picker_format)){
+    		$time_format = $website_time_picker_format;
+    	}    
+    	    	    	
+    	$times = FunctionsV3::createTimeRange($time_start, $time_end , "$time_interval mins",$time_format);    	
+    	if(is_array($times) && count($times)>=1){			
+		} else {
+			$times = FunctionsV3::createTimeRange("6:00", "23:59" , "$time_interval mins",$time_format);		
+		}		
+		
+		$final_time = array();
+		if(is_array($times) && count($times)>=1){
+			foreach ($times as $val) {
+				$final_time[$val]=$val;
+			}
+		}   
+		
+		return $final_time;
+    }
+    
+    public static function getDateList($merchant_id='')
+    {
+    	$mt_timezone=Yii::app()->functions->getOption("merchant_timezone",$merchant_id);
+		if(!empty($mt_timezone)){
+			Yii::app()->timeZone=$mt_timezone;
+		}
+		
+		$day=Yii::app()->functions->getOption("stores_open_day",$merchant_id);
+		$day_open=!empty($day)?json_decode($day,true):false;
+			
+		if(is_array($day_open) && count($day_open)>=1){
+			
+			for ($i = 0; $i <= 30; $i++) {				
+				$key=date("Y-m-d",strtotime("+$i day"));
+				$key_day = strtolower(date("l",strtotime($key)));
+				if(in_array($key_day,(array)$day_open)){
+					$dates[$key] = FunctionsV3::prettyDate($key);
+				}
+			}
+		} else {
+			for ($i = 0; $i <= 30; $i++) {				
+				$key=date("Y-m-d",strtotime("+$i day"));
+				$dates[$key] = date("D F d Y",strtotime("+$i day"));
+			}
+		}
+		
+		return $dates;
+    }
+    
+    public static function categorySkeduler($merchant_id='', $days='')
+    {
+    	$and=''; $days=strtolower($days);  
+    	
+    	$enabled_category_sked = getOption($merchant_id,'enabled_category_sked');    	
+
+    	if($enabled_category_sked==1){
+    		$and = " AND $days='1' ";
+    	}    
+    	
+    	$stmt="
+		SELECT 
+		cat_id,
+		category_name,
+		category_description,
+		category_name_trans,
+		photo,
+		category_description_trans
+		
+		FROM
+		{{category}}
+		WHERE 
+		merchant_id= ".FunctionsV3::q($merchant_id)."
+		AND status in ('publish','published')
+		$and
+		ORDER BY sequence ASC
+		";		
+    	//dump($stmt);	    	
+    	$db = new DbExt();
+    	if($res = $db->rst($stmt)){
+    		foreach ($res as $val) {    			
+    			if(!empty($val['category_name_trans'])){
+    				$category_name_trans = json_decode($val['category_name_trans'],true);    				
+    				$val['category_name_trans']=$category_name_trans;
+    			}
+    			if(!empty($val['category_description_trans'])){
+    				$category_description = json_decode($val['category_description_trans'],true);    				
+    				$val['category_description_trans']=$category_description;
+    			}
+    			$val['category_id']=$val['cat_id'];
+    			$val['item']=array();
+    			$data[]=$val;
+    		}
+    		return $data;
+    	}
+    	return false;
+    }
+    
+    public static function addClass($add=false, $class_name='')
+    {
+    	if($add){
+    		return 'class="'.$class_name.'"';
+    	}
+    	return false;
+    }
+    	
 }/* end class*/
 
 
