@@ -1,14 +1,9 @@
 
 
 <div style="margin-bottom:20px;float:right;">
-<a class="uk-button" target="_blank" href="<?php echo Yii::app()->createUrl('/update')?>">
+<a class="uk-button" target="_blank" href="<?php echo websiteUrl()?>/update">
 <?php echo t("Click here to update your database")?> <i class="fa fa-database"></i>
 </a>
-
-<a class="uk-button" target="_blank" href="<?php echo Yii::app()->createUrl('/update/updatemerchant')?>">
-<?php echo t("Click here to update your merchant info")?> <i class="fa fa-database"></i>
-</a>
-
 </div>
 <div class="clear"></div>
 
@@ -17,7 +12,7 @@
 <h3><?php echo Yii::t("default","New Merchant Registration List For Today")?> <span class="uk-text-success">
 <?php
  //echo date('F d, Y')
- echo FormatDateTime(date('c'),false);
+ echo FormatDateTime(date('Y-m-d H:i:s'),false);
  ?>
 </span>
 </h3>
@@ -49,7 +44,7 @@
 </div>
 
 <h3><?php echo Yii::t("default","New Merchant Payment List For Today")?> <span class="uk-text-success">
-<?php echo FormatDateTime(date('c'),false);//echo date('F d, Y')?></span></h3>
+<?php echo FormatDateTime(date('Y-m-d H:i:s'),false);//echo date('F d, Y')?></span></h3>
 
 <form id="frm_table_list2" method="POST" class="report uk-form uk-form-horizontal" >
 <input type="hidden" name="action" id="action" value="rptMerchantPaymentToday">
@@ -77,9 +72,9 @@
 
 
 <h3><?php echo Yii::t("default","Incoming orders from merchant for today")?> <span class="uk-text-success">
-<?php echo FormatDateTime(date('c'),false); //echo date('F d, Y')?></span></h3>
+<?php echo FormatDateTime(date('Y-m-d H:i:s'),false); //echo date('F d, Y')?></span></h3>
 
-<form id="frm_table_list3" method="POST" class="report uk-form uk-form-horizontal admin-neworders" >
+<form id="frm_table_list3" method="POST" class="report uk-form uk-form-horizontal" >
 <input type="hidden" name="action" id="action" value="rptIncomingOrders">
 <input type="hidden" name="tbl" id="tbl" value="item">
 <table id="table_list3" class="uk-table uk-table-hover uk-table-striped uk-table-condensed">  
@@ -95,7 +90,6 @@
             <th width="3%"><?php echo Yii::t('default',"Tax")?></th>
             <th width="3%"><?php echo Yii::t('default',"Total W/Tax")?></th>
             <th width="3%"><?php echo Yii::t('default',"Status")?></th>
-            <th width="3%"><?php echo Yii::t('default',"Platform")?></th>
             <th width="3%"><?php echo Yii::t('default',"Date")?></th>            
         </tr>
     </thead>
