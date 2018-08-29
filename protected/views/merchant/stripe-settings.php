@@ -90,6 +90,32 @@ $paymode=Yii::app()->functions->getOption('stripe_mode',$merchant_id);
 </div>
 
 
+<h3><?php echo t("Stripe Ideal")?></h3>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo Yii::t("default","Enabled Stripe Ideal")?></label>
+  <?php 
+  $merchant_stripe_ideal_enabled=getOption($merchant_id,'merchant_stripe_ideal_enabled');
+  echo CHtml::checkBox('merchant_stripe_ideal_enabled',
+  $merchant_stripe_ideal_enabled==1?true:false
+  ,array(
+    'value'=>1,
+    'class'=>"icheck"
+  ))
+  ?> 
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo Yii::t("default","Card Fee")?></label>
+  <?php 
+  echo CHtml::textField('merchant_stripe_ideal_fee',
+  getOption($merchant_id,'merchant_stripe_ideal_fee')
+  ,array(
+    'class'=>"uk-form-width-large"
+  ))
+  ?>
+</div>
+
 <div class="uk-form-row">
 <label class="uk-form-label"></label>
 <input type="submit" value="<?php echo Yii::t("default","Save")?>" class="uk-button uk-form-width-medium uk-button-success">

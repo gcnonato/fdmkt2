@@ -108,13 +108,6 @@ if (!class_exists('AjaxAdmin'))
 		public function addMerchant()
 		{			
 			
-			if (!empty($this->data['id'])){
-				if(!is_numeric($this->data['id'])){
-				   $this->msg="Invalid merchant id"; 
-		           return ;
-				}
-			}
-			
 			if (empty($this->data['id'])){				
 				if ( empty($this->data['username']) && empty($this->data['password'])){
 					$this->msg=Yii::t("default","username & password is required");
@@ -276,14 +269,6 @@ if (!class_exists('AjaxAdmin'))
 			    	isset($this->data['merchant_master_table_boooking'])?$this->data['merchant_master_table_boooking']:''
 			    	,$mtid);
 			    	
-			    	Yii::app()->functions->updateOption("disabled_single_app_modules",
-			    	isset($this->data['disabled_single_app_modules'])?$this->data['disabled_single_app_modules']:''
-			    	,$mtid);
-			    	
-			    	Yii::app()->functions->updateOption("merchant_master_disabled_ordering",
-			    	isset($this->data['merchant_master_disabled_ordering'])?$this->data['merchant_master_disabled_ordering']:''
-			    	,$mtid);
-			    	
 			    	//AUTO ADD SIZE
 			    	FunctionsV3::autoAddSize($mtid);
 		    	}
@@ -322,13 +307,6 @@ if (!class_exists('AjaxAdmin'))
 			    	isset($this->data['merchant_master_table_boooking'])?$this->data['merchant_master_table_boooking']:''
 			    	,$mtid);
 			    	
-			    	Yii::app()->functions->updateOption("disabled_single_app_modules",
-			    	isset($this->data['disabled_single_app_modules'])?$this->data['disabled_single_app_modules']:''
-			    	,$mtid);
-			    	
-			    	Yii::app()->functions->updateOption("merchant_master_disabled_ordering",
-			    	isset($this->data['merchant_master_disabled_ordering'])?$this->data['merchant_master_disabled_ordering']:''
-			    	,$mtid);
 			    				    	
 			    	$payment_list=FunctionsV3::PaymentOptionList();
 			    	foreach ($payment_list as $payment_key=>$payment_val) {
@@ -407,25 +385,18 @@ if (!class_exists('AjaxAdmin'))
 		
 		public function rowDelete()
 		{			
-			
-			$p = new CHtmlPurifier();
-			
 			if (!isset($this->data['tbl']))
 			{	
 				$this->msg=Yii::t("default","Missing parameters");
 				return ;		 				 
 			}			
-			
 						
 			/*CHECK IF DATA HAS REFERENCE TO OTHER TABLE*/
-			if($this->data['tbl']=="dishes"){	
-				if(FunctionsV3::getDishInItem($this->data['row_id'])){
-					$this->msg=t("Cannot delete this record it has reference to other tables");
-					return ;
-				}							
-			}
-			
-			if($this->data['tbl']=="category"){	
+			if(FunctionsV3::getDishInItem($this->data['row_id'])){
+				$this->msg=t("Cannot delete this record it has reference to other tables");
+				return ;
+			}							
+			if($this->data['tbl']=="category"){							
 				if(FunctionsV3::getCategoryInItem($this->data['row_id'])){
 				   $this->msg=t("Cannot delete this record it has reference to other tables");
 				   return ;
@@ -518,9 +489,8 @@ if (!class_exists('AjaxAdmin'))
 			dump($this->data);
 			die(); */
 			
-			
 			$whereid=$this->data['whereid'];
-			$tbl=Yii::app()->db->tablePrefix. $p->purify($this->data['tbl']) ;
+			$tbl=Yii::app()->db->tablePrefix.$this->data['tbl'];
 			$query = "DElETE FROM $tbl WHERE $whereid=". Yii::app()->db->quoteValue($this->data['row_id']) ." "; 
 			if (Yii::app()->db->createCommand($query)->query()){
 			     $this->msg=Yii::t("default","Successfully deleted.");
@@ -672,9 +642,9 @@ if (!class_exists('AjaxAdmin'))
 			SELECT * FROM
 			{{category}}
 			WHERE
-			merchant_id= ".FunctionsV3::q($mtid)."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY cat_id DESC
-			";			
+			";
 			$connection=Yii::app()->db;
     	    $rows=$connection->createCommand($stmt)->queryAll();     	    
     	    if (is_array($rows) && count($rows)>=1){
@@ -707,6 +677,72 @@ if (!class_exists('AjaxAdmin'))
     	    }     	    
     	    $this->otableNodata();
 		}
+		
+	    public function uploadImage()
+	    {	    	
+	    	$qqfile=$_GET['qqfile'];
+	    	if (preg_match("/.php/i", $qqfile)) {
+	    		if (isset($_GET['currentController'])){
+	    			if ($_GET['currentController']!="admin"){
+	    				$this->msg=Yii::t("default","Invalid file");
+	    				return ;
+	    			} else {
+	    				// check language file if has errors
+	    			}	    		
+	    		}	    	
+	    	}
+	    		    	
+	    	if (preg_match("/.php/i", $qqfile)) {
+	    		$this->msg=Yii::t("default","Invalid file");
+	    	    return ;
+	    	}
+	    	
+	    	$path_to_upload=Yii::getPathOfAlias('webroot')."/upload/";	    		    	
+		    if(!file_exists($path_to_upload)) {	
+               if (!@mkdir($path_to_upload,0777)){
+               	    $this->msg=Yii::t("default","Cannot create upload folder. Please create the upload folder manually on your rood directory with 777 permission.");
+               	    return ;
+               }		    
+		    }
+		    
+		    /*create htaccess file*/
+		    $htaccess='<Files *>';
+		    $htaccess.=PHP_EOL;
+		    $htaccess.='SetHandler default-handler';
+		    $htaccess.=PHP_EOL;
+		    //$htaccess.='php_flag engine off';
+		    $htaccess.=PHP_EOL;
+		    $htaccess.='</Files>';
+		    $htfile=$path_to_upload.'.htaccess';		    
+		    if (!file_exists($htfile)){
+		    	$myfile = fopen($htfile, "w") or die("Unable to open file!".$htfile);    
+                fwrite($myfile, $htaccess);        
+                fclose($myfile);
+		    }	    
+		    
+		    if (isset($this->data['qqfile']) && !empty($this->data['qqfile'])){
+		        $input = fopen("php://input", "r");
+		        $temp = tmpfile();
+		        $realSize = stream_copy_to_stream($input, $temp);
+		
+		        $pathinfo = pathinfo($this->data['qqfile']);	  		        
+		        $time=time();
+		        $file_name=$time."-".$pathinfo['filename'].".".$pathinfo['extension'];		        
+		        $file_name=str_replace(" ","-",$file_name);
+		        $path=$path_to_upload.$file_name;
+		        		
+		        $target = fopen($path, "w");        
+		        fseek($temp, 0, SEEK_SET);
+	            stream_copy_to_stream($temp, $target);
+				
+	            $this->code=1;
+		        $this->msg=Yii::t("default","Upload Completed");
+		        $this->details=array(
+		           'file'=>$file_name,
+		           'id'=>time().Yii::app()->functions->generateRandomKey(10)
+		        );			    
+	        } else $this->msg=Yii::t("default","File is empty");
+	    }
 		
 		public function addCategory()
 		{			
@@ -781,7 +817,7 @@ if (!class_exists('AjaxAdmin'))
 			SELECT * FROM
 			{{subcategory}}
 			WHERE
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY subcat_id  DESC
 			";
 			$connection=Yii::app()->db;
@@ -868,7 +904,7 @@ if (!class_exists('AjaxAdmin'))
 			SELECT a.* 
 			FROM {{subcategory_item}} a			
 			WHERE
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY sub_item_id DESC
 			";
 			$connection=Yii::app()->db;
@@ -994,7 +1030,7 @@ if (!class_exists('AjaxAdmin'))
 			SELECT * FROM
 			{{size}}
 			WHERE			
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY size_id  DESC
 			";
 			$connection=Yii::app()->db;
@@ -1065,7 +1101,7 @@ if (!class_exists('AjaxAdmin'))
 			SELECT * FROM
 			{{cooking_ref}}
 			WHERE			
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY cook_id  DESC
 			";
 			$connection=Yii::app()->db;
@@ -1172,9 +1208,7 @@ if (!class_exists('AjaxAdmin'))
 			  'require_addon'=>isset($this->data['require_addon'])?json_encode($this->data['require_addon']):"",
 			  'dish'=>isset($this->data['dish'])?json_encode($this->data['dish']):'',
 			  'non_taxable'=>isset($this->data['non_taxable'])?$this->data['non_taxable']:1,
-			  'gallery_photo'=>isset($this->data['gallery_photo'])?json_encode($this->data['gallery_photo']):"",
-			  'packaging_fee'=>isset($this->data['packaging_fee'])?$this->data['packaging_fee']:0,
-			  'packaging_incremental'=>isset($this->data['packaging_incremental'])?$this->data['packaging_incremental']:0,
+			  'gallery_photo'=>isset($this->data['gallery_photo'])?json_encode($this->data['gallery_photo']):""
 			);			
 						
 			if (isset($this->data['item_name_trans'])){
@@ -1270,7 +1304,7 @@ if (!class_exists('AjaxAdmin'))
 			SELECT * FROM
 			{{item}}
 			WHERE
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY item_id DESC
 			";
 			$connection=Yii::app()->db;
@@ -1670,14 +1704,7 @@ if (!class_exists('AjaxAdmin'))
 	    	isset($this->data['merchant_tax_number'])?$this->data['merchant_tax_number']:''
 	    	,$merchant_id);  
 	    	
-	    	Yii::app()->functions->updateOption("merchant_packaging_wise",
-	    	isset($this->data['merchant_packaging_wise'])?$this->data['merchant_packaging_wise']:''
-	    	,$merchant_id);  
 	    	
-	    	Yii::app()->functions->updateOption("merchant_show_category_image",
-	    	isset($this->data['merchant_show_category_image'])?$this->data['merchant_show_category_image']:''
-	    	,$merchant_id);  
-	    		    	
 	    	if (FunctionsV3::enabledExtraCharges()){
 		    	Yii::app()->functions->updateOption("extra_charge_start_time",
 		    	isset($this->data['extra_charge_start_time'])?json_encode($this->data['extra_charge_start_time']):''
@@ -1696,10 +1723,6 @@ if (!class_exists('AjaxAdmin'))
 		    	,$merchant_id);
 	    	}
 	    	
-	    	
-	    	Yii::app()->functions->updateOption("merchant_two_flavor_option",
-	    	isset($this->data['merchant_two_flavor_option'])?$this->data['merchant_two_flavor_option']:''
-	    	,$merchant_id);  
 	    	
 	    	$this->code=1;
 	    	$this->msg=Yii::t("default","Settings saved.");
@@ -1723,14 +1746,6 @@ if (!class_exists('AjaxAdmin'))
 	    	
 	    	Yii::app()->functions->updateOption("merchant_invoice_email",
 	    	isset($this->data['merchant_invoice_email'])?$this->data['merchant_invoice_email']:''
-	    	,$merchant_id);
-	    	
-	    	Yii::app()->functions->updateOption("merchant_cancel_order_email",
-	    	isset($this->data['merchant_cancel_order_email'])?$this->data['merchant_cancel_order_email']:''
-	    	,$merchant_id);
-	    	
-	    	Yii::app()->functions->updateOption("merchant_cancel_order_phone",
-	    	isset($this->data['merchant_cancel_order_phone'])?$this->data['merchant_cancel_order_phone']:''
 	    	,$merchant_id);
 	    	
 	    	$this->code=1;
@@ -2162,28 +2177,23 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 				    			   return ;
 	    						}	    					
 	    					}	    				
-	    				} else {	    		    					
-	    					if(!isset($this->data['two_flavors'])){
-	    						$this->data['two_flavors']='';
-	    					}	    			
-	    					if ($this->data['two_flavors']!=2){
-			    				if(!empty($h_price)){
-			    			       $h_price=explode("|",$h_price);
-			    		        }			    		        
-			    		        if(!is_array($h_price) && count($h_price)>=1){
-					    			$this->msg=t("Failed. Price has been tampered");
-					    			return ;
-					    		}	  				    		
-					    		$h_size_id = isset($h_price[2])?$h_price[2]:'';
-			    		        $h_price_added = isset($h_price[0])?$h_price[0]:'';
-			    		        
-			    		        $item_price_original = isset($item_price[$h_size_id])?$item_price[$h_size_id]:'';			    		        
-			    		        		    		            		        
-			    		        if ( $item_price_original!=$h_price_added){
-				    		   	  $this->msg=t("Failed. Price has been tampered");
-				    			  return ;
-				    		   }	    
-	    				   }			    		   
+	    				} else {	    						    				
+		    				if(!empty($h_price)){
+		    			       $h_price=explode("|",$h_price);
+		    		        }			    		        
+		    		        if(!is_array($h_price) && count($h_price)>=1){
+				    			$this->msg=t("Failed. Price has been tampered");
+				    			return ;
+				    		}	  				    		
+				    		$h_size_id = isset($h_price[2])?$h_price[2]:'';
+		    		        $h_price_added = isset($h_price[0])?$h_price[0]:'';
+		    		        
+		    		        $item_price_original = isset($item_price[$h_size_id])?$item_price[$h_size_id]:'';			    		        
+		    		        		    		            		        
+		    		        if ( $item_price_original!=$h_price_added){
+			    		   	  $this->msg=t("Failed. Price has been tampered");
+			    			  return ;
+			    		   }	    			    		   
 	    			   }
 		    		   
 	    		    }
@@ -2278,11 +2288,8 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    	if (!isset($this->data['two_flavors'])){
 	    		$this->data['two_flavors']='';
 	    	}
-	    	
+	    
 	    	if ( $this->data['two_flavors']==2){
-	    		
-	    		$merchant_two_flavor_option = getOption($this->data['merchant_id'],'merchant_two_flavor_option');
-	    		
 	    		$two_flavor_price='';
 	    		if (is_array($this->data['sub_item']) && count($this->data['sub_item'])>=1){	    			
 	    			$price='';
@@ -2295,23 +2302,8 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    				}
 	    			}	    	
 	    				    			
-	    			$highest_price = 0;
-	    				    			
-	    			if($merchant_two_flavor_option==2){
-	    				if(is_array($price) && count($price)>=1){
-	    				   $sum_up = 0;
-	    				   foreach ($price as $price_val) {
-	    				   		$sum_up+=$price_val;
-	    				   }	
-	    				   if($sum_up>0){
-	    				      $highest_price=$sum_up/2;
-	    				   }
-	    				}
-	    			} else {	    		
-		    			$highest_price = max($price);				    			
-		    			$highest_key = array_search($highest_price, $price);  			
-	    			}
-	    				    				    				    				    		
+	    			$highest_price = max($price);				    			
+	    			$highest_key = array_search($highest_price, $price);	    			
 	    			$this->data['price']=$highest_price;	    					    			
 	    		}	    	
 	    	}	    
@@ -2512,24 +2504,12 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 		    	}
 	    	}
 	    		    	    
-	    	/*dump($this->data);
-	    	dump($_SESSION['kr_item']);*/
-	    	
+	    	//dump($_SESSION['kr_item']);
 	    	Yii::app()->functions->displayOrderHTML($this->data, isset($_SESSION['kr_item'])?$_SESSION['kr_item']:'' );
 	    	$this->code=Yii::app()->functions->code;
 	    	$this->msg=Yii::app()->functions->msg;
 	    	$this->details=Yii::app()->functions->details;	    	
-	    	//dump(Yii::app()->functions->details['raw']);
 	    	//dump($this->details['html']);	  
-	    	
-	    	/*SET ORDER SUB TOTAL*/
-	    	unset($_SESSION['kmrs_subtotal']);
-	    	$raw = Yii::app()->functions->details['raw'];
-	    	if(isset($raw['total'])){
-	    		if(isset($raw['total']['subtotal'])){
-	    		   $_SESSION['kmrs_subtotal']=$raw['total']['subtotal'];
-	    		}	    	
-	    	}	    	    		    	
 	    		    	
 	    	/*ITEM TAXABLE CART*/	    	 
 	    	if(!empty($mtid)){
@@ -2567,7 +2547,6 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    
 	    public function setDeliveryOptions()
 	    {
-	    	
 	    	
 	       /** check if time is non 24 hour format */	    
 	       if ( yii::app()->functions->getOptionAdmin('website_time_picker_format')=="12"){
@@ -2638,7 +2617,7 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 			   	  }
 			   }	
 		   }	   
-		   		   
+			
 	       $this->code=1;$this->msg=Yii::t("default","OK");	  
 	       $this->details=Yii::app()->createUrl('store/checkout');
 	    }
@@ -2792,9 +2771,7 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 		    	unset($params['currentController']);
 		    	$params['client_id']=$cid;
 		    	$params['date_created']=FunctionsV3::dateNow();
-		    	$params['ip_address']=$_SERVER['REMOTE_ADDR'];		
-		    	unset($params['yii_session_token']);
-		    	unset($params['YII_CSRF_TOKEN']);		    	    
+		    	$params['ip_address']=$_SERVER['REMOTE_ADDR'];			    	
 		    	if ( $this->insertData("{{client_cc}}",$params)){
 		    		$this->code=1;
 		    		$this->msg=Yii::t("default","Credit Card Successfuly added");
@@ -2825,7 +2802,7 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    	$stmt="SELECT * FROM
 	    	{{client_cc}}
 	    	WHERE
-	    	client_id= ".FunctionsV3::q($client_id)."
+	    	client_id='".$client_id."'
 	    	ORDER BY cc_id DESC
 	    	";
 	    	if ( $res=$this->rst($stmt)){
@@ -2846,7 +2823,7 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    	$stmt="SELECT * FROM
 	    	{{merchant_cc}}
 	    	WHERE
-	    	merchant_id= ".FunctionsV3::q($this->data['merchant_id'])."
+	    	merchant_id='".$this->data['merchant_id']."'
 	    	ORDER BY mt_id DESC
 	    	";
 	    	if ( $res=$this->rst($stmt)){
@@ -2932,6 +2909,28 @@ $resto_info.="<p><span class=\"uk-text-bold\">".Yii::t("default","Delivery Est")
 	    {	
 
 	    	$p = new CHtmlPurifier();
+	    	    	
+	    	//dump($this->data);	    		    
+	    	/*
+	    	if (isset($_SESSION['voucher_code'])){	  	    		
+		        if ( isset($this->data['address_book_id'])){
+		        	if ($address_book=Yii::app()->functions->getAddressBookByID($this->data['address_book_id'])){
+		        		$this->data['street']=$address_book['street'];
+		        		$this->data['city']=$address_book['city'];
+		        		$this->data['state']=$address_book['state'];
+		        		$this->data['zipcode']=$address_book['zipcode'];
+		        		$this->data['location_name']=$address_book['location_name'];
+		        	}	    		        
+		        }		    		
+	    		if ( FunctionsV3::validateVoucherByAddress($_SESSION['voucher_code']['voucher_code'],
+	    		$this->data['street'],$this->data['city'],$this->data['state'])){
+	    		   $this->msg=t("Voucher code already been used");
+	    		   return ;	
+	    		}	    	
+	    	}
+	    	*/
+	    	
+	    	//die();
 	    	
 	    	
 	    	$mtid=isset($_SESSION['kr_merchant_id'])?$_SESSION['kr_merchant_id']:'';
@@ -3258,16 +3257,12 @@ $params['cart_tip_value']=$raw['total']['tips'];
 			            	}            
 			            }/** end commission condition*/
 			            
-			            			            
-			            if(isset($raw['total'])){
-			               if(isset($raw['total']['merchant_packaging_charge'])){			               	   
-			               	   $params['packaging'] = $raw['total']['merchant_packaging_charge'];
-			               }			            
-			            }
 			            // fixed packaging by saving the packaging charge to db
-			            /*$merchant_packaging_charge=Yii::app()->functions->getOption('merchant_packaging_charge',$mtid);
+			            $merchant_packaging_charge=Yii::app()->functions->getOption('merchant_packaging_charge',$mtid);
 			            if ( $merchant_packaging_charge>0){
-			            	$params['packaging']=$merchant_packaging_charge;			            				            				            				           
+			            	$params['packaging']=$merchant_packaging_charge;			            	
+			            				            	
+			            	/** if packaging is incremental*/
 			            	if ( Yii::app()->functions->getOption("merchant_packaging_increment",$mtid)==2){
 			            		$total_cart_item=0;
 			            		foreach ($raw['item'] as $cart_item_x) {
@@ -3275,7 +3270,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 		        		        }		                
 		                        $params['packaging']=$total_cart_item*$merchant_packaging_charge;
 			            	}
-			            }*/	    						          
+			            }	    						          
 			            
 			            /** card fee */
 			            if ( !empty($card_fee) && $card_fee>=0.1){	    				    			        
@@ -3440,28 +3435,24 @@ $params['cart_tip_value']=$raw['total']['tips'];
 		    				if (!isset($this->data['saved_address'])){
 		    					$this->data['saved_address']='';
 		    				}
-				            if ( $this->data['saved_address']==2){				            	
-				            	if (!FunctionsV3::isSearchByLocation()){
-					            	$sql_up="UPDATE {{address_book}}
-						     		SET as_default='1' 	     		
-						     		";
-						     		$this->qry($sql_up);
-					            	$params_i=array(
-					            	  'client_id'=>Yii::app()->functions->getClientId(),
-					            	  'street'=>$p->purify($this->data['street']),
-					            	  'city'=>$p->purify($this->data['city']),
-					            	  'state'=>$p->purify($this->data['state']),
-					            	  'zipcode'=>$p->purify($this->data['zipcode']),
-					            	  'location_name'=>$p->purify($this->data['location_name']),
-					            	  'date_created'=>FunctionsV3::dateNow(),
-					            	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-					            	  'country_code'=>Yii::app()->functions->adminCountry(true),
-					            	  'as_default'=>2
-					            	);
-					            	$this->insertData("{{address_book}}",$params_i);
-				            	} else {
-				            		/*SAVE ADDRESS BOOK BY LOCATION*/
-				            	}				            
+				            if ( $this->data['saved_address']==2){
+				            	$sql_up="UPDATE {{address_book}}
+					     		SET as_default='1' 	     		
+					     		";
+					     		$this->qry($sql_up);
+				            	$params_i=array(
+				            	  'client_id'=>Yii::app()->functions->getClientId(),
+				            	  'street'=>$p->purify($this->data['street']),
+				            	  'city'=>$p->purify($this->data['city']),
+				            	  'state'=>$p->purify($this->data['state']),
+				            	  'zipcode'=>$p->purify($this->data['zipcode']),
+				            	  'location_name'=>$p->purify($this->data['location_name']),
+				            	  'date_created'=>FunctionsV3::dateNow(),
+				            	  'ip_address'=>$_SERVER['REMOTE_ADDR'],
+				            	  'country_code'=>Yii::app()->functions->adminCountry(true),
+				            	  'as_default'=>2
+				            	);
+				            	$this->insertData("{{address_book}}",$params_i);
 				            }				            			            
 		    						    				    				
 		    			   /*VOUCHER*/
@@ -3903,11 +3894,11 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	$stmt="DELETE FROM
 	    	{{review}}
 	    	WHERE
-	    	id=".FunctionsV3::q($this->data['id'])."
+	    	id='".$this->data['id']."'
 	    	";
 	    	if ( $DbExt->qry($stmt)){
 	    		$this->code=1;
-	    		$this->msg=Yii::t("default","Successful");
+	    		$this->msg=Yii::t("default","Succssful");
 	    		
 	    		/*POINTS PROGRAM*/		    		
 	    		if (FunctionsV3::hasModuleAddon("pointsprogram")){
@@ -4015,23 +4006,10 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    {	    	
 	    	if (isset($this->data['order_id'])){
 	    		if ( $res=Yii::app()->functions->getOrder($this->data['order_id'])){	    			
-	    			/*dump($res);
-	    			die();*/
 	    			$json_details=!empty($res['json_details'])?json_decode($res['json_details'],true):false;
 	    			if ( $json_details!=false){	    				
 	    				$json_details=(array)$json_details;
-	    			}	    		
-	    			
-	    			if(is_array($json_details) && count($json_details)>=1){
-	    			   foreach ($json_details as $key=>$val) {	    			   		
-	    			   		if ($item_details = Yii::app()->functions->getFoodItem($val['item_id'])){	    			   			
-	    			   			if($item_details['not_available']==2){
-	    			   				unset($json_details[$key]);
-	    			   			}	    			   		
-	    			   		}	    			   
-	    			   	}	
-	    			}	    	
-	    				    				    	
+	    			}	    			    		
 	    			$_SESSION['kr_merchant_slug']=$res['restaurant_slug'];
 	    			$_SESSION['kr_merchant_id']=$res['merchant_id'];
 	    			$_SESSION['kr_item']=$json_details;
@@ -4058,7 +4036,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 		    	WHERE
 		    	option_name='merchant_photo'
 		    	AND
-		    	merchant_id= ".FunctionsV3::q($merchant_id)."
+		    	merchant_id='$merchant_id'
 		    	";
 		    	$DbExt->qry($stmt);
 		    	$this->code=1;
@@ -4075,8 +4053,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	$and='';  
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		$and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+	    		$and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		 ";
 	    		}
 	    	}
@@ -4130,7 +4108,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	FROM
 	    	{{order}} a
 	    	WHERE
-	    	merchant_id=".FunctionsV3::q($merchant_id)."
+	    	merchant_id='$merchant_id'
 	    	AND status NOT IN ('".initialStatus()."')
 	    	$and
 	    	ORDER BY order_id DESC
@@ -4375,8 +4353,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	        $and='';  
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		   $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+	    		   $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		   ";
 	    		   $_SESSION['rpt_date_range']=array(
     		         'start_date'=>$this->data['start_date'],
@@ -4411,7 +4389,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	FROM
 	    	{{view_order_details}} a	 
 	    	WHERE
-	    	merchant_id= ".FunctionsV3::q($merchant_id)."
+	    	merchant_id='$merchant_id'
 	    	AND status NOT IN ('".initialStatus()."')
 	        $and
 	    	GROUP BY item_id,size
@@ -4450,9 +4428,9 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	FROM
 	    	{{order}}
 	    	WHERE
-	    	date_created BETWEEN ".FunctionsV3::q($start_date)." AND ".FunctionsV3::q($date_now)."
+	    	date_created BETWEEN '$start_date' AND '$date_now'
 	    	AND
-	    	merchant_id = ".FunctionsV3::q($merchant_id)."
+	    	merchant_id ='$merchant_id'
 	    	AND status NOT IN ('".initialStatus()."')
 	    	GROUP BY DATE_FORMAT(date_created, '%M-%D')
 	    	ORDER BY date_created ASC
@@ -4489,8 +4467,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	       ON
 	    	       a.order_id=b.order_id
 	    	       WHERE
-	    	       b.date_created BETWEEN ".FunctionsV3::q($start_date)." AND ".FunctionsV3::q($date_now)."
-	    	       AND a.merchant_id = ".FunctionsV3::q($merchant_id)."
+	    	       b.date_created BETWEEN '$start_date' AND '$date_now'
+	    	       AND a.merchant_id ='$merchant_id'
 	    	       AND a.status NOT IN ('".initialStatus()."')
 	    	       GROUP BY item_id
 	    	       ORDER BY item_name ASC
@@ -4540,10 +4518,9 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	FROM
 	    	{{order}} a
 	    	WHERE
-	    	merchant_id= ".FunctionsV3::q($merchant_id)."
+	    	merchant_id='$merchant_id'	    	
 	    	AND date_created like '".date('Y-m-d')."%'
 	    	AND status NOT in ('".initialStatus()."')
-	    	AND request_cancel = '2'
 	    	ORDER BY date_created DESC	    	
 	    	";
 	    	//dump($this->data);
@@ -5314,9 +5291,6 @@ $params['cart_tip_value']=$raw['total']['tips'];
 			Yii::app()->functions->updateOptionAdmin("website_time_picker_format",
 	    	isset($this->data['website_time_picker_format'])?$this->data['website_time_picker_format']:'');
 	    	
-	    	/*dump($this->data);
-	    	die();*/
-	    	
 			Yii::app()->functions->updateOptionAdmin("website_date_format",
 	    	isset($this->data['website_date_format'])?$this->data['website_date_format']:'');
 	    	
@@ -5606,30 +5580,6 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	
 	    	Yii::app()->functions->updateOptionAdmin("website_disabled_cart_validation",
 	    	isset($this->data['website_disabled_cart_validation'])?$this->data['website_disabled_cart_validation']:1);
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("cancel_order_days_applied",
-	    	isset($this->data['cancel_order_days_applied'])?$this->data['cancel_order_days_applied']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("cancel_order_status_accepted",
-	    	isset($this->data['cancel_order_status_accepted'])?json_encode($this->data['cancel_order_status_accepted']):1);
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("cancel_order_enabled",
-	    	isset($this->data['cancel_order_enabled'])?$this->data['cancel_order_enabled']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("website_review_type",
-	    	isset($this->data['website_review_type'])?$this->data['website_review_type']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("review_baseon_status",
-	    	isset($this->data['review_baseon_status'])?json_encode($this->data['review_baseon_status']):1);
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("website_use_date_picker",
-	    	isset($this->data['website_use_date_picker'])?$this->data['website_use_date_picker']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("website_use_time_picker",
-	    	isset($this->data['website_use_time_picker'])?$this->data['website_use_time_picker']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("website_time_picker_interval",
-	    	isset($this->data['website_time_picker_interval'])?$this->data['website_time_picker_interval']:'');
 	    		    	
 	    	$this->code=1;
 	    	$this->msg=Yii::t("default","Setting saved");
@@ -5755,7 +5705,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 		      $stmt="SELECT * FROM		   
 		      {{merchant}}
 		      WHERE
-		      activation_token= ".FunctionsV3::q($this->data['token'])."
+		      activation_token='".$this->data['token']."'
 		      LIMIT 0,1
 		      ";
 		      if ($res=$this->rst($stmt)){		      	 		      	 
@@ -6200,8 +6150,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 			$and='';  
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		$and=" WHERE date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+	    		$and=" WHERE date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		 ";
 	    		}
 	    	}
@@ -6211,8 +6161,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	if (isset($this->data['stats_id'])){
 		    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
 		    		foreach ($this->data['stats_id'] as $stats_id) {		    			
-		    			//$order_status_id.="'$stats_id',";
-		    			$order_status_id.= FunctionsV3::q($stats_id).",";
+		    			$order_status_id.="'$stats_id',";
 		    		}
 		    		if ( !empty($order_status_id)){
 		    			$order_status_id=substr($order_status_id,0,-1);
@@ -6276,8 +6225,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 			$and='';  
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		$and=" WHERE date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+	    		$and=" WHERE date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		 ";
 	    		}
 	    	}
@@ -6906,7 +6855,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 		public function OrderStatusListMerchant($as_merchant=true)
 		{
 			$mtid=Yii::app()->functions->getMerchantID();
-			$where="WHERE merchant_id=".FunctionsV3::q($mtid)." ";
+			$where="WHERE merchant_id='$mtid'";
 			if ( $as_merchant==FALSE){
 				$where='';
 			}								
@@ -7041,7 +6990,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 			$stmt="SELECT * FROM
 			{{client_cc}}		
 			WHERE
-			client_id = ".FunctionsV3::q(Yii::app()->functions->getClientId())."
+			client_id ='".Yii::app()->functions->getClientId()."'	
 			ORDER BY cc_id DESC
 			";						
 			if ($res=$this->rst($stmt)){
@@ -7740,9 +7689,9 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    		$stmt="SELECT * FROM
 	    		{{merchant}}
 	    		WHERE 
-	    		lost_password_code= ".FunctionsV3::q($this->data['lost_password_code'])."
+	    		lost_password_code='".$this->data['lost_password_code']."'
 	    		AND
-	    		contact_email= ".FunctionsV3::q($this->data['email'])."
+	    		contact_email='".$this->data['email']."'
 	    		LIMIT 0,1
 	    		";
 	    		if ($res=$this->rst($stmt)){
@@ -7764,8 +7713,8 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    {	    	
 	    	$stmt="SELECT * FROM
 	    	{{merchant}}
-	    	WHERE	    	
-	    	contact_email= ".FunctionsV3::q($this->data['email_address'])."
+	    	WHERE
+	    	contact_email='".$this->data['email_address']."'
 	    	LIMIT 0,1
 	    	";
 	    	if ($res=$this->rst($stmt)){	    		
@@ -7792,7 +7741,7 @@ $params['cart_tip_value']=$raw['total']['tips'];
 	    	$stmt="SELECT * FROM
 	    	{{merchant}}
 	    	WHERE
-	    	activation_token= ".FunctionsV3::q($this->data['token'])."
+	    	activation_token='".$this->data['token']."'
 	    	LIMIT 0,1
 	    	";
 	    	if ($res=$this->rst($stmt)){	    		
@@ -8618,7 +8567,7 @@ $country=array_key_exists($val['country_code'],(array)$country_list)?$country_li
 			SELECT * FROM
 			{{sms_broadcast}}
 			WHERE			
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY broadcast_id  DESC
 			";
 			$connection=Yii::app()->db;
@@ -9162,7 +9111,7 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 			a.client_id = b.client_id
 			
 			WHERE
-			merchant_id= ".FunctionsV3::q($merchant_id)."
+			merchant_id='$merchant_id'
 			ORDER BY id DESC
 			";
 			
@@ -9589,13 +9538,7 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 			} else {
 				$new_data['restaurant_name']=$merchant_info['restaurant_name'];
 			}		
-						
-            /*check if email address is blocked*/
-	    	if ( FunctionsK::emailBlockedCheck($params['email'])){
-	    		$this->msg=t("Sorry but your email address is blocked by website admin");
-	    		return ;
-	    	}
-		    																
+																
 			if ( $db_ext->insertData('{{bookingtable}}',$params)){
 				$booking_id=Yii::app()->db->getLastInsertID();
 			    $this->code=1;
@@ -9620,7 +9563,7 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 			SELECT * FROM
 			{{bookingtable}}
 			WHERE
-			merchant_id= ".FunctionsV3::q(Yii::app()->functions->getMerchantID())."
+			merchant_id='".Yii::app()->functions->getMerchantID()."'
 			ORDER BY booking_id DESC
 			";
 			$connection=Yii::app()->db;
@@ -10073,8 +10016,8 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 	    	$and='';  
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-	    		$and=" AND a.date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+	    		$and=" AND a.date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		 ";
 	    		}
 	    	}
@@ -10084,8 +10027,7 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 	    	if (isset($this->data['stats_id'])){
 		    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
 		    		foreach ($this->data['stats_id'] as $stats_id) {		    			
-		    			//$order_status_id.="'$stats_id',";
-		    			$order_status_id.=FunctionsV3::q($stats_id).",";
+		    			$order_status_id.="'$stats_id',";
 		    		}
 		    		if ( !empty($order_status_id)){
 		    			$order_status_id=substr($order_status_id,0,-1);
@@ -10458,7 +10400,7 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 			}		
 			
 			/*DELETE IMAGE*/
-			if(is_array($old_data) && count($old_data)>=1 && !empty($this->data['photo'])){
+			if(is_array($old_data) && count($old_data)>=1){
 				foreach ($old_data as $val) {
 					if(!in_array($val,(array)$this->data['photo'])){				
 		    	        FunctionsV3::deleteUploadedFile($val);
@@ -11253,9 +11195,6 @@ $last_login=$val['last_login']=="0000-00-00 00:00:00"?"":date('M d,Y G:i:s',strt
 	    	
 	    	Yii::app()->functions->updateOptionAdmin("browse_page_sort",
 	    	isset($this->data['browse_page_sort'])?$this->data['browse_page_sort']:'');
-	    	
-	    	Yii::app()->functions->updateOptionAdmin("theme_enabled_rtl",
-	    	isset($this->data['theme_enabled_rtl'])?$this->data['theme_enabled_rtl']:'');
 	    	
 			$this->code=1;
 	    	$this->msg=Yii::t("default","Setting saved");

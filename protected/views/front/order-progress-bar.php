@@ -28,6 +28,28 @@ if (isset($_SESSION['search_type'])){
 		    $search_key='zipcode';
 			break;	
 			
+		case "kr_search_location":	
+		    $search_key='';
+		    $search_str='';
+		    if(!empty($_GET)){		    	
+		    	 foreach ($_GET as $key => $val) {		    	 	
+		    	 	$search_key=$key;
+		    	 	$search_str=$val;
+		    	 }
+		    	 $_SESSION['kr_search_location_query']=array(
+		    	   'search_key'=>$search_key,
+		    	   'search_str'=>$search_str
+		    	 );
+		    } else {
+		    	if(isset($_SESSION['kr_search_location_query'])){	
+		    		if(is_array($_SESSION['kr_search_location_query']) && count($_SESSION['kr_search_location_query'])>=1){
+		    			$search_key=$_SESSION['kr_search_location_query']['search_key'];
+		    			$search_str=$_SESSION['kr_search_location_query']['search_str'];
+		    		}
+		    	}
+		    }	   
+		    break;	
+			
 		default:
 			$search_str=isset($_SESSION['kr_search_address'])?$_SESSION['kr_search_address']:'';
 			$search_key='s';

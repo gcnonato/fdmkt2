@@ -4,6 +4,9 @@ if (isset($_GET['st'])){
 	$search_address=$_GET['st'];
 }
 
+/*dump($data);
+die();
+*/
 /*SEARCH BY LOCATION*/
 $search_by_location=false; $location_data='';
 if (FunctionsV3::isSearchByLocation()){
@@ -349,6 +352,10 @@ echo CHtml::hiddenField('clien_long',$data['client']['long']);
 	                          $distance,
 	                          $distance_type_raw);
 	             } 
+	             
+	             if (FunctionsV3::enabledExtraCharges()){	                 
+	                 $delivery_fee = FunctionsV3::extraDeliveryFee($merchant_id,$delivery_fee,'');
+	             }
 	             ?>
 	             
 	             <?php 	             	                                   
@@ -359,7 +366,7 @@ echo CHtml::hiddenField('clien_long',$data['client']['long']);
 					   'merchant_id'=>$merchant_id,
 					   'ratings'=>$ratings,
 					   'distance_type'=>$distance_type,
-					   'distance_type_orig'=>$distance_type_orig,
+					   'distance_type_orig'=>$distance_type_raw,
 					   'distance'=>$distance,
 					   'merchant_delivery_distance'=>$merchant_delivery_distance,
 					   'delivery_fee'=>$delivery_fee,
@@ -372,7 +379,7 @@ echo CHtml::hiddenField('clien_long',$data['client']['long']);
 					   'merchant_id'=>$merchant_id,
 					   'ratings'=>$ratings,
 					   'distance_type'=>$distance_type,
-					   'distance_type_orig'=>$distance_type_orig,
+					   'distance_type_orig'=>$distance_type_raw,
 					   'distance'=>$distance,
 					   'merchant_delivery_distance'=>$merchant_delivery_distance,
 					   'delivery_fee'=>$delivery_fee,

@@ -59,13 +59,12 @@ if ($data['two_flavors']==2){
 }
 dump($data['dish']);
 ?>
-     <a href="javascript:close_fb();"><i class="far fa-times-circle" style="font-size:26px;margin-left: 10px;"></i></a>
+
 <div class="container  view-food-item-wrap">
-
-
+   
   <!--ITEM NAME & DESCRIPTION-->
   <div class="row">
-    <div class="col-md-3 ">
+    <div class="col-md-3 ">              
        <img src="<?php echo FunctionsV3::getFoodDefaultImage($data['photo']);?>" alt="<?php echo $data['item_name']?>" title="<?php echo $data['item_name']?>" class="logo-small">
     </div> <!--col-->
     <div class="col-md-9 ">
@@ -75,7 +74,6 @@ dump($data['dish']);
     </div> <!--col-->
   </div> <!--row-->
   <!--ITEM NAME & DESCRIPTION--
-
      
   <!--FOOD ITEM GALLERY-->
   <?php if (getOption($data['merchant_id'],'disabled_food_gallery')!=2):?>  
@@ -84,7 +82,7 @@ dump($data['dish']);
       <div class="section-label">
         <a class="section-label-a">
           <span class="bold">
-          <?php echo t("Galería")?></span>
+          <?php echo t("Gallery")?></span>
           <b></b>
         </a>     
         <div class="food-gallery-wrap row ">
@@ -107,7 +105,7 @@ dump($data['dish']);
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Precio")?></span>
+      <?php echo t("Price")?></span>
       <b></b>
     </a>     
     <div class="row">
@@ -165,7 +163,7 @@ dump($data['dish']);
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Cantidad")?></span>
+      <?php echo t("Quantity")?></span>
       <b></b>
     </a>     
     <div class="row">
@@ -182,8 +180,9 @@ dump($data['dish']);
        </div>
        <div class="col-md-1 col-xs-1 border into-row">
          <a href="javascript:;" class="qty-plus green-button inline"><i class="ion-plus"></i></a>
-        <br>
-         <a href="javascript:;" class="special-instruction orange-button inline" style=""><?php echo t("Instrucciones")?></a>
+       </div>
+       <div class="col-md-6 col-xs-6 border into-row">
+         <a href="javascript:;" class="special-instruction orange-button inline"><?php echo t("Special Instructions")?></a>
        </div>
     </div> <!--row-->
   </div> <!-- section-label--> 
@@ -193,7 +192,7 @@ dump($data['dish']);
   isset($item_data['notes'])?$item_data['notes']:""
   ,array(
    'class'=>'uk-width-1-1',
-   'placeholder'=>Yii::t("default","Tus instruciones especiales")
+   'placeholder'=>Yii::t("default","Special Instructions")
   ))?>
   </div> <!--notes-wrap-->
   
@@ -211,7 +210,7 @@ dump($data['dish']);
   
     <div class="section-label-a">
       <span class="bold">
-      <?php echo t("Preferencias")?></span>
+      <?php echo t("Cooking Preference")?></span>
       <b></b>
        <!--<a href="javascript:;"><i class="ion-ios-plus-outline"></i></a>-->
     </div>        
@@ -249,7 +248,7 @@ dump($data['dish']);
   <div class="section-label">
     <a class="section-label-a">
       <span class="bold">
-      <?php echo t("Ingredientes")?></span>
+      <?php echo t("Ingredients")?></span>
       <b></b>
     </a>             
      <div class="row">     
@@ -473,10 +472,11 @@ dump($data['dish']);
 <div class="row food-item-actions">
   <div class="col-md-4 col-xs-4 border into-row "></div>
   <div class="col-md-4 col-xs-4 border into-row">
-     <input type="submit" value="<?php echo empty($row)?Yii::t("default","añadir"):Yii::t("default","actualizar");?>" 
+     <input type="submit" value="<?php echo empty($row)?Yii::t("default","add to cart"):Yii::t("default","update cart");?>" 
      class="add_to_cart orange-button upper-text">
   </div>
   <div class="col-md-4 col-xs-4 border into-row">
+  <a href="javascript:close_fb();" class="center upper-text green-button inline"><?php echo t("Close")?></a>
   </div>
 </div>
 <?php endif;?>
@@ -484,7 +484,7 @@ dump($data['dish']);
 </div> <!--view-item-wrap-->
 </form>
 <?php else :?>
-<p class="text-danger"><?php echo Yii::t("default","Disculpa pero no podemos encontrar lo que estas buscando.")?></p>
+<p class="text-danger"><?php echo Yii::t("default","Sorry but we cannot find what you are looking for.")?></p>
 <?php endif;?>
 <script type="text/javascript">
 jQuery(document).ready(function() {	

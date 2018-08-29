@@ -37,7 +37,7 @@ class DbExt
 		$connection=Yii::app()->db;
 		$command = Yii::app()->db->createCommand();
 		$res = $command->update($table , $data , 
-               "$wherefield=:$wherefield" , array(":$wherefield"=> addslashes($whereval) ));
+               "$wherefield=:$wherefield" , array(":$wherefield"=> $whereval ));
         if ($res){
         	return true;
         }

@@ -7,7 +7,7 @@ $this->renderPartial('/front/mobile_header',array(
 
 $min_fees=FunctionsV3::getMinOrderByTableRates($merchant_id,
    $distance,
-   $distance_type,
+   $distance_type_raw,
    $data['minimum_order']
 );
 

@@ -582,16 +582,138 @@ echo CHtml::textField('merchant_extenal',$merchant_extenal,array(
 
 <div class="uk-form-row">
   <label class="uk-form-label"><?php echo Yii::t("default","Delivery Charges")?></label>
-  <?php 
-  //echo CHtml::dropDownList('merchant_delivery_charges_type',$merchant_delivery_charges_type
-  //,Yii::app()->functions->deliveryChargesType());
+  <?php   
   echo CHtml::textField('merchant_delivery_charges',$merchant_delivery_charges,array(
-    'class'=>"numeric_only",
-    //'style'=>"width:80px;"
+    'class'=>"numeric_only",    
   ));
   ?>
   <?php echo Yii::app()->functions->getCurrencyCode(Yii::app()->functions->getMerchantID());?>      
 </div>
+
+
+<?php if ( FunctionsV3::enabledExtraCharges()):?>
+<hr>
+
+<h3><?php echo t("Extra Delivery Charges")?></h3>
+
+<?php 
+$extra_charge_start_time = getOption($merchant_id,'extra_charge_start_time');
+$extra_charge_end_time=''; $extra_charge_fee='';
+if(!empty($extra_charge_start_time)){
+   $extra_charge_start_time = json_decode($extra_charge_start_time,true);
+   $extra_charge_end_time = json_decode(getOption($merchant_id,'extra_charge_end_time'),true);
+   $extra_charge_fee = json_decode(getOption($merchant_id,'extra_charge_fee'),true);
+}  
+?>
+
+<?php if(!is_array($extra_charge_start_time) && count($extra_charge_start_time)<=1):?>
+<div class="time_applicable_row">
+<div class="uk-form-row time_applicable_rows" >
+  <label class="uk-form-label"><?php echo t("Time Applicable")?></label>
+  <?php 
+  echo CHtml::textField('extra_charge_start_time[]','',
+  array(
+    'style'=>'width:100px',
+    'class'=>'timepick',
+    'placeholder'=>t("Start")
+  ));
+  ?>
+  <span><?php echo t("To")?></span>
+  <?php 
+  echo CHtml::textField('extra_charge_end_time[]','',
+  array(
+    'style'=>'width:100px',
+    'class'=>'timepick',
+    'placeholder'=>t("End")
+  ));
+  ?>    
+  
+  <?php 
+  echo CHtml::textField('extra_charge_fee[]','',
+  array(
+    'style'=>'width:100px',
+    'class'=>'numeric_only',
+    'placeholder'=>t("Fee")
+  ));
+  ?> 
+
+  <a href="javascript:;" class="extra_charge_add_new_row">
+  <i class="fa fa-plus-square"></i>
+  </a> 
+  
+</div>    
+</div> <!--time_applicable_row-->
+<?php endif;?>
+
+<div class="more_charge_row">  
+  <?php if(is_array($extra_charge_start_time) && count($extra_charge_start_time)>=1):?>
+  
+  <?php $x_counter=0; //dump($extra_charge_start_time); dump($extra_charge_fee);?>
+  <?php foreach ($extra_charge_start_time as $keyx=>$valx): //dump($keyx);?>
+  <div class="uk-form-row time_applicable_rows">
+	  <label class="uk-form-label">Time Applicable</label>
+
+	   <?php 
+	  echo CHtml::textField("extra_charge_start_time[$x_counter]",$valx,
+	  array(
+	    'style'=>'width:100px',
+	    'class'=>'timepick',
+	    'placeholder'=>t("Start")
+	  ));
+	  ?>
+  
+	  <span>To</span>
+	  
+	   <?php
+	  echo CHtml::textField("extra_charge_end_time[$x_counter]",
+	  isset($extra_charge_end_time[$keyx])?$extra_charge_end_time[$keyx]:''
+	  ,
+	  array(
+	    'style'=>'width:100px',
+	    'class'=>'timepick',
+	    'placeholder'=>t("End")
+	  ));
+	  ?>    
+	  
+	  <?php 
+	  echo CHtml::textField('extra_charge_fee[]',
+	  isset($extra_charge_fee[$keyx])?$extra_charge_fee[$keyx]:''
+	  ,
+	  array(
+	    'style'=>'width:100px',
+	    'class'=>'numeric_only',
+	    'placeholder'=>t("Fee")
+	  ));
+	  ?> 
+ 	  
+	  <a href="javascript:;" class="<?php echo $x_counter==0?"extra_charge_add_new_row":"remove_charge_row"?>">
+	  <i class="fa <?php echo $x_counter==0?"fa-plus-square":"fa-minus-square"?>"></i>
+	  </a> 
+	  
+	</div>
+	<?php $x_counter++;?>
+	<?php endforeach;?>
+  
+  <?php endif;?>
+</div> <!--more_charge_row-->
+
+
+
+<div class="uk-form-row">
+<label class="uk-form-label"><?php echo t("Extra Charge Notification")?></label>
+<?php
+echo CHtml::textArea('extra_charge_notification',
+getOption($merchant_id,'extra_charge_notification')
+,array(
+  'placeholder'=>t(""),
+  'class'=>'uk-form-width-large'
+  ));
+?>
+</div>
+
+
+<hr>
+<?php endif;?>
 
 <div class="uk-form-row">
 <label class="uk-form-label"><?php echo Yii::t("default","Do not apply tax to delivery charges")?></label>

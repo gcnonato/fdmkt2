@@ -2,7 +2,8 @@
 
 <div class="box-grey rounded merchant-promo" style="margin-top:0;">
 
-<?php if (!empty($promo['offer'])):?>
+<?php if(isset($promo['offer'])):?>
+<?php if (is_array($promo['offer']) && count($promo['offer'])>=1 ):?>
 <div class="section-label">
     <a class="section-label-a">
       <span class="bold" style="background:#fff;">
@@ -10,7 +11,10 @@
       <b></b>
     </a>     
 </div>  
-<p><i class="green-color ion-ios-plus-empty"></i> <?php echo $promo['offer']?></p>
+<?php foreach ($promo['offer'] as $promov_val):?>
+   <p><i class="green-color ion-ios-plus-empty"></i> <?php echo $promov_val?></p>
+<?php endforeach;?>
+<?php endif;?>
 <?php endif;?>
 
 

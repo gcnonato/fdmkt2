@@ -15,6 +15,7 @@ $this->renderPartial('/front/default-header',array(
 	<li class="active"><?php echo t("Income Points")?></li>
 	<li><?php echo t("Expenses Points")?></li>
 	<li><?php echo t("Expired Points")?></li>	
+	<li><?php echo t("Points By Merchant")?></li>
    </ul>
    
    <div class="points-total-wrap">
@@ -77,6 +78,21 @@ $this->renderPartial('/front/default-header',array(
 		      <th width="25%"><?php echo t("Date")?></th>
 		      <th width="50%"><?php echo t("Transaction")?></th>
 		      <th width="20%"><?php echo t("Amount")?></th>
+		     </tr>
+		     </thead>
+		     <tbody>		     
+		     </tbody>
+		  </table> 
+		 </form> 
+		</li>
+		
+		<li>
+		 <form class="frm_pts_by_merchant pts_frm">
+		  <table id="pts-merchant-tbl" class="table table-hover">
+		     <thead>
+		     <tr>
+		      <th width="25%"><?php echo t("Merchant")?></th>
+		      <th width="50%"><?php echo t("Total Points")?></th>		      
 		     </tr>
 		     </thead>
 		     <tbody>		     

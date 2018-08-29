@@ -388,8 +388,7 @@ class FunctionsK extends DbExt
 			$sWhere = "WHERE (";
 			for ( $i=0 ; $i<count($aColumns) ; $i++ )
 			{
-				//$sWhere .= $aColumns[$i]." LIKE '%".( $_GET['sSearch'] )."%' OR ";
-				$sWhere .= $aColumns[$i]." LIKE ". FunctionsV3::q("%".$_GET['sSearch']."%")  ." OR ";
+				$sWhere .= $aColumns[$i]." LIKE '%".( $_GET['sSearch'] )."%' OR ";
 			}
 			$sWhere = substr_replace( $sWhere, "", -3 );
 			$sWhere .= ')';
@@ -411,8 +410,7 @@ class FunctionsK extends DbExt
 				{
 					$sWhere .= " AND ";
 				}
-				//$sWhere .= $aColumns[$i]." LIKE '%".($_GET['sSearch_'.$i])."%' ";
-				$sWhere .= $aColumns[$i]." LIKE ".FunctionsV3::q("%".$_GET['sSearch']."%")." ";
+				$sWhere .= $aColumns[$i]." LIKE '%".($_GET['sSearch_'.$i])."%' ";
 			}
 		}
 
@@ -870,8 +868,8 @@ class FunctionsK extends DbExt
     	SELECT contact_phone
     	FROM
     	{{client}}
-    	WHERE    	
-    	contact_phone LIKE ".FunctionsV3::q("%$mobile_no")."
+    	WHERE
+    	contact_phone LIKE '%".$mobile_no."%'
     	$and
     	";    	
     	if ( $res=$this->rst($stmt)){      		

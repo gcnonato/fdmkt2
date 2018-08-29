@@ -42,7 +42,9 @@
 <li class="<?php echo $provider_selected=="plivo"?"uk-active":"";?>" ><a href="#"><?php echo t("plivo")?></a></li>
 <li class="<?php echo $provider_selected=="msg91"?"uk-active":"";?>" ><a href="#"><?php echo t("msg91")?></a></li>
 <li class="<?php echo $provider_selected=="spothit"?"uk-active":"";?>" ><a href="#"><?php echo t("Spot-hit")?></a></li>
-<!--<li class="<?php echo $provider_selected=="libonet"?"uk-active":"";?>" ><a href="#"><?php echo t("Libonet")?></a></li>-->
+<!--<li class="<?php echo $provider_selected=="libonet"?"uk-active":"";?>" ><a href="#"><?php echo t("Libonet")?></a></li>
+<li class="<?php echo $provider_selected=="hubtel"?"uk-active":"";?>" ><a href="#"><?php echo t("hubtel")?></a></li>
+<li class="<?php echo $provider_selected=="infobip"?"uk-active":"";?>" ><a href="#"><?php echo t("infobip")?></a></li>-->
 </ul>
 
 <ul class="uk-switcher uk-margin " id="tab-content">
@@ -731,7 +733,72 @@ $provider_selected=="spothit"?true:false
 
 </li>
 
-<li >
+
+<li>
+<!--HUB TEL-->
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Enabled")?></label>
+  <?php
+  echo CHtml::radioButton('sms_provider',
+$provider_selected=="hubtel"?true:false
+,array(
+'class'=>"icheck",
+'value'=>"hubtel"
+));
+  ?>
+  </label>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Client ID")?></label>
+  <?php 
+  echo CHtml::textField('hubtel_username',
+  Yii::app()->functions->getOptionAdmin('hubtel_username')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Client Secret")?></label>
+  <?php 
+  echo CHtml::passwordField('hubtel_password',
+  Yii::app()->functions->getOptionAdmin('hubtel_password')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Sender")?></label>
+  <?php 
+  echo CHtml::textField('hubtel_sender',
+  Yii::app()->functions->getOptionAdmin('hubtel_sender')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("FlashMessage")?></label>
+  <?php 
+  echo CHtml::checkBox('hubtel_flashmessage',
+  getOptionA('hubtel_flashmessage')==1?true:false
+  ,array(
+    'val'=>1,
+    'class'=>"icheck"
+  ));
+  ?>
+</div>
+
+</li>
+
+
+<li>
 <!--Libonet-->
 
 <div class="uk-form-row">
@@ -806,6 +873,83 @@ $provider_selected=="libonet"?true:false
 </div>
 
 </li>
+
+
+<!--INFOBIP-->
+<li>
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Enabled")?></label>
+  <?php
+  echo CHtml::radioButton('sms_provider',
+$provider_selected=="infobip"?true:false
+,array(
+'class'=>"icheck",
+'value'=>"infobip"
+));
+  ?>
+  </label>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Username")?></label>
+  <?php 
+  echo CHtml::textField('infobip_username',
+  Yii::app()->functions->getOptionAdmin('infobip_username')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Password")?></label>
+  <?php 
+  echo CHtml::textField('infobip_password',
+  Yii::app()->functions->getOptionAdmin('infobip_password')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo t("Sender ID")?></label>
+  <?php 
+  echo CHtml::textField('infobip_senderid',
+  Yii::app()->functions->getOptionAdmin('infobip_senderid')
+  ,array(
+    'class'=>"uk-form-width-large"    
+  ))
+  ?>
+</div>
+
+<!--<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo Yii::t("default","Use CURL")?></label>
+  <?php 
+  echo CHtml::checkBox('infobip_use_curl',
+  Yii::app()->functions->getOptionAdmin('infobip_use_curl')==1?true:false
+  ,array(
+    'value'=>1,
+    'class'=>"icheck"
+  ))
+  ?> 
+</div>
+-->
+
+<!--<div class="uk-form-row">
+  <label class="uk-form-label"><?php echo Yii::t("default","Use Unicode")?></label>
+  <?php 
+  echo CHtml::checkBox('infobip_use_unicode',
+  Yii::app()->functions->getOptionAdmin('infobip_use_unicode')==1?true:false
+  ,array(
+    'value'=>1,
+    'class'=>"icheck"
+  ))
+  ?> 
+</div>-->
+
+</li>
+<!--END INFOBIP-->
 
 </ul>
 

@@ -4,7 +4,7 @@ class GoogleCaptcha
 	public static $capctha_url='https://www.google.com/recaptcha/api/siteverify';
 	public static $message;
 	
-	public static function checkCredentials()
+	public function checkCredentials()
 	{
 		$captcha_site_key=getOptionA('captcha_site_key');
 		$captcha_secret=getOptionA('captcha_secret');
@@ -36,7 +36,7 @@ class GoogleCaptcha
 	   <?php
 	}
 	
-	public static function validateCaptcha()
+	public function validateCaptcha()
 	{  		
 	   $secret_key=getOptionA('captcha_secret');
 	   if (empty($secret_key)){

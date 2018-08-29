@@ -236,7 +236,7 @@ $full_merchant_address=$merchant_info['street']." ".$merchant_info['city']. " ".
 		       <?php if (isset($data['delivery_time'])):?>
 		       <?php if ( !empty($data['delivery_time'])):?>
 		       <div class="input-block">
-		         <div class="label"><?php echo Yii::t("default","Hora del delivery")?> :</div>
+		         <div class="label"><?php echo Yii::t("default","Delivery Time")?> :</div>
 		         <div class="value">
 		         <?php //echo $data['delivery_time']?>
 		         <?php echo Yii::app()->functions->timeFormat($data['delivery_time'],true)?>

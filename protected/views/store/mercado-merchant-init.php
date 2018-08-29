@@ -152,7 +152,8 @@ if (isset($_GET['status'])){
 			    "external_reference" => $reference,
 		    );   		    
 		    //dump($preference_data);
-		    $preference = $mp->create_preference($preference_data);       		    
+		    $preference = $mp->create_preference($preference_data); 
+		    //dump($preference);		      		   
 		    ?>
 		    
 		    <div class="sections section-grey2 section-orangeform">
@@ -163,7 +164,7 @@ if (isset($_GET['status'])){
 			          <div class="box-grey rounded">	  
 			          			          
 			          <?php if ($paymode=="Sandbox"):?>
-			          <a href="<?php echo $preference["response"]["sandbox_init_point"];; ?>" name="MP-Checkout" class="lightblue-M-Ov-ArOn">Pay</a>
+			          <a href="<?php echo $preference["response"]["sandbox_init_point"]; ?>" name="MP-Checkout" class="lightblue-M-Ov-ArOn">Pay</a>
 			          <?php else :?>
 			           <a href="<?php echo $preference["response"]["init_point"]; ?>" name="MP-Checkout" class="lightblue-M-Ov-ArOn">
 		    <?php echo Yii::t("default","Pay")?>

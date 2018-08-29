@@ -53,9 +53,49 @@ echo CHtml::hiddenField('cod_change_required',$cod_change_required);
 	         		));
 	         	} else echo $val;
          	    break;
+         	    
+         	case "paymill":     
+         	    if ( $credentials=KPaymill::getCredentials($merchant_id)){    
+         	    	if ($credentials['card_fee1']>=0.001){
+         	    		$fee1=$credentials['card_fee1'];
+         	    		$fee2=$credentials['card_fee2'];
+         	    	    echo t("Paymill")." (".t("card fee $fee1% + $fee2").adminCurrencySymbol().")";
+         	    	} else echo t("Paymill");   
+         	    } else echo t("Paymill");     	    
+         	    break;
+         	    
+         	case "strip_ideal":    
+         	    if ( $credentials=StripeIdeal::getCredentials($merchant_id)){
+         	       if($credentials['ideal_fee']>=0.0001){
+         	    		echo $val = Yii::t("default","Stripe Ideal (card fee [fee])",array(
+		         		  '[fee]'=>FunctionsV3::prettyPrice($credentials['ideal_fee'])
+		         		));
+         	       } else echo t("Stripe Ideal");   
+         	    } else echo t("Stripe Ideal");   
+         	    break;
+         	    
+         	case "mol":            	   
+         	   if ($credentials=MollieClass::getCredentials($merchant_id)){           	   	   
+         	   	   if($credentials['card_fee']>=0.0001){
+         	   	   	  echo $val = Yii::t("default","Mollie (card fee [fee])",array(
+		         		  '[fee]'=>FunctionsV3::prettyPrice($credentials['card_fee'])
+		         		));
+         	   	   } else echo t($val); 
+         	   } else echo t($val); 
+         	   break;
+         	   
+         	case "wirecard":  
+         	   if($credentials=WireCard::getCredentials($merchant_id)){         	   	  
+         	   	  if ( $credentials['fee1']>=0.0001  && $credentials['fee2']>=0.0001){
+         	   	  	   $fee1=$credentials['fee1'];
+         	    	   $fee2=$credentials['fee2'];
+         	    	   echo t("WireCard")." (".t("card fee $fee1% + $fee2").adminCurrencySymbol().")";
+         	   	  } else echo t("WireCard");
+         	   } else echo t("WireCard");
+         	   break;
          			
          	default:
-         		echo $val; 
+         		echo t($val); 
          		break;
          }
          ?>

@@ -14,9 +14,14 @@ if ( !file_exists(FunctionsV3::uploadPath()."/$merchant_photo_bg")){
 
 /*GET MINIMUM ORDER*/
 
+/*dump($distance_type);
+dump($distance_type_orig);
+dump($distance_type_raw);
+*/
+
 $min_fees=FunctionsV3::getMinOrderByTableRates($merchant_id,
    $distance,
-   $distance_type,
+   $distance_type_raw,
    $data['minimum_order']
 );
 
@@ -482,6 +487,14 @@ if ($food_viewing_private==2){
 	        ?>
 	        </p>
 	        
+	        
+	        <?php if(FunctionsV3::enabledExtraCharges()):?>
+	        <?php $extra_charge_notification  = getOption($merchant_id,'extra_charge_notification')?>
+	        <?php if(!empty($extra_charge_notification)):?>
+	          <p class="extra_charge_notification"><?php echo $extra_charge_notification;?></p>
+	        <?php endif;?>
+	        <?php endif;?>
+	        
 	        <?php if($search_by_location):?>
 	        <a href="javascript:;" class="top10 green-color change-location block text-center">
 	        [<?php echo t("Change Location here")?>]
@@ -491,6 +504,7 @@ if ($food_viewing_private==2){
 	        [<?php echo t("Change Your Address here")?>]
 	        </a>
 	        <?php endif;?>
+	        
 	        
         </div>
         <!--END DELIVERY INFO-->

@@ -13,11 +13,18 @@
 <?php foreach ($val['item'] as $val_item):?>
 
 <?php 
+//dump($val_item);
 $atts='';
 if ( $val_item['single_item']==2){
 	  $atts.='data-price="'.$val_item['single_details']['price'].'"';
 	  $atts.=" ";
 	  $atts.='data-size="'.$val_item['single_details']['size'].'"';
+	  $atts.=" ";
+	  if(isset($val_item['single_details']['size_id'])){
+	     $atts.='data-size_id="'.$val_item['single_details']['size_id'].'"';
+	  }
+	  $atts.=" ";
+	  $atts.='data-discount="'.$val_item['discount'].'"';
 }
 ?> 
 

@@ -166,7 +166,7 @@ if ( $res=Yii::app()->functions->getMerchantByToken($my_token)){
 				}
 				
 	           if (isset($_GET['renew'])){
-                     header('Location: '.Yii::app()->request->baseUrl."/store/renewSuccesful");
+                     header('Location: '.Yii::app()->request->baseUrl."/store/renewsuccesful");
                } else header('Location: '.Yii::app()->request->baseUrl."/store/merchantSignup/Do/step4/token/$my_token");				     		         
 		       die();
 				

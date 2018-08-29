@@ -64,7 +64,7 @@ echo CHtml::hiddenField('mobile_country_code',Yii::app()->functions->getAdminCou
            <?php if ( $data['unlimited_post']==2):?>
               <?php echo $limit_post[$data['unlimited_post']]?>
            <?php else :?>
-              <?php echo $limit_post[$data['unlimited_post']] . " (".$data['post_limit']." item )"?>
+              <?php echo $limit_post[$data['unlimited_post']] . " (".$data['post_limit']." ".t("item")." )"?>
            <?php endif;?>
         </div>
       </div> 

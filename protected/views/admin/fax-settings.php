@@ -49,7 +49,7 @@ echo CHtml::textField('fax_username',yii::app()->functions->getOptionAdmin('fax_
 <div class="uk-form-row">
 <label class="uk-form-label"><?php echo t("Password")?>:</label>  
 <?php 
-echo CHtml::textField('fax_password',yii::app()->functions->getOptionAdmin('fax_password'),array(
+echo CHtml::passwordField('fax_password',yii::app()->functions->getOptionAdmin('fax_password'),array(
  'class'=>"uk-form-width-large"
 ))
 ?>

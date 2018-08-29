@@ -96,6 +96,14 @@ if($val['service']==1 || $val['service']==2  || $val['service']==4  || $val['ser
 	        ?>
 	        </p>
 	        
+	        <?php if(method_exists('FunctionsV3','getOffersByMerchantNew')):?>
+	        <?php if ($offer=FunctionsV3::getOffersByMerchantNew($merchant_id)):?>
+	          <?php foreach ($offer as $offer_value):?>
+	            <p><?php echo $offer_value?></p>
+	          <?php endforeach;?>
+	        <?php endif;?>
+	        <?php endif;?>
+	        
 	        <p class="top15"><?php echo FunctionsV3::getFreeDeliveryTag($merchant_id)?></p>
 	    
 	    </div> <!--col-->

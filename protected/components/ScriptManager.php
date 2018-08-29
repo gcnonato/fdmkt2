@@ -88,14 +88,11 @@ class ScriptManager
 		$cs->registerScriptFile($baseUrl."/assets/vendor/jquery.ui.timepicker-0.0.8.js"
 		,CClientScript::POS_END); 
 		
-		/*$cs->registerScriptFile($baseUrl."/assets/js/uploader.js"
+		$cs->registerScriptFile($baseUrl."/assets/js/uploader.js"
 		,CClientScript::POS_END); 
 		
 		$cs->registerScriptFile($baseUrl."/assets/vendor/ajaxupload/fileuploader.js"
-		,CClientScript::POS_END); */
-		
-		$cs->registerScriptFile($baseUrl."/assets/vendor/SimpleAjaxUploader.min.js"
-		,CClientScript::POS_END);
+		,CClientScript::POS_END); 
 						
 		/*$cs->registerScriptFile($baseUrl."/assets/vendor/bar-rating/jquery.barrating.min.js"
 		,CClientScript::POS_END);*/ 
@@ -209,10 +206,8 @@ class ScriptManager
 		,CClientScript::POS_END); 
 		$cs->registerScriptFile($baseUrl."/assets/vendor/pickadate.js/lib/picker.time.js"
 		,CClientScript::POS_END); */
-				
-		$website_use_time_picker = Yii::app()->functions->getOptionAdmin('website_use_time_picker');
 		
-		if (Yii::app()->functions->getOptionAdmin('theme_time_pick')==2 || $website_use_time_picker==2){
+		if (Yii::app()->functions->getOptionAdmin('theme_time_pick')==2){
 			$cs->registerScriptFile($baseUrl."/assets/vendor/timepicker.co/jquery.timepicker.js"
 			,CClientScript::POS_END);
 		}
@@ -275,10 +270,8 @@ class ScriptManager
 		/*$cs->registerCssFile($baseUrl."/assets/vendor/pickadate.js/lib/themes/default.css");
 		$cs->registerCssFile($baseUrl."/assets/vendor/pickadate.js/lib/themes/default.time.css");*/	
 		
-		$website_use_time_picker = Yii::app()->functions->getOptionAdmin('website_use_time_picker');  
-		
-		if (Yii::app()->functions->getOptionAdmin('theme_time_pick')==2 || $website_use_time_picker==2){
-		   $cs->registerCssFile($baseUrl."/assets/vendor/timepicker.co/jquery.timepicker.min.css");
+		if (Yii::app()->functions->getOptionAdmin('theme_time_pick')==2){
+		  $cs->registerCssFile($baseUrl."/assets/vendor/timepicker.co/jquery.timepicker.min.css");
 		}
 		
 		$cs->registerCssFile($baseUrl.'/assets/css/store-v2.css?ver=1.0');

@@ -110,10 +110,12 @@ if ($data['two_flavors']==2){
           <?php $price['price']=Yii::app()->functions->unPrettyPrice($price['price'])?>
           <div class="col-md-5 ">
              <?php if ( !empty($price['size'])):?>
-                 <?php echo CHtml::radioButton('price',
+                 <?php                  
+                 $size_id=isset($price['size_id'])?$price['size_id']:''; 
+                 echo CHtml::radioButton('price',
 		          $size_select==$price['size']?true:false
 		          ,array(
-		            'value'=>$price['price']."|".$price['size'],
+		            'value'=>$price['price']."|".$price['size']."|".$size_id,
 		            'class'=>"price_cls item_price"
 		          ))?>
 		          <?php echo qTranslate($price['size'],'size',$price)?>

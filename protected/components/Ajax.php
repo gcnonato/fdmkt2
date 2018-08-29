@@ -66,23 +66,19 @@ class Ajax extends AjaxAdmin
 	}
 	
 	public function merchantCommission()
-	{		 		    
-		    $where_params='';
-		    $and_params='';
-		    
+	{
+		 		    
+		  
 	    	$and='';  
 	    	$and_date='';	    	
 	    	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
 	    		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-		    		$and=" AND a.date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-		    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
-		    		 ";	    		    		
-		    		$and_date=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-		    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
-		    		 ";
-		    		
-		    		$and_params.="a.date_created|".FunctionsV3::q($this->data['start_date']." 00:00:00");
-		    		$and_params.=",".FunctionsV3::q($this->data['end_date']." 23:59:00");
+	    		$and=" AND a.date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
+	    		 ";	    		
+	    		$and_date=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
+	    		 ";
 	    		}
 	    	}
 	    	
@@ -90,16 +86,12 @@ class Ajax extends AjaxAdmin
 		    	$start_date=date("Y-m-d", strtotime ('-15 days'));
 				$end_date=date("Y-m-d");
 				
-				$and =" AND a.date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
-		    		        ".FunctionsV3::q($end_date." 23:59:00")."
+				$and =" AND a.date_created BETWEEN  '".$start_date." 00:00:00' AND 
+		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
-				
-				$and_params.="a.date_created|".$start_date." 00:00:00";
-				$and_params.=",".$end_date." 23:59:00";
-				
 	    	} elseif ( $this->data['query']=="last30"){
 	    		
 	    		$start_date=date("Y-m-d", strtotime ('-30 days'));
@@ -111,10 +103,6 @@ class Ajax extends AjaxAdmin
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
-				
-				$and_params.="a.date_created|".$start_date." 00:00:00";
-				$and_params.=",".$end_date." 23:59:00";
-				
 	    	} elseif ( $this->data['query']=="month"){
 	    		
 	    		$query_date = $this->data['query_date'];			
@@ -127,19 +115,14 @@ class Ajax extends AjaxAdmin
 				$and_date =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
 		    		        '".$end_date." 23:59:00'
 		    		 ";	    		
-				
-				$and_params.="a.date_created|".$start_date." 00:00:00";
-				$and_params.=",".$end_date." 23:59:00";
 	    	}
 	    	
 	    	$order_status_id='';
 	    	$or='';
-	    	$order_status_raw='';
 	    	if (isset($this->data['stats_id'])){
 		    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
 		    		foreach ($this->data['stats_id'] as $stats_id) {		    			
-		    			$order_status_id.= FunctionsV3::q($stats_id)."," ;
-		    			$order_status_raw.="$stats_id,";
+		    			$order_status_id.="'$stats_id',";
 		    		}
 		    		if ( !empty($order_status_id)){
 		    			$order_status_id=substr($order_status_id,0,-1);
@@ -148,36 +131,26 @@ class Ajax extends AjaxAdmin
 	    	}
 	    	
 	    	if ( !empty($order_status_id)){	    		
-	    		$where= " WHERE a.status IN ($order_status_id)";	    		
+	    		$where= " WHERE a.status IN ($order_status_id)";
 	    		$and_date.=" AND status IN ($order_status_id)";
-	    		
-	    		$where_params.="a.status_in|$order_status_raw";
 	    	} else {
 	    		$where= " WHERE a.status NOT IN ('".initialStatus()."')";
 	    		$and_date.="AND status NOT IN ('".initialStatus()."')";
-	    		
-	    		$where_params.="a.status_not_in|$order_status_raw";
 	    	}
 	    		    	
 	    	 	    	
 	    	
 	    	if ( $this->data['merchant_id']>=1){
-	    		$and.=" AND a.merchant_id=".FunctionsV3::q($this->data['merchant_id'])." ";
+	    		$and.=" AND a.merchant_id='".$this->data['merchant_id']."' ";
 	    	}
 	    	
 	    	if (isset($this->data['payment_type'])){
 	    		if ( $this->data['payment_type']==2){ // cash
 	    			$and_date.=" AND payment_type IN ('cod','pyr','ccr','ocr') ";
 	    			$and.=" AND payment_type IN ('cod','pyr','ccr','ocr') ";
-	    			
-	    			
-	    			$and_params.="&payment_type_in=payment_type|cod,pyr,ccr,ocr";
-	    			
 	    		} else if ($this->data['payment_type']==3) { // card
 	    			$and_date.=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
 	    			$and.=" AND payment_type NOT IN ('cod','pyr','ccr','ocr') ";
-	    			
-	    			$and_params.="&payment_type_not_in=cod,pyr,ccr,ocr";
 	    		}	    	
 	    	}	
 	    	
@@ -236,16 +209,18 @@ class Ajax extends AjaxAdmin
 	    		$total_commission=0;
 	    		foreach ($res as $val) {	    		
 	    			$link=websiteUrl()."/admin/merchantcommissiondetails";	    			
+	    			/*$link.="/mtid/".$val['merchant_id'];	 
+	    			$link.="/where/".$where;	 
+	    			$link.="/and/".$and;*/
 	    			
-	    			/*$link.="?mtid=".$val['merchant_id'];	 
+	    			$link.="?mtid=".$val['merchant_id'];	 
 	    			$link.="&where=".$where;	 
-	    			$link.="&and=".$and;	    			
-	    			dump($link);*/
-	    			
-	    			$link.="?mtid=".$val['merchant_id'];
-	    			$link.="&where=$where_params";
-	    			$link.="&and=$and_params";
+	    			$link.="&and=".$and;
 	    				    			
+/*$action="<a class=\"view-details\" data-id=\"$val[merchant_id]\" href=\"javascript:;\" data-where=\"$where\" data-and=\"$and\">".
+Yii::t("default","Details").
+"</a>";*/	    			
+
                     $total_commission+=$val['total_commission'];
 $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	    			$date=prettyDate($val['date_created'],true);
@@ -269,92 +244,15 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	public function merchantCommissionDetails()
 	{
 		$DbExt=new DbExt;		
-		$where='';		
+		$where=$this->data['where'];
 		$and=" AND merchant_id=".FunctionsV3::q($this->data['mtid'])." ";
-
-		if(isset($this->data['where'])){
-		   if(!empty($this->data['where'])){
-		   	   $data_where = explode("|",$this->data['where']);		   	   
-		   	   if(is_array($data_where) && count($data_where)>=1){
-		   	   	
-		   	   	  switch ($data_where[0]) {
-		   	   	  	case "a.status_in":
-		   	   	  		$data_where_query = explode(",",$data_where[1]);
-		   	   	  		if(is_array($data_where_query) && count($data_where_query)>=1){
-		   	   	  		   $status_in='';
-		   	   	  		   foreach ($data_where_query as $val) {
-		   	   	  		   		if(!empty($val)){
-		   	   	  		   			$status_in.= FunctionsV3::q($val).",";
-		   	   	  		   		}		   	   	  		   
-		   	   	  		   	}	
-		   	   	  		   	$status_in = substr($status_in,0,-1);
-		   	   	  		   	$and.=" AND a.status IN ($status_in)";
-		   	   	  		}		   	   	  
-		   	   	  		break;
-		   	   	  
-		   	   	  	default:
-		   	   	  		break;
-		   	   	  }
-		   	   	  
-		   	   }		   
-		   }		
-		}
-		
-		if(isset($this->data['and'])){
-			$data_and = explode("|",$this->data['and']);
-			if(is_array($data_and) && count($data_and)>=1){				
-				$data_and_date = explode(",",$data_and[1]);
-				if(is_array($data_and_date) && count($data_and_date)>=1){					
-					$data_and_between = FunctionsV3::q($data_and_date[0])." AND ".FunctionsV3::q($data_and_date[1]);
-				}
-				switch ($data_and[0]) {
-					case "a.date_created":
-						$and.=" AND a.date_created BETWEEN $data_and_between";
-						break;
-				
-					default:
-						break;
-				}
-			}		
-		}
-		
-		if (isset($this->data['payment_type_in'])){
-			if(!empty($this->data['payment_type_in'])){
-			    $payment_type_in = explode("|",$this->data['payment_type_in']);
-			    if(is_array($payment_type_in) && count($payment_type_in)>=1){
-			    	$payment_type_list='';		    	
-			    	$payment_type_in_list = explode(",", isset($payment_type_in[1])?$payment_type_in[1]:'' );
-			    	if(is_array($payment_type_in_list) && count($payment_type_in_list)>=1){
-			    		foreach ($payment_type_in_list as $payment_type_in_list_val) {		    			
-			    			$payment_type_list.=FunctionsV3::q($payment_type_in_list_val).",";
-			    		}		    		
-			    		$payment_type_list = substr($payment_type_list,0,-1);		    		
-			    		$and.=" AND payment_type IN ($payment_type_list)";
-			    	}		    
-			    }
-			}
-		}	
-		
-		if (isset($this->data['payment_type_not_in'])){
-			if(!empty($this->data['payment_type_not_in'])){
-				$payment_type_list='';
-				$payment_type_not_in = explode(",",$this->data['payment_type_not_in']);
-				if(is_array($payment_type_not_in) && count($payment_type_not_in)>=1){
-					foreach ($payment_type_not_in as $val_in) {
-						$payment_type_list.=FunctionsV3::q($val_in).",";					
-					}
-					
-					$payment_type_list = substr($payment_type_list,0,-1);
-					$and.=" AND payment_type NOT IN ($payment_type_list)";
-				}		
-			}
-		}
+		$and.=$this->data['and'];
 		
 				
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		$and.=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+    		$and.=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+    		        '".$this->data['end_date']." 23:59:00'
     		 ";
     		}
     	}
@@ -367,9 +265,8 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
     	{{merchant}}
     	where merchant_id = a.merchant_id 
     	) as merchant_name    	
-		FROM		
+		FROM
 		{{order}} a
-		WHERE 1
 		$where
 		$and
 		ORDER BY order_id DESC
@@ -578,32 +475,32 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 			$query_date = $this->data['query_date'];			
 			$start_date=date('Y-m-01', strtotime($query_date));
 			$end_date=date('Y-m-t', strtotime($query_date));
-			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($end_date." 23:59:00")."
+			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
+	    		        '".$end_date." 23:59:00'
 	    		 ";	    		
 		} elseif ( $this->data['query']=="period"){
 			
 			$start_date=$this->data['start_date'];
 			$end_date=$this->data['end_date'];
 			
-			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($end_date." 23:59:00")."
+			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
+	    		        '".$end_date." 23:59:00'
 	    		 ";	    		
 		} elseif ( $this->data['query']=="last15"){
 			
 			$start_date=date("Y-m-d", strtotime ('-15 days'));
 			$end_date=date("Y-m-d");
 			
-			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($end_date." 23:59:00")."
+			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
+	    		        '".$end_date." 23:59:00'
 	    		 ";	    		
 		} elseif ( $this->data['query']=="last30"){
 			
 			$start_date=date("Y-m-d", strtotime ('-30 days'));
 			$end_date=date("Y-m-d");
 			
-			$and =" AND date_created BETWEEN  ".FunctionsV3::q($start_date." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($end_date." 23:59:00")."
+			$and =" AND date_created BETWEEN  '".$start_date." 00:00:00' AND 
+	    		        '".$end_date." 23:59:00'
 	    		 ";	    		
 		}	
 		
@@ -613,7 +510,11 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 			} elseif ( $this->data['payment_type']==3){ //card			
 				$trans_type="AND payment_type NOT IN ('cod','pyr','ccr','ocr')";	
 			}		
-		}		
+		}
+		/*$trans_type="AND payment_type NOT IN ('cod','pyr','ccr')";
+		if (isset($this->data['cash_statement'])){
+			$trans_type="AND payment_type IN ('cod','pyr','ccr')";
+		}*/
 		
 	    $stmt="SELECT * FROM
 	    {{order}}
@@ -1004,12 +905,12 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		if (isset($this->data['start_date']) && isset($this->data['end_date'])){
 			if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
 				if (!empty($and)){				
-					$and.=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+					$and.=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		    ";
 				} else {
-					$and.=" WHERE date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-	    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+					$and.=" WHERE date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+	    		        '".$this->data['end_date']." 23:59:00'
 	    		    ";
 				}
 			}
@@ -1018,9 +919,9 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		if (isset($this->data['merchant_id'])){
 			if (!empty($this->data['merchant_id'])){
 				if (!empty($and)){
-					$and.=" AND merchant_id= ".FunctionsV3::q($this->data['merchant_id'])." ";
+					$and.=" AND merchant_id='".addslashes($this->data['merchant_id'])."'";
 				} else {
-					$and=" WHERE merchant_id=".FunctionsV3::q($this->data['merchant_id'])." ";
+					$and=" WHERE merchant_id='".addslashes($this->data['merchant_id'])."'";
 				}
 			}
 		}	
@@ -1176,8 +1077,8 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		   $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+    		   $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+    		        '".$this->data['end_date']." 23:59:00'
     		   ";
     		   $_SESSION['rpt_date_range']=array(
     		     'start_date'=>$this->data['start_date'],
@@ -1190,8 +1091,8 @@ $action="<a href=\"$link\" >".Yii::t("default","Details")."</a>";
 	    $or='';
     	if (isset($this->data['stats_id'])){
 	    	if (is_array($this->data['stats_id']) && count($this->data['stats_id'])>=1){
-	    		foreach ($this->data['stats_id'] as $stats_id) {	    			
-	    			$order_status_id.= FunctionsV3::q($stats_id).",";
+	    		foreach ($this->data['stats_id'] as $stats_id) {		    			
+	    			$order_status_id.="'$stats_id',";
 	    		}
 	    		if ( !empty($order_status_id)){
 	    			$order_status_id=substr($order_status_id,0,-1);
@@ -1910,8 +1811,8 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		  $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+    		  $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+    		        '".$this->data['end_date']." 23:59:00'
     		  ";
     		    		  
               $_SESSION['rpt_date_range']=array(
@@ -1973,8 +1874,8 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$and='';  
     	if (isset($this->data['start_date']) && isset($this->data['end_date']))	{
     		if (!empty($this->data['start_date']) && !empty($this->data['end_date'])){
-    		   $and=" AND date_created BETWEEN  ".FunctionsV3::q($this->data['start_date']." 00:00:00")." AND 
-    		        ".FunctionsV3::q($this->data['end_date']." 23:59:00")."
+    		   $and=" AND date_created BETWEEN  '".$this->data['start_date']." 00:00:00' AND 
+    		        '".$this->data['end_date']." 23:59:00'
     		   ";    		   
                $_SESSION['rpt_date_range']=array(
     		     'start_date'=>$this->data['start_date'],
@@ -2871,13 +2772,14 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      }
      
      public function addressBook()
-     {     	 	    
+     {     	
+ 	    //$slug=createUrl("store/profile/?tab=2");
 		$stmt="SELECT id,location_name,country_code,as_default,
 		concat(street,' ',city,' ',state,' ',zipcode) as address		
 		FROM
 		{{address_book}}		
 		WHERE
-		client_id = ".FunctionsV3::q(Yii::app()->functions->getClientId())."
+		client_id ='".Yii::app()->functions->getClientId()."'	
 		ORDER BY id DESC
 		";						
 		if ($res=$this->rst($stmt)){
@@ -2927,7 +2829,7 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
      		$sql_up="UPDATE {{address_book}}
      		SET as_default='1' 	     		
      		WHERE
-     		client_id= ".FunctionsV3::q(Yii::app()->functions->getClientId())."
+     		client_id='".Yii::app()->functions->getClientId()."'
      		";
      		$this->qry($sql_up);
      	}     
@@ -3118,22 +3020,13 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
                    </tr>
                  </thead>
                  <tbody>
-                   <?php foreach ($resh as $valh):?>                   
-                   <?php 
-		           $remarks = $valh['remarks'];
-		           if(!empty($valh['remarks2']) && !empty($valh['remarks_args']) ){
-		           	   $remarks_args = json_decode($valh['remarks_args'],true);
-		           	   if(is_array($remarks_args) && count($remarks_args)>=1){
-		           	      $remarks = Yii::t("driver",$valh['remarks2'],$remarks_args);            	   
-		           	   }
-		           }
-		           ?>                                      
+                   <?php foreach ($resh as $valh):?>
                    <tr style="font-size:12px;">
                      <td><?php                       
                       echo FormatDateTime($valh['date_created'],true);
                       ?></td>
                      <td><?php echo t($valh['status'])?></td>
-                     <td><?php echo $remarks?></td>
+                     <td><?php echo $valh['remarks']?></td>
                    </tr>
                    <?php endforeach;?>
                  </tbody>
@@ -3235,8 +3128,6 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 			        	  'gateway'=>$resp['sms_provider']
 			        	);	  		        	  
 			        	$this->insertData("{{sms_broadcast_details}}",$params);	   
-			        	
-			        	FunctionsV3::fastRequest(FunctionsV3::getHostURL().Yii::app()->createUrl("cron/processsms"));
 				    	
 				    } else $this->msg=t("Sorry but we cannot sms code this time")." ".$resp['msg'];
 				} else $this->msg=t("Sorry but we cannot sms code this time");
@@ -3764,28 +3655,6 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 			    
 	    if ( $this->data['delivery_type']=="delivery"){
 	    	if (FunctionsV3::isSearchByLocation()){	    		
-	    			    		
-	    		/*IF USE ADDRESS BOOK */	    		
-	    		if(isset($this->data['address_book_id_location'])){
-	    			
-	    			$address_book_id_location = $this->data['address_book_id_location'];	    			
-	    			if($res_book = FunctionsV3::getAddressByLocationFullDetails($address_book_id_location)){	    				
-	    					    				
-	    				$this->data['state_id']=$res_book['state_id'];
-	    				$this->data['city_id']=$res_book['city_id'];
-	    				$this->data['area_id']=$res_book['area_id'];
-	    				
-	    				$this->data['street'] = $res_book['street'];    				
-	    				$this->data['city'] = $res_book['city_name'];
-	    				$this->data['state'] = $res_book['state_name'];
-	    				$this->data['area_name'] = $res_book['area_name'];
-	    				$this->data['location_name'] = $res_book['location_name'];
-	    				$this->data['zipcode'] = $res_book['postal_code'];
-	    			}	    		
-	    		} 
-	    		
-	    		//dump($this->data);
-	    		
 	    		$params_check=array(
 	    		   'state_id'=>$this->data['state_id'],
 	    		   'city_id'=>$this->data['city_id'],
@@ -3804,36 +3673,16 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	    			return ;
 	    		} 
 	    		  	
-	    	} else {	    		
-	    		$resp_recheck = FunctionsV3::reCheckDeliveryNew($mtid,$this->data);	    		
-	    		if($resp_recheck['code']==1){
-	    			/*CHECK MINIMUM ORDER TABLE*/
-	    			//dump($resp_recheck);
-	    			$min_fees=FunctionsV3::getMinOrderByTableRates($mtid,
-					   isset($resp_recheck['distance'])?$resp_recheck['distance']:'',
-					   isset($resp_recheck['distance_type_raw'])?$resp_recheck['distance_type_raw']:'',
-					   getOption($mtid,'merchant_minimum_order')
-					);					
-					$kmrs_subtotal = isset($_SESSION['kmrs_subtotal'])?$_SESSION['kmrs_subtotal']:0;					
-					if($min_fees>0 && $kmrs_subtotal>0){
-					   	if($min_fees>$kmrs_subtotal){
-					   	   $this->msg = Yii::t("default","Sorry but Minimum order is [min_order]",array(
-					   	     '[min_order]'=>FunctionsV3::prettyPrice($min_fees)
-					   	   ));
-					   	   return false;	
-					   	}					
-					}	    		
-	    		} elseif ( $resp_recheck['code']==3 ) {
-	    			// do nothing
-	    		} else {
-	    			$mt_delivery_miles=getOption($mtid,'merchant_delivery_miles'); 
+	    	} else {
+		    	if (!FunctionsV3::reCheckDelivery($mtid,$this->data)){
+		    		$mt_delivery_miles=getOption($mtid,'merchant_delivery_miles'); 
 		    		$distance_type=FunctionsV3::getMerchantDistanceType($mtid); 
 		    		$unit=$distance_type=="M"?t("miles"):t("kilometers");
 		    		$this->msg=t("Sorry but this merchant delivers only with in ").$mt_delivery_miles." $unit";
 		    		return ;
-	    		}    	
+		    	}
 	    	}
-	    }	    	    
+	    }
 	    	    
 	    $params='';
 	    if (is_array($this->data) && count($this->data)>=1){
@@ -3902,7 +3751,10 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	    	default:
 	    		break;
 	    }	    
-	    	    	   	    	    
+	    
+	    /*dump($params);
+	    die();*/
+	    	    
 	    $_SESSION['confirm_order_data']=$params;	    
 	    $this->code=1; $this->msg=t("Please wait while we redirect you");
 	    	    
@@ -4146,7 +3998,7 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 	{
 				
 		$aColumns = array(
-		  'order_id','a.merchant_id','c.first_name',
+		  'order_id','a.merchant_id','a.client_id',
 		  'json_details','trans_type','payment_type',
 		  'sub_total','taxable_total','total_w_tax','a.status','request_from','a.date_created'
 		);
@@ -5018,325 +4870,4 @@ $this->msg=t("We have sent bank information instruction to your email")." :$merc
 		$this->msg=Yii::t("default","Settings saved.");
 	}
 	
-	public function requestCancelOrderList()
-	{
-		$DbExt=new DbExt;
-    	$merchant_id=Yii::app()->functions->getMerchantID();	    
-    	$stmt="SELECT a.*,
-    	(
-    	select concat(first_name,' ',last_name)
-    	from
-    	{{client}}
-    	where
-    	client_id=a.client_id
-    	) as client_name,
-    	
-    	(
-    	select concat(contact_phone)
-    	from
-    	{{client}}
-    	where
-    	client_id=a.client_id
-    	) as contact_phone,
-    	
-    	(
-    	select group_concat(item_name)
-    	from
-    	{{order_details}}
-    	where
-    	order_id=a.order_id
-    	) as item
-    	
-    	FROM
-    	{{order}} a
-    	WHERE
-    	merchant_id=".FunctionsV3::q($merchant_id)." 
-    	AND status NOT in ('".initialStatus()."')
-    	AND request_cancel = '1'
-    	ORDER BY date_created DESC	    	
-    	";    	
-    	if ( $res=$DbExt->rst($stmt)){    		
-    		foreach ($res as $val) {	    			
-    			$new='';
-    			$action="<a data-id=\"".$val['order_id_token']."\" class=\"order_cancel_review\" href=\"javascript:\">".t("Review Order")."</a>";
-    			
-    			if ($val['request_cancel_viewed']==2){
-    				$new=" <div class=\"uk-badge\">".Yii::t("default","NEW")."</div>";
-    			}
-    			    			
-    			$date=FormatDateTime($val['date_created']);
-    			
-    			$item=FunctionsV3::translateFoodItemByOrderId(
-    			  $val['order_id'],
-    			  'kr_merchant_lang_id'
-    			);
-    			
-    			$feed_data['aaData'][]=array(
-    			  $val['order_id'],
-    			  ucwords($val['client_name']).$new,
-    			  $val['contact_phone'],
-    			  $item,
-    			  t($val['trans_type']),	    			  
-    			  FunctionsV3::prettyPaymentType('payment_order',$val['payment_type'],$val['order_id'],$val['trans_type']),
-    			  prettyFormat($val['sub_total'],$merchant_id),
-    			  prettyFormat($val['taxable_total'],$merchant_id),
-    			  prettyFormat($val['total_w_tax'],$merchant_id),	    			  
-    			  "<span class=\"tag ".$val['status']."\">".t($val['status'])."</span>",
-    			  t($val['request_from']),
-    			  $date,
-    			  $action
-    		    );
-    		}
-    		$this->otableOutput($feed_data);
-    	}	   
-    	$this->otableNodata();		
-	}
-	
-	public function reviewCancelOrder()
-	{
-		$order_id = isset($this->data['order_id'])?$this->data['order_id']:'';		
-		if(!empty($order_id)){
-			if ($res = FunctionsV3::getOrderByToken($order_id)){
-				$id = $res['order_id'];
-				$params = array(
-				  'request_cancel_viewed'=>1,
-				  'date_modified'=>FunctionsV3::dateNow(),
-				  'ip_address'=>$_SERVER['REMOTE_ADDR']
-				);
-				$db = new DbExt();
-				$db->updateData("{{order}}",$params,'order_id',$id);
-				Yii::app()->controller->renderPartial('/merchant/review_cancel_order',array(
-			        'order_id'=>$this->data['order_id']  
-			    ),false);
-			    
-				Yii::app()->end();
-			} else $error = t("Order id not found");
-		} else $error = t("Order id not found");
-
-		Yii::app()->controller->renderPartial('/merchant/error',array(
-	        'message'=>$error
-	    ),false);
-		Yii::app()->end();
-				
-	}
-	
-	public function addAddressBookLocation()
-	{
-		$client_id=Yii::app()->functions->getClientId();
-		
-		if($client_id<=0){
-			$this->msg =  t("Session has expired");
-			return ;
-		}	
-		
-		$params = array(
-		 'client_id'=>$client_id,
-		 'street'=>$this->data['street'],
-		 'state_id'=>$this->data['state_id'],
-		 'city_id'=>$this->data['city_id'],
-		 'area_id'=>$this->data['area_id'],
-		 'location_name'=>isset($this->data['location_name'])?$this->data['location_name']:'',
-		 'country_id'=>$this->data['country_id'],
-		 'as_default'=>isset($this->data['as_default'])?$this->data['as_default']:0,
-		 'date_created'=>FunctionsV3::dateNow(),
-		 'ip_address'=>$_SERVER['REMOTE_ADDR']
-		);		
-		$db = new DbExt();
-		if(isset($this->data['id'])){
-			unset($params['date_created']);
-			unset($params['client_id']);
-			$params['date_modified']=FunctionsV3::dateNow();			
-			if ($db->updateData("{{address_book_location}}",$params,'id',$this->data['id'])){
-			    $this->code=1;
-     			$this->msg=Yii::t("default","Successful");		 
-     			
-     			
-     			if($params['as_default']==1){
-     			   $db->qry("
-     			    UPDATE {{address_book_location}}
-     			    SET as_default=''
-     			    WHERE
-     			    client_id = ".FunctionsV3::q($client_id)."
-     			    AND 
-     			    id <> ".FunctionsV3::q($this->data['id'])."
-     			   ");
-     			}			
-     			
-     		} else $this->msg=t("ERROR: Something went wrong");	
-		} else {						
-			if ( $db->insertData('{{address_book_location}}',$params)){
-	        	$id=Yii::app()->db->getLastInsertID();
-	        	$this->details=Yii::app()->createUrl('store/profile',array(
-	        	  'tab'=>2,
-	        	  'do'=>'add',
-	        	  'id'=>$id
-	        	));
-	    		$this->code=1;
-	    		$this->msg=Yii::t("default","Successful");	
-	    		
-	    		if($params['as_default']==1){
-     			   $db->qry("
-     			    UPDATE {{address_book_location}}
-     			    SET as_default=''
-     			    WHERE
-     			    client_id = ".FunctionsV3::q($client_id)."
-     			    AND 
-     			    id <> ".FunctionsV3::q($id)."
-     			   ");
-     			}			
-	    		 
-	        } else $this->msg=t("ERROR: Something went wrong");		
-		}	
-		unset($db);
-	}
-	
-	public function addressBookLocation()
-	{		
-		$client_id = Yii::app()->functions->getClientId();
-		$feed_data = array();
-		if($client_id>0){
-			$stmt="
-			SELECT 
-			a.*,
-			b.name as state_name,
-			c.name as city_name,
-			c.postal_code ,
-			d.name as area_name
-			
-		    FROM
-			{{address_book_location}} a
-			
-			left join {{location_states}} b
-			On
-			a.state_id = b.state_id
-			
-			left join {{location_cities}} c
-			On
-			a.city_id = c.city_id
-			
-			left join {{location_area}} d
-			On
-			a.area_id = d.area_id
-			
-			WHERE
-			client_id = ".FunctionsV3::q($client_id)."
-			";							
-			if ($res=$this->rst($stmt)){				
-				foreach ($res as $val) {
-					$slug=Yii::app()->createUrl("store/profile/",array(
-			   	     'tab'=>2,
-			   	     'do'=>"add",
-			   	     'id'=>$val['id']
-			   	    ));
-			   	    
-			   	    $address='';
-			   	    $address.= $val['street']." ".$val['state_name']." ".$val['city_name']." ".$val['area_name'];			   	    
-			   	    $address.=" ".$val['postal_code'];
-			   	    
-			   	    $action="<div class=\"options\">
-		    		<a href=\"$slug\" ><i class=\"ion-ios-compose-outline\"></i></a>
-		    		<a href=\"javascript:;\" class=\"del_addresslocation\" data-id=\"$val[id]\" ><i class=\"ion-ios-trash\"></i></a>
-		    		</div>";		   	   
-			   	   $feed_data['aaData'][]=array(
-			   	      $address.$action,
-			   	      $val['location_name'],
-			   	      $val['as_default']==1?'<i class="fa fa-check"></i>':'<i class="fa fa-times"></i>'
-			   	   );
-				}
-				$this->otableOutput($feed_data);
-			} else $this->otableNodata();
-		} else $this->otableNodata();		
-	}
-	
-	public function addReviewToOrder()
-	{
-		$order_info= array();
-		$client_id = Yii::app()->functions->getClientId();
-		if($client_id<=0){
-			$this->msg =  t("Session has expired");
-			return ;
-		}	
-		
-		if($this->data['initial_review_rating']<0 || empty($this->data['initial_review_rating'])){
-		   $this->msg = t("Rating is required");
-		   return ;	
-		}	
-				
-		$order_token = isset($this->data['order_id_token'])?$this->data['order_id_token']:'';		
-		if(!empty($order_token)){
-			$order_info = FunctionsV3::getOrderInfoByToken($order_token);
-		}		
-		if(is_array($order_info) && count($order_info)>=1){
-			$order_id = $order_info['order_id'];			
-			$params = array(
-			  'merchant_id'=>$order_info['merchant_id'],
-			  'client_id'=>$client_id,
-			  'review'=>$this->data['review_content'],
-			  'rating'=>$this->data['initial_review_rating'],
-			  'date_created'=>FunctionsV3::dateNow(),
-			  'ip_address'=>$_SERVER['REMOTE_ADDR'],
-			  'order_id'=>$order_id,			  
-			);
-			$db = new DbExt();			
-			if(!FunctionsV3::getReviewByOrder($client_id,$order_id)){
-				if ( $db->insertData("{{review}}",$params)){
-					$this->code = 1;
-					$this->msg = t("Your review has been published.");
-				} else $this->msg = t("ERROR. cannot insert data.");
-			} else $this->msg = t("You have already have add review to this order");
-		} else $this->msg  = t("Order id not found");
-	}
-	
-	public function saveCategorySked()
-	{
-		$db = new DbExt();
-		
-		$mtid = Yii::app()->functions->getMerchantID();
-		if($mtid<=0){
-		   $this->msg = t("ERROR: Your session has expired.");
-		   return ;	
-		}
-		
-		Yii::app()->functions->updateOption("enabled_category_sked",
-    	isset($this->data['enabled_category_sked'])?$this->data['enabled_category_sked']:'',$mtid);     	
-		
-		$stmt="
-		UPDATE {{category}}
-		SET 
-		monday='0',
-		tuesday='0',
-		wednesday='0',
-		thursday='0',
-		friday='0',
-		saturday='0',
-		sunday='0'
-		
-		WHERE
-		merchant_id = ". FunctionsV3::q($mtid)."
-		";
-		$db->qry($stmt);
-				
-		if(isset($this->data['category'])){
-		   foreach ($this->data['category'] as $days=>$val) {		   	    	
-		   		if(is_array($val) && count($val)>=1){
-		   			foreach ($val as $sub_key=>$sub_val) {		   				
-		   				$stmt="
-		   				UPDATE {{category}}
-		   				SET $days='1'
-		   				WHERE
-		   				cat_id=".FunctionsV3::q($sub_key)."
-		   				AND
-		   				merchant_id = ". FunctionsV3::q($mtid)."
-		   				";
-		   				//dump($stmt);
-		   				$db->qry($stmt);
-		   			}
-		   		}		   
-		   	}	
-		}		
-		
-		$this->code = 1;
-		$this->msg = t("Setting saved");
-	}
-		
 } /*END CLASS*/

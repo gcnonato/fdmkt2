@@ -89,9 +89,9 @@ class CronFunctions extends DbExt
 		$stmt="SELECT * FROM
 		{{sms_broadcast_details}}
 		WHERE
-		broadcast_id=".FunctionsV3::q($bid)."
+		broadcast_id='$bid'
 		AND
-		client_id=".FunctionsV3::q($cid)."
+		client_id='$cid'
 		LIMIT 0,1
 		";		
 		if ($res=$this->rst($stmt)){	

@@ -471,7 +471,7 @@ echo CHtml::checkBox('theme_hide_footer_section2',getOptionA('theme_hide_footer_
 <div class="uk-form-row">
   <label class="uk-form-label"><?php echo t("Exit Link")?></label>  
   <?php 
-  echo CHtml::telField('age_restriction_exit_link',
+  echo CHtml::textField('age_restriction_exit_link',
   getOptionA('age_restriction_exit_link'),array(
     'class'=>"uk-form-width-large"
   ));
