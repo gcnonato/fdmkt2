@@ -76,12 +76,12 @@ return array(
 				
 		'db'=>array(	        
 		    'class'            => 'CDbConnection' ,
-			'connectionString' => 'mysql:host=localhost;dbname=restomulti',
+			'connectionString' => 'mysql:host=localhost;dbname=pdv2',
 			'emulatePrepare'   => true,
-			'username'         => 'root',
-			'password'         => '',
+			'username'         => 'adm',
+			'password'         => 'Anxmlmle9?',
 			'charset'          => 'utf8',
-			'tablePrefix'      => 'mt_',
+			'tablePrefix'      => 'ra_',
 	    ),
 		
 	    'functions'=> array(
